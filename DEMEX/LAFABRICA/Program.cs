@@ -1,6 +1,14 @@
 using LAFABRICA.Components;
-
+using LAFABRICA.Data.DB;
+using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
+
+//DATABASE
+//Crea variable para la cadena de conexion
+var connectionString = builder.Configuration.GetConnectionString("DEMEX");
+//registra servicio  para la conexion
+builder.Services.AddDbContext<AppDbContext>(options =>
+options.UseSqlServer(connectionString));
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
