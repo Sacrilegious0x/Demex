@@ -1,5 +1,7 @@
 using LAFABRICA.Components;
 using LAFABRICA.Data.DB;
+using LAFABRICA.Models.Interface;
+using LAFABRICA.Services;
 using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,7 +15,9 @@ options.UseSqlServer(connectionString));
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-
+//DEPENDENCIAS 
+builder.Services.AddScoped<IClientService, ClientService>();
+builder.Services.AddBlazorBootstrap();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
