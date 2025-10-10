@@ -1,0 +1,137 @@
+﻿@page "/clientes/crear"
+@page "/clientes/editar/{clientId:int}"
+@using LAFABRICA.Data.DB;
+@using LAFABRICA.Models.Interface;
+@inject IClientService service;
+
+<PageTitle>Nuevo Cliente</PageTitle>
+
+<div class="container mt2">
+	<div class="card">
+		<div class="card-header">
+			<div class="d-flex justify-content-between align-items-center mt-3">
+				<h2>
+					@if (clientId.HasValue)
+					{
+						<Icon Name="IconName.PersonFillGear" />
+						<text>Editar cliente</text>
+					}
+					else
+					{
+						<Icon Name="IconName.PersonFillAdd"/>
+						<text>Nuevo cliente</text>
+					}
+				</h2>
+				<a class="btn btn-outline-secondary" href="/clientes"><Icon Name="IconName.ArrowLeft"></Icon></a>
+			</div>	
+		</div>
+		<div class="card-body">
+			<EditForm EditContext="@editContext" OnValidSubmit="HandleOnValidSubmit">
+				<DataAnnotationsValidator/>
+				<div class=" d-flex justify-content-between">
+					<div class="container-sm">
+						<h3 >Informacion de la Empresa</h3>
+						<div class="form-group row mb-3">
+							<label class="col-md-5 col-form-label">Nombre de la Empresa: <span class="text-danger">*</span></label>
+							<div class="col-md-8">
+								<TextInput Class="border-0" @bind-Value="@client.Name" Placeholder="Ingrese el nombre del cliente" />
+								<ValidationMessage For="@(() => client.Name)" />
+							</div>
+						</div>
+						<div class="form-group row mb-3">
+							<label class="col-md-5 col-form-label">Contacto <span class="text-danger">*</span></label>
+							<div class="col-md-8">
+								<TextInput Class="border-0" @bind-Value="@client.PhoneNumber" Placeholder="Ingrese el contacto de la empresa" />
+								<ValidationMessage For="@(() => client.PhoneNumber)" />
+							</div>
+						</div>
+						<div class="form-group row mb-3">
+							<label class="col-md-5 col-form-label">Correo <span class="text-danger">*</span></label>
+							<div class="col-md-8">
+								<TextInput Class="border-0" @bind-Value="@client.Email" Placeholder="Ingrese el correo electronico" />
+								<ValidationMessage For="@(() => client.Email)" />
+							</div>
+						</div>
+					</div>
+					<div class="container-sm">
+						<h3>Informacion del encargado</h3>
+						<div class="form-group row mb-3">
+							<label class="col-md-5 col-form-label">Nombre de la Empresa: <span class="text-danger">*</span></label>
+							<div class="col-md-8">
+								<TextInput Class="border-0" @bind-Value="@client.Manager" Placeholder="Ingrese el nombre del Encargado" />
+								<ValidationMessage For="@(() => client.Manager)" />
+							</div>
+						</div>
+						<div class="form-group row mb-3">
+							<label class="col-md-5 col-form-label">Contacto <span class="text-danger">*</span></label>
+							<div class="col-md-8">
+								<TextInput Class="border-0" @bind-Value="@client.ManagerPhoneNumber" Placeholder="Ingrese el contacto del Encargado" />
+								<ValidationMessage For="@(() => client.ManagerPhoneNumber)" />
+							</div>
+						</div>
+						<div class="container-sm">
+							<h3>Informacion de Ubicacion</h3>
+							<div class="form-group row mb-3">
+								<label class="col-md-5 col-form-label ">Provincia <span class="text-danger">*</span></label>
+								<div class="col-md-8">
+									<InputSelect Class="form-select" @bind-Value="@client.Location"> 
+										<option value="">Seleccione una provincia</option>
+										@foreach(string province in provinces)
+										{
+											<option value="@province">@province</option>
+										}
+									</InputSelect>
+									<ValidationMessage For="@(() => client.Location)" />
+								</div>
+							</div>
+							<div class="form-group row mb-3">
+								<label class="col-md-5 col-form-label ">Locacion Especifica <span class="text-danger">*</span></label>
+								<div class="col-md-8">
+									<TextInput Class="border-0" @bind-Value="@client.SpecificLocation" Placeholder="Ingrese ubicacion detallada" />
+									<ValidationMessage For="@(() => client.SpecificLocation)" />
+								</div>
+							</div>
+						</div>
+					</div>			
+				</div>	
+				<div class="d-flex justify-content-end">	
+					<a class="btn btn-secondary me-2">Volver</a>
+					<button class="btn btn-primary">Guardar</button>
+				</div>
+			</EditForm>
+		</div>
+	</div>
+</div>
+
+@code {
+	private Client client = new();
+	private EditContext? editContext;
+	[Parameter]
+	public int? clientId { get; set; }
+	private string [] provinces = { "San Jose", "Alajuela", "Heredia", "Cartago",
+									"Guanacaste", "Puntarenas", "Limon"};
+	protected override void OnInitialized()
+	{
+		editContext = new EditContext(client);
+		base.OnInitialized();
+	}
+
+	public void HandleOnValidSubmit()
+	{
+		// additional check
+		if (editContext.Validate())
+		{
+			// do something
+			// submit the form
+			Console.WriteLine("Form submitted successfully");
+		}
+	}
+
+	private void ResetForm()
+	{
+		client = new();
+		editContext = new EditContext(client);
+	}
+
+	
+}
