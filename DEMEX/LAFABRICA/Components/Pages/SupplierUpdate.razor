@@ -1,0 +1,194 @@
+﻿@page "/Supplier/edit/{Id:int}"
+@using LAFABRICA.Models
+@using LAFABRICA.Services
+@inject ISupplierService SupplierService
+@inject NavigationManager NavigationManager
+
+@*
+    La variable 'supplier' es la que se precarga y se usa para el binding.
+    La variable 'isBusy' se usa para manejar el estado de carga y evitar errores si el objeto es nulo.
+*@
+
+@if (isBusy)
+{
+    <div class="text-center p-5">
+        <p>Cargando información del proveedor...</p>
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+}
+else if (supplier == null)
+{
+    <div class="alert alert-danger text-center m-4" role="alert">
+        Proveedor con ID @Id no encontrado.
+    </div>
+}
+else
+{
+    <div class="card shadow-sm h-100 d-flex flex-column">
+
+        @* --- Header (Título) --- *@
+        <div class="card-header p-4 border-bottom">
+            <h1 class="h4 card-title text-gray-900 d-flex align-items-center">
+                <i class="bi bi-building me-3" style="font-size: 1.5rem; color: #0f54a1;"></i>
+                Editar Proveedor: @supplier.Name
+            </h1>
+        </div>
+
+        @* --- Cuerpo del Formulario --- *@
+        <div class="flex-grow-1 overflow-auto p-4">
+
+            <EditForm Model="@supplier" OnValidSubmit="@HandleValidSubmit" class="mx-auto" style="max-width: 850px;">
+                <DataAnnotationsValidator />
+
+                <div class="row g-4">
+                    @* Mismos estilos de grid *@
+
+                    @* Columna 1: Información del Proveedor *@
+                    <div class="col-12 col-lg-6">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h3 class="h5 card-title mb-4 d-flex align-items-center text-gray-900">
+                                    <i class="bi bi-person me-2" style="color: #0f54a1;"></i>
+                                    Información del Proveedor
+                                </h3>
+
+                                <div class="space-y-4">
+
+                                    @* Campo: Nombre *@
+                                    <div class="mb-3">
+                                        <label for="name" class="form-label">Nombre de la empresa *</label>
+                                        <InputText id="name" @bind-Value="supplier.Name" class="form-control" placeholder="Ej: Cerámica Nacional" required />
+                                    </div>
+
+                                    @* Campo: Correo Electrónico *@
+                                    <div class="mb-3">
+                                        <label for="email" class="form-label">Correo electrónico</label>
+                                        <InputText id="email" @bind-Value="supplier.Email" class="form-control" placeholder="correo@ejemplo.com" type="email" />
+                                    </div>
+
+                                    @* Campo: Teléfono *@
+                                    <div class="mb-3">
+                                        <label for="phone" class="form-label">Teléfono *</label>
+                                        <InputText id="phone" @bind-Value="supplier.Phone" class="form-control" placeholder="+506 8888-8888" required />
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* Columna 2: Ubicación y Detalles *@
+                    <div class="col-12 col-lg-6">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h3 class="h5 card-title mb-4 d-flex align-items-center text-gray-900">
+                                    <i class="bi bi-geo-alt me-2" style="color: #0f54a1;"></i>
+                                    Ubicación y detalles
+                                </h3>
+
+                                <div class="space-y-4">
+
+                                    @* Campo: Dirección *@
+                                    <div class="mb-3">
+                                        <label for="address" class="form-label">Dirección</label>
+                                        <InputText id="address" @bind-Value="supplier.Address" class="form-control" placeholder="Dirección completa" />
+                                    </div>
+
+                                    @* Campo: Notas Adicionales (Textarea) *@
+                                    <div class="mb-3">
+                                        <label for="notes" class="form-label">Notas adicionales</label>
+                                        <InputTextArea id="notes" @bind-Value="supplier.Notes" class="form-control" placeholder="Información adicional..." rows="3" />
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @* --- Nota (Alerta Azul de Bootstrap) --- *@
+                <div class="alert alert-info alert-note my-4 p-4" role="alert">
+                    <div class="d-flex align-items-start">
+                        <i class="bi bi-info-circle-fill me-3" style="font-size: 1.25rem;"></i>
+                        <div>
+                            <h4 class="alert-heading h6 m-0">Nota</h4>
+                            <p class="mb-0 text-sm">
+                                Los proveedores creados podrán asignarse a materiales más adelante.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                @* --- Botones de Acción (Footer) --- *@
+                <div class="d-flex justify-content-end space-x-4 pt-4 border-top">
+                    <button type="button" class="btn btn-outline-secondary px-4" @onclick="HandleCancel">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn text-white px-4" style="background-color: #0f54a1;">
+                        Actualizar Proveedor
+                    </button>
+                </div>
+
+            </EditForm>
+        </div>
+    </div>
+}
+
+
+@* --- Bloque de Código C# para Carga y Edición --- *@
+@code {
+    // Parámetro de ruta: Captura el ID de la URL
+    [Parameter]
+    public int Id { get; set; }
+
+    private SupplierDto? supplier;
+    private bool isBusy = true;
+
+    // Se llama automáticamente al inicializar el componente y cuando los parámetros (Id) cambian
+    protected override async Task OnInitializedAsync()
+    {
+        // 1. Lógica de carga
+        supplier = await SupplierService.GetSupplierByIdAsync(Id);
+        isBusy = false;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (supplier == null) return;
+
+        Console.WriteLine(supplier);
+
+        try
+        {
+            // 2. Llama al método de actualización del servicio
+            bool success = await SupplierService.UpdateSupplierAsync(supplier);
+
+            if (success)
+            {
+                // TODO: Mostrar notificación de éxito
+                Console.WriteLine($"Proveedor {supplier.Id} actualizado con éxito.");
+
+                // 3. Redirige a la lista de proveedores
+                NavigationManager.NavigateTo("/Supplier");
+            }
+            else
+            {
+                // El proveedor no se encontró o no se pudo actualizar
+                // TODO: Mostrar mensaje de error
+                Console.WriteLine("Error: El proveedor no pudo ser actualizado.");
+            }
+        }
+        catch (Exception ex)
+        {
+            // TODO: Manejo de error
+            Console.WriteLine($"Error al actualizar proveedor: {ex.Message}");
+        }
+    }
+
+    private void HandleCancel()
+    {
+        NavigationManager.NavigateTo("/Supplier");
+    }
+}
