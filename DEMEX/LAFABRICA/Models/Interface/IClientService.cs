@@ -8,7 +8,7 @@ namespace LAFABRICA.Models.Interface
         Task<Client?> GetById(int id);
         Task<Client> Create(Client client);
         Task<Client> Update(int id, Client client);
-        Task<bool> Delete(int id);
+        Task Delete(int id);
 
     }
 }

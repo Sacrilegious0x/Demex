@@ -3,6 +3,8 @@ using LAFABRICA.Data.DB;
 using LAFABRICA.Models.Interface;
 using LAFABRICA.Services;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Http;
+
 var builder = WebApplication.CreateBuilder(args);
 
 //DATABASE
@@ -18,6 +20,7 @@ builder.Services.AddRazorComponents()
 //DEPENDENCIAS 
 builder.Services.AddScoped<IClientService, ClientService>();
 builder.Services.AddBlazorBootstrap();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

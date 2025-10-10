@@ -21,15 +21,13 @@ namespace LAFABRICA.Services
             return client;
         }
 
-        public async Task<bool> Delete(int id)
+        public async Task Delete(int id)
         {
             var client = await _contex.Clients.FindAsync(id);
             if (client == null)
-                return false;
-
+                throw new KeyNotFoundException($"Cliente con id {id} no encontrado");
             _contex.Clients.Remove(client);
             await _contex.SaveChangesAsync();
-            return true;
         }
 
         public async Task<IEnumerable<Client>> GetAllClient()
