@@ -6,7 +6,7 @@
 
 <PageTitle>Clientes</PageTitle>
 
-<Modal @ref="modal" />
+<Modal @ref="modal" IsVerticallyCentered="true" Size="ModalSize.Large"  />
 <Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 <ConfirmDialog @ref="dialog" />
 
@@ -35,10 +35,28 @@
 					<div class="d-flex justify-content-between align-items-center mt-3">
 					<h3> <Icon Name="IconName.PersonFill"></Icon> Gestion de Clientes</h3>
 						<a class="btn btn-primary" href="/clientes/crear"> <Icon Name="IconName.PlusLg"></Icon> Nuevo Cliente</a>
-					</div> 
-					<div class="mt-3">
-						<h6>Aqui la barra de busqueda y filtros</h6>
 					</div>
+				<div class="d-flex justify-content-sm-start align-items-center gap-3 mt-3">
+
+		
+					<div class="d-flex align-items-center border rounded px-2">
+						<Icon Name="IconName.Search" class="text-secondary me-2" />
+						<input type="text" class="form-control border-0" @bind="searchText" @bind:event="oninput" placeholder="Buscar Empresa..." style="box-shadow:none;" />
+					</div>
+
+					<div class="d-flex align-items-center gap-2">
+						<Icon Name="IconName.Funnel" class="text-secondary" />
+						<InputSelect class="form-select" @bind-Value="selectedLocation">
+							<option value="">Todas las provincias</option>
+							@foreach (var province in provinces)
+							{
+								<option value="@province">@province</option>
+							}
+						</InputSelect>
+					</div>
+
+				</div>
+
 										
 				</div>
 				<div class="card-body text-center">
@@ -59,11 +77,11 @@
 								</thead>
 								<tbody>
 
-									@foreach (var clt in clients.Select((c, index) => new { c, index }))
+								@foreach (var clt in filteredClients.Select((c, index) => new { c, index }))
 									{
-										@if (clt.c.IsActive == 1)
-										{
-										<tr>
+										
+										<tr >
+											
 											<td>@(clt.index + 1)</td>
 											<td>
 												<div>@clt.c.Name</div>
@@ -91,8 +109,7 @@
 													<Icon Name="IconName.Trash" Color="IconColor.Danger"></Icon>
 												</button>
 											</td>
-										</tr>
-										}									
+										</tr>																	
 									}
 								</tbody>
 
@@ -115,10 +132,19 @@
 
 @code {
 	[Inject] protected ToastService ToastService { get; set; } = default!;
+	private string selectedLocation = "";
+	private string searchText = string.Empty;
+	private readonly string[] provinces = { "San José", "Alajuela", "Heredia", "Cartago", "Guanacaste", "Puntarenas", "Limon" };
 	private List<Client>? clients;
 	private ConfirmDialog dialog = default!;
 	private Modal modal = default!;
-
+	private IEnumerable<Client> filteredClients =>
+	clients?
+		.Where(c => c.IsActive == 1)
+		.Where(c => string.IsNullOrEmpty(selectedLocation) || c.Location == selectedLocation)
+		.Where(c => string.IsNullOrEmpty(searchText)|| c.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+		?? [];
+	
 	protected override async Task OnInitializedAsync()
 	{
 		await LoadClients();
@@ -193,6 +219,6 @@
 	{
 		var parameters = new Dictionary<string, object>();
 		parameters.Add("ClientId", clt.Id);
-		await modal.ShowAsync<ViewClient>(title: $"Detalles del cliente {clt.Name}", parameters: parameters);
+		await modal.ShowAsync<ViewClient>(title: $"Detalles del cliente: {clt.Name}", parameters: parameters);
 	}
 }
