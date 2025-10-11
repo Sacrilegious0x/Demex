@@ -26,7 +26,10 @@ namespace LAFABRICA.Services
             var client = await _contex.Clients.FindAsync(id);
             if (client == null)
                 throw new KeyNotFoundException($"Cliente con id {id} no encontrado");
-            _contex.Clients.Remove(client);
+            client.IsActive = 0;
+            _contex.Clients.Update(client);
+            //_contex.Clients.Remove(client);
+            
             await _contex.SaveChangesAsync();
         }
 

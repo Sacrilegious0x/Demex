@@ -1,0 +1,16 @@
+﻿@using LAFABRICA.Data.DB;
+@using LAFABRICA.Models.Interface;
+
+
+<h3>ViewClient</h3>
+
+@code {
+	private Client? client;
+	[Parameter] public int ClientId { get; set }
+	protected override void OnInitialized()
+	{
+
+		base.OnInitialized();
+	}
+
+}
