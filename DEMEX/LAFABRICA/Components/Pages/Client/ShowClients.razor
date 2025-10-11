@@ -6,6 +6,7 @@
 
 <PageTitle>Clientes</PageTitle>
 
+<Modal @ref="modal" />
 <Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 <ConfirmDialog @ref="dialog" />
 
@@ -84,7 +85,7 @@
 											<td><Icon Name="IconName.GeoAlt"></Icon> @clt.c.Location</td>
 											<td><Icon Name="IconName.Geo"></Icon> @clt.c.SpecificLocation</td>
 											<td>
-												<button class="btn btn-show"> <Icon Class="icon-show" Name="IconName.Eye"></Icon> </button>
+												<button class="btn btn-show" @onclick="()=> ViewClientInfo(clt.c)"> <Icon Class="icon-show" Name="IconName.Eye"></Icon> </button>
 												<button Class="btn btn-edit" @onclick="() => EditClient(clt.c)"> <Icon Class="icon-edit" Name="IconName.PencilSquare"></Icon> </button>
 												<button Class="btn btn-delete" @onclick="() => DeleteClient(clt.c)">
 													<Icon Name="IconName.Trash" Color="IconColor.Danger"></Icon>
@@ -116,6 +117,7 @@
 	[Inject] protected ToastService ToastService { get; set; } = default!;
 	private List<Client>? clients;
 	private ConfirmDialog dialog = default!;
+	private Modal modal = default!;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -187,5 +189,10 @@
 			nav.NavigateTo($"/clientes/editar/{clt.Id}");
 		}
 	}
-
+	private async Task ViewClientInfo(Client clt)
+	{
+		var parameters = new Dictionary<string, object>();
+		parameters.Add("ClientId", clt.Id);
+		await modal.ShowAsync<ViewClient>(title: $"Detalles del cliente {clt.Name}", parameters: parameters);
+	}
 }
