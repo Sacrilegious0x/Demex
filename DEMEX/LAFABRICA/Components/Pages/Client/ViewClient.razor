@@ -1,16 +1,22 @@
 ﻿@using LAFABRICA.Data.DB;
 @using LAFABRICA.Models.Interface;
+@inject IClientService service;
 
-
-<h3>ViewClient</h3>
+<div class="row">
+    <div class="col-5 col-md-3 text-end">Nombre :</div>
+    <div class="col-7 col-md-9">@client?.Name</div>
+</div>
 
 @code {
 	private Client? client;
-	[Parameter] public int ClientId { get; set }
-	protected override void OnInitialized()
-	{
-
-		base.OnInitialized();
-	}
+	[Parameter] 
+	public int ClientId { get; set; }
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ClientId != 0)
+        {
+            client = await service.GetById(ClientId); 
+        }
+    }
 
 }
