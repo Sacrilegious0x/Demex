@@ -1,4 +1,5 @@
 ﻿@page "/Supplier/edit/{Id:int}"
+@using BlazorBootstrap
 @using LAFABRICA.Models
 @using LAFABRICA.Services
 @inject ISupplierService SupplierService
@@ -8,6 +9,8 @@
     La variable 'supplier' es la que se precarga y se usa para el binding.
     La variable 'isBusy' se usa para manejar el estado de carga y evitar errores si el objeto es nulo.
 *@
+
+<ConfirmDialog @ref="dialog" />
 
 @if (isBusy)
 {
@@ -39,7 +42,7 @@ else
         @* --- Cuerpo del Formulario --- *@
         <div class="flex-grow-1 overflow-auto p-4">
 
-            <EditForm Model="@supplier" OnValidSubmit="@HandleValidSubmit" class="mx-auto" style="max-width: 850px;">
+            <EditForm Model="@supplier" OnValidSubmit="@ShowConfirmationAsync" class="mx-auto" style="max-width: 850px;">
                 <DataAnnotationsValidator />
 
                 <div class="row g-4">
@@ -123,10 +126,11 @@ else
 
                 @* --- Botones de Acción (Footer) --- *@
                 <div class="d-flex justify-content-end space-x-4 pt-4 border-top">
-                    <button type="button" class="btn btn-outline-secondary px-4" @onclick="HandleCancel">
+
+                    <button type="button" class="btn btn-outline-secondary px-4 m-1" @onclick="HandleCancel">
                         Cancelar
                     </button>
-                    <button type="submit" class="btn text-white px-4" style="background-color: #0f54a1;">
+                    <button type="submit" class="btn text-white px-4 m-1" style="background-color: #0f54a1;">
                         Actualizar Proveedor
                     </button>
                 </div>
@@ -145,6 +149,10 @@ else
 
     private SupplierDto? supplier;
     private bool isBusy = true;
+    private ConfirmDialog dialog = default!;
+
+
+
 
     // Se llama automáticamente al inicializar el componente y cuando los parámetros (Id) cambian
     protected override async Task OnInitializedAsync()
@@ -154,41 +162,64 @@ else
         isBusy = false;
     }
 
-    private async Task HandleValidSubmit()
-    {
-        if (supplier == null) return;
-
-        Console.WriteLine(supplier);
-
-        try
-        {
-            // 2. Llama al método de actualización del servicio
-            bool success = await SupplierService.UpdateSupplierAsync(supplier);
-
-            if (success)
-            {
-                // TODO: Mostrar notificación de éxito
-                Console.WriteLine($"Proveedor {supplier.Id} actualizado con éxito.");
-
-                // 3. Redirige a la lista de proveedores
-                NavigationManager.NavigateTo("/Supplier");
-            }
-            else
-            {
-                // El proveedor no se encontró o no se pudo actualizar
-                // TODO: Mostrar mensaje de error
-                Console.WriteLine("Error: El proveedor no pudo ser actualizado.");
-            }
-        }
-        catch (Exception ex)
-        {
-            // TODO: Manejo de error
-            Console.WriteLine($"Error al actualizar proveedor: {ex.Message}");
-        }
-    }
-
+    
     private void HandleCancel()
     {
         NavigationManager.NavigateTo("/Supplier");
+    }
+
+    
+
+    private async Task ShowConfirmationAsync()
+    {
+        var options = new ConfirmDialogOptions
+        {
+            YesButtonText = "Si",
+            YesButtonColor = ButtonColor.Success,
+            NoButtonText = "No",
+            NoButtonColor = ButtonColor.Danger
+        };
+
+        var confirmation = await dialog.ShowAsync(
+            title: "Deseas aplicar estos cambios?",
+            message1: "Una vez editado se pierde la informacion anterior",
+            confirmDialogOptions: options);
+
+        if (confirmation)
+        {
+            if (supplier == null) return;
+
+            Console.WriteLine(supplier.Notes);
+
+            try
+            {
+                // 2. Llama al método de actualización del servicio
+                bool success = await SupplierService.UpdateSupplierAsync(supplier);
+
+                if (success)
+                {
+                    // TODO: Mostrar notificación de éxito
+                    Console.WriteLine($"Proveedor {supplier.Id} actualizado con éxito.");
+
+                    // 3. Redirige a la lista de proveedores
+                    NavigationManager.NavigateTo("/Supplier");
+                }
+                else
+                {
+                    // El proveedor no se encontró o no se pudo actualizar
+                    // TODO: Mostrar mensaje de error
+                    Console.WriteLine("Error: El proveedor no pudo ser actualizado.");
+                }
+            }
+            catch (Exception ex)
+            {
+                // TODO: Manejo de error
+                Console.WriteLine($"Error al actualizar proveedor desde el metodo en el razor: {ex.Message}");
+            }
+        }
+        else
+        {
+            // do whatever
+        }
     }
 }

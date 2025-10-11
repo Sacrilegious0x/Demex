@@ -23,7 +23,8 @@ namespace LAFABRICA.Services
             {
                 // 3. USAMOS EF CORE para obtener los datos
                 var suppliers = await _context.Suppliers
-                                            .ToListAsync();
+                .Where(s => s.IsActive) // <-- ¡FILTRO AGREGADO!
+                .ToListAsync();
 
                 // 4. Mapeamos la entidad a la DTO (Si el modelo Supplier no es igual a SupplierDto)
                 // Si el modelo Supplier de la BD y SupplierDto son idénticos, puedes quitar el DTO y usar la entidad,
@@ -37,7 +38,8 @@ namespace LAFABRICA.Services
                     Phone = s.Phone,
                     Email = s.Email,
                     DateLastPurchase = s.DateLastPurchase,
-                    Notes = s.Notes
+                    Notes = s.Notes,
+                    IsActive = s.IsActive,
                 }).ToList();
 
                 return supplierDtos;
@@ -68,7 +70,8 @@ namespace LAFABRICA.Services
                 Phone = newSupplierDto.Phone,
                 Email = newSupplierDto.Email,
                 DateLastPurchase = newSupplierDto.DateLastPurchase,
-                Notes = newSupplierDto.Notes
+                Notes = newSupplierDto.Notes,
+                IsActive = newSupplierDto.IsActive
                 // Las propiedades de navegación (List<...>) se ignoran o se inicializan si es necesario.
             };
 
@@ -106,35 +109,30 @@ namespace LAFABRICA.Services
             // 2. Mapear la entidad a DTO y retornar
             return new SupplierDto
             {
-                Id = supplierEntity.Id,
+                Id = id,
                 Name = supplierEntity.Name,
                 Address = supplierEntity.Address,
                 Phone = supplierEntity.Phone,
                 Email = supplierEntity.Email,
                 DateLastPurchase = supplierEntity.DateLastPurchase,
-                Notes = supplierEntity.Notes
+                Notes = supplierEntity.Notes,
+                IsActive= supplierEntity.IsActive
             };
         }
 
         public async Task<bool> UpdateSupplierAsync(SupplierDto updatedSupplierDto)
         {
-            // 1. Mapear DTO a la Entidad (Entity)
-            var supplierEntity = new Supplier
-            {
-                Id = updatedSupplierDto.Id, // El ID es crucial para la actualización
-                Name = updatedSupplierDto.Name,
-                Address = updatedSupplierDto.Address,
-                Phone = updatedSupplierDto.Phone,
-                Email = updatedSupplierDto.Email,
-                DateLastPurchase = updatedSupplierDto.DateLastPurchase,
-                Notes = updatedSupplierDto.Notes
-                // Propiedades de navegación omitidas
-            };
 
-            // 2. Adjuntar la entidad al contexto y marcarla como modificada.
-            // Esto es más eficiente que hacer un Find() y luego actualizar propiedades.
-            _context.Suppliers.Attach(supplierEntity);
-            _context.Entry(supplierEntity).State = EntityState.Modified;
+            var supplier = await _context.Suppliers.FindAsync(updatedSupplierDto.Id);
+            if (supplier == null) return false;
+
+            supplier.Name = updatedSupplierDto.Name;
+            supplier.Address = updatedSupplierDto.Address;
+            supplier.Phone = updatedSupplierDto.Phone;
+            supplier.Email = updatedSupplierDto.Email;
+            supplier.DateLastPurchase = updatedSupplierDto.DateLastPurchase;
+            supplier.Notes = updatedSupplierDto.Notes;
+            supplier.IsActive = updatedSupplierDto.IsActive;
 
             try
             {
@@ -153,9 +151,40 @@ namespace LAFABRICA.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error al actualizar proveedor: {ex.Message}");
+                Console.WriteLine($"Error al actualizar proveedor desde el metodo en el service: {ex.Message}");
                 return false;
             }
+        }
+
+        public async Task<bool> DeleteSupplierAsync(int id)
+        {
+            var supplier = await _context.Suppliers.FindAsync(id);
+
+            if (supplier == null) return false;
+
+            supplier.IsActive = false;
+
+            try
+            {
+                // 3. Guardar los cambios. Retorna el número de filas afectadas (debe ser 1)
+                var result = await _context.SaveChangesAsync();
+                return result > 0;
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Manejar la excepción si el proveedor no existe (o si ha habido un conflicto)
+                if (!_context.Suppliers.Any(e => e.Id == id))
+                {
+                    return false; // No encontrado
+                }
+                throw; // Lanzar otras excepciones de concurrencia
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al eliminar el proveedor desde el metodo en el service: {ex.Message}");
+                return false;
+            }
+
         }
 
     }

@@ -84,6 +84,9 @@
                                     <InputTextArea id="notes" @bind-Value="supplier.Notes" class="form-control" placeholder="Información adicional..." rows="3" />
                                 </div>
 
+                                
+                                
+
                             </div>
                         </div>
                     </div>
@@ -122,12 +125,17 @@
 @code {
     // 1. Instancia del DTO que contendrá los datos del formulario
     private SupplierDto supplier = new SupplierDto();
+    
+
 
     // 2. Método que se ejecuta al enviar el formulario (si es válido)
     private async Task HandleValidSubmit()
     {
+        supplier.IsActive = true;
+
         try
         {
+            
             // Llama al nuevo método del servicio para agregar el proveedor
             var newSupplier = await SupplierService.AddSupplierAsync(supplier);
 

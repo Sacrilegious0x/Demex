@@ -12,7 +12,7 @@ namespace LAFABRICA.Services
         // CRUD: UPDATE (NUEVO)
         Task<bool> UpdateSupplierAsync(SupplierDto updatedSupplierDto);
 
-
+        Task<bool> DeleteSupplierAsync(int id);
 
     }
 }
