@@ -17,6 +17,9 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 //DEPENDENCIAS 
 builder.Services.AddScoped<IClientService, ClientService>();
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IMaterialService, MaterialService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddBlazorBootstrap();
 var app = builder.Build();
 

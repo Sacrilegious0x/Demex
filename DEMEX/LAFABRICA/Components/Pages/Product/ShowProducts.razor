@@ -1,0 +1,135 @@
+﻿@page "/products"
+@using LAFABRICA.Data.DB
+@using LAFABRICA.Models.Interface
+@using LAFABRICA.Components.Pages.Product
+@inject IProductService service
+@inject ToastService ToastService
+
+<PageTitle>Catálogo de Productos</PageTitle>
+
+<Toasts class="p-3" Autohide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+<ConfirmDialog @ref="dialog" />
+
+<ProductDetailsModal @ref="detailsModal" />
+
+<Card>
+    <CardHeader>
+        <div class="d-flex justify-content-between align-items-center">
+            <CardTitle Size="HeadingSize.H5" Class="mb-0">Catálogo de Productos</CardTitle>
+            <div>
+                <a href="/products/create" class="btn btn-primary">
+                    <Icon Name="IconName.PlusCircleFill" /> Nuevo Producto
+                </a>
+            </div>
+        </div>
+    </CardHeader>
+    <CardBody>
+        @if (products == null)
+        {
+            <div class="text-center">
+                <Spinner Color="SpinnerColor.Primary" />
+                <p class="mt-2">Cargando productos...</p>
+            </div>
+        }
+        else
+        {
+            <Grid TItem="Product"
+                  Data="@products"
+                  Class="table table-hover table-striped"
+                  Responsive="true"
+                  AllowSorting="true">
+
+                <GridColumn TItem="Product" HeaderText="#" Sortable="true">@context.Id</GridColumn>
+                <GridColumn TItem="Product" HeaderText="Producto" Sortable="true">@context.Name</GridColumn>
+                <GridColumn TItem="Product" HeaderText="Categoría" Sortable="true">@context.Category</GridColumn>
+                <GridColumn TItem="Product" HeaderText="Precio Base" Sortable="true" TextAlignment="Alignment.End">
+                    @context.PriceBase.ToString("C", new System.Globalization.CultureInfo("es-CR"))
+                </GridColumn>
+                <GridColumn TItem="Product" HeaderText="Personalizable" TextAlignment="Alignment.Center">
+                    @(context.IsCustom == 1 ? "Sí" : "No")
+                </GridColumn>
+                <GridColumn TItem="Product" HeaderText="Complejidad" Sortable="true" TextAlignment="Alignment.Center">
+                    <Badge Color="@GetComplexityBadgeColor(context.Complexity)">@context.Complexity</Badge>
+                </GridColumn>
+                <GridColumn TItem="Product" HeaderText="Acciones" TextAlignment="Alignment.Center">
+                    <Button Color="ButtonColor.Secondary" IsOutlined="true" Size="ButtonSize.Small" Class="me-1" title="Ver"
+                            @onclick="() => detailsModal.ShowAsync(context.Id)">
+                        <Icon Name="IconName.EyeFill" />
+                    </Button>
+                    <a href="@($"/products/edit/{context.Id}")" class="btn btn-outline-primary btn-sm me-1" title="Editar">
+                        <i class="bi bi-pencil-fill"></i>
+                    </a>
+                    <Button Color="ButtonColor.Danger" IsOutlined="true" Size="ButtonSize.Small" title="Eliminar" @onclick="() => DeleteProduct(context)">
+                        <Icon Name="IconName.TrashFill" />
+                    </Button>
+                </GridColumn>
+            </Grid>
+        }
+    </CardBody>
+</Card>
+
+@code {
+    private List<Product>? products;
+    private ConfirmDialog dialog = default!;
+    private ProductDetailsModal detailsModal = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProducts();
+    }
+
+    private async Task LoadProducts()
+    {
+        products = (await service.GetAllProducts()).ToList();
+    }
+
+    private async Task ShowDetailsModal(int productId)
+    {
+        await detailsModal.ShowAsync(productId);
+    }
+
+    private BadgeColor GetComplexityBadgeColor(string complexity)
+    {
+        return complexity switch
+        {
+            "Muy alta" => BadgeColor.Danger,
+            "Alta" => BadgeColor.Warning,
+            "Media" => BadgeColor.Secondary,
+            "Baja" => BadgeColor.Info,
+            "Muy baja" => BadgeColor.Light,
+            _ => BadgeColor.Secondary
+        };
+    }
+
+    private async Task DeleteProduct(Product product)
+    {
+        var options = new ConfirmDialogOptions
+        {
+            YesButtonText = "Eliminar",
+            YesButtonColor = ButtonColor.Danger,
+            NoButtonText = "Cancelar",
+            NoButtonColor = ButtonColor.Secondary
+        };
+
+        var confirmation = await dialog.ShowAsync(
+            title: "Eliminar Producto",
+            message1: $"¿Estás seguro de eliminar el producto '{product.Name}'?",
+            message2: "Esta acción marcará el producto como descontinuado.",
+            confirmDialogOptions: options);
+
+        if (confirmation)
+        {
+            try
+            {
+                await service.Delete(product.Id);
+                await LoadProducts();
+                StateHasChanged();
+                ToastService.Notify(new(ToastType.Success, $"Se eliminó correctamente el producto '{product.Name}'"));
+            }
+            catch (Exception e)
+            {
+                ToastService.Notify(new(ToastType.Danger, $"Ocurrió un error al tratar de eliminar a {product.Name}: {e.Message}"));
+            }
+        }
+    }
+}
