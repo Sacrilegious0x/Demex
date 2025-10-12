@@ -5,10 +5,12 @@
 @inject ISupplierService SupplierService
 @inject NavigationManager NavigationManager
 
+
 @*
-    La variable 'supplier' es la que se precarga y se usa para el binding.
-    La variable 'isBusy' se usa para manejar el estado de carga y evitar errores si el objeto es nulo.
+     supplier es la que se precarga y se usa para el binding
+     isBusy se usa para manejar el estado de carga y evitar broncas feas si el objeto es nulo
 *@
+<Toasts Class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight"></Toasts>
 
 <ConfirmDialog @ref="dialog" />
 
@@ -31,7 +33,7 @@ else
 {
     <div class="card shadow-sm h-100 d-flex flex-column">
 
-        @* --- Header (Título) --- *@
+        @*Header   *@
         <div class="card-header p-4 border-bottom">
             <h1 class="h4 card-title text-gray-900 d-flex align-items-center">
                 <i class="bi bi-building me-3" style="font-size: 1.5rem; color: #0f54a1;"></i>
@@ -39,15 +41,12 @@ else
             </h1>
         </div>
 
-        @* --- Cuerpo del Formulario --- *@
+        @*  Formulario *@
         <div class="flex-grow-1 overflow-auto p-4">
 
             <EditForm Model="@supplier" OnValidSubmit="@ShowConfirmationAsync" class="mx-auto" style="max-width: 850px;">
                 <DataAnnotationsValidator />
-
                 <div class="row g-4">
-                    @* Mismos estilos de grid *@
-
                     @* Columna 1: Información del Proveedor *@
                     <div class="col-12 col-lg-6">
                         <div class="card h-100">
@@ -99,7 +98,7 @@ else
                                         <InputText id="address" @bind-Value="supplier.Address" class="form-control" placeholder="Dirección completa" />
                                     </div>
 
-                                    @* Campo: Notas Adicionales (Textarea) *@
+                                    @* Campo: Notas Adicionales  *@
                                     <div class="mb-3">
                                         <label for="notes" class="form-label">Notas adicionales</label>
                                         <InputTextArea id="notes" @bind-Value="supplier.Notes" class="form-control" placeholder="Información adicional..." rows="3" />
@@ -111,7 +110,7 @@ else
                     </div>
                 </div>
 
-                @* --- Nota (Alerta Azul de Bootstrap) --- *@
+                @*  NotaAlerta Azul de Bootstrap*@
                 <div class="alert alert-info alert-note my-4 p-4" role="alert">
                     <div class="d-flex align-items-start">
                         <i class="bi bi-info-circle-fill me-3" style="font-size: 1.25rem;"></i>
@@ -141,11 +140,12 @@ else
 }
 
 
-@* --- Bloque de Código C# para Carga y Edición --- *@
 @code {
-    // Parámetro de ruta: Captura el ID de la URL
+    // PParametro de la url
     [Parameter]
     public int Id { get; set; }
+
+    [Inject] protected ToastService ToastService { get; set; } = default!;
 
     private SupplierDto? supplier;
     private bool isBusy = true;
@@ -157,7 +157,7 @@ else
     // Se llama automáticamente al inicializar el componente y cuando los parámetros (Id) cambian
     protected override async Task OnInitializedAsync()
     {
-        // 1. Lógica de carga
+        // Lógica de carga
         supplier = await SupplierService.GetSupplierByIdAsync(Id);
         isBusy = false;
     }
@@ -193,33 +193,36 @@ else
 
             try
             {
-                // 2. Llama al método de actualización del servicio
+
                 bool success = await SupplierService.UpdateSupplierAsync(supplier);
 
                 if (success)
                 {
-                    // TODO: Mostrar notificación de éxito
-                    Console.WriteLine($"Proveedor {supplier.Id} actualizado con éxito.");
 
-                    // 3. Redirige a la lista de proveedores
+                    ToastService.Notify(new(ToastType.Success, "¡Éxito!", $"Proveedor '{supplier.Name}' editado con exito "));
+                    Console.WriteLine($"Proveedor {supplier.Id} actualizado con éxito.");
+                    await Task.Delay(600);
+
                     NavigationManager.NavigateTo("/Supplier");
                 }
                 else
                 {
-                    // El proveedor no se encontró o no se pudo actualizar
-                    // TODO: Mostrar mensaje de error
+                    ToastService.Notify(new(ToastType.Danger, "¡Error!", $"Proveedor '{supplier.Name}' no se pudo editar"));
+
+
+                    await Task.Delay(600);
                     Console.WriteLine("Error: El proveedor no pudo ser actualizado.");
                 }
             }
             catch (Exception ex)
             {
-                // TODO: Manejo de error
+
                 Console.WriteLine($"Error al actualizar proveedor desde el metodo en el razor: {ex.Message}");
             }
         }
         else
         {
-            // do whatever
+            // Nada! xd
         }
     }
 }

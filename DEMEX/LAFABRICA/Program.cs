@@ -14,11 +14,13 @@ options.UseSqlServer(connectionString));
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+builder.Services.AddBlazorBootstrap();
 
 //Se agregan controladores
 builder.Services.AddControllers();
 
 builder.Services.AddScoped<ISupplierService,SupplierService>();
+
 
 
 

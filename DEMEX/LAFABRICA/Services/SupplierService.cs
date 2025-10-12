@@ -8,10 +8,10 @@ namespace LAFABRICA.Services
 {
     public class SupplierService : ISupplierService
     {
-        // 1. REEMPLAZAMOS HttpClient por AppDbContext
+
         private readonly AppDbContext _context;
 
-        // 2. CAMBIAMOS EL CONSTRUCTOR para inyectar AppDbContext
+
         public SupplierService(AppDbContext context)
         {
             _context = context;
@@ -21,14 +21,14 @@ namespace LAFABRICA.Services
         {
             try
             {
-                // 3. USAMOS EF CORE para obtener los datos
+
                 var suppliers = await _context.Suppliers
-                .Where(s => s.IsActive) // <-- ¡FILTRO AGREGADO!
+                .Where(s => s.IsActive) // FILTRO
                 .ToListAsync();
 
-                // 4. Mapeamos la entidad a la DTO (Si el modelo Supplier no es igual a SupplierDto)
-                // Si el modelo Supplier de la BD y SupplierDto son idénticos, puedes quitar el DTO y usar la entidad,
-                // pero mantener el DTO es una buena práctica para separar capas.
+                // Mapea la entidad a la DTO (Si el modelo Supplier no es igual a SupplierDto)
+                // Si el modelo Supplier de la BD y SupplierDto son idénticos se puede usar el DTO y usar la entidad,
+                // pero segun la documentacion disque es buena practica hacerlo asi, la verdad yo no lo veo asi , pero bueno confiemos en quienes diseniaron el lenguaje XD
 
                 var supplierDtos = suppliers.Select(s => new SupplierDto
                 {
@@ -48,8 +48,8 @@ namespace LAFABRICA.Services
             {
                 // Manejo de errores de base de datos
                 Console.WriteLine($"Error al obtener proveedores desde la BD: {ex.Message}");
-                // En un servicio in-process, es mejor lanzar la excepción o usar un logger, 
-                // pero retornamos una lista vacía para la UI.
+                // En un servicio in-process, es mejor lanzar la excepción o usar un logger pero aqui retornamos una lista porque somos unos duros
+
                 return new List<SupplierDto>();
             }
 
@@ -60,11 +60,11 @@ namespace LAFABRICA.Services
 
         public async Task<SupplierDto> AddSupplierAsync(SupplierDto newSupplierDto)
         {
-            // 1. Mapear DTO a la Entidad de EF Core (Supplier)
-            // (Asumimos que tienes una clase de entidad Supplier en tu proyecto)
+            // Mapear DTO a la Entidad de EF Core (Supplier)
+
             var supplierEntity = new Supplier
             {
-                // El Id debe ser 0 o ignorarse, ya que es autoincremental
+                // El Id debe ser 0 o ignorarse ya que es autoincremental
                 Name = newSupplierDto.Name,
                 Address = newSupplierDto.Address,
                 Phone = newSupplierDto.Phone,
@@ -72,19 +72,18 @@ namespace LAFABRICA.Services
                 DateLastPurchase = newSupplierDto.DateLastPurchase,
                 Notes = newSupplierDto.Notes,
                 IsActive = newSupplierDto.IsActive
-                // Las propiedades de navegación (List<...>) se ignoran o se inicializan si es necesario.
+
             };
 
-            // 2. Agregar al Contexto
             _context.Suppliers.Add(supplierEntity);
 
-            // 3. Guardar los cambios en la base de datos
+            //  Guardar los cambios en la base de datos
             await _context.SaveChangesAsync();
 
-            // 4. Mapear la Entidad de vuelta a DTO para retornar el objeto con el ID generado
+
             return new SupplierDto
             {
-                Id = supplierEntity.Id, // <--- ID Autoincremental generado por la BD
+                Id = supplierEntity.Id, // ID Autoincremental generado por la BD
                 Name = supplierEntity.Name,
                 Address = supplierEntity.Address,
                 Phone = supplierEntity.Phone,
@@ -98,15 +97,15 @@ namespace LAFABRICA.Services
         {
             // 1. Buscar la entidad en la base de datos
             var supplierEntity = await _context.Suppliers
-                                               .AsNoTracking() // Es un método de lectura, no necesitamos seguimiento
+                                               .AsNoTracking() // Es un método de lectura, no necesitamos seguimiento porque si lo seguimos explota todo
                                                .FirstOrDefaultAsync(s => s.Id == id);
 
             if (supplierEntity == null)
             {
-                return null; // Retorna nulo si no se encuentra
+                return null; 
             }
 
-            // 2. Mapear la entidad a DTO y retornar
+            //Mapear la entidad a DTO y retornar
             return new SupplierDto
             {
                 Id = id,
@@ -136,18 +135,18 @@ namespace LAFABRICA.Services
 
             try
             {
-                // 3. Guardar los cambios. Retorna el número de filas afectadas (debe ser 1)
+                // Guardar los cambios. Retorna el número de filas afectadas (debe ser 1) para que funque
                 var result = await _context.SaveChangesAsync();
                 return result > 0;
             }
             catch (DbUpdateConcurrencyException)
             {
-                // Manejar la excepción si el proveedor no existe (o si ha habido un conflicto)
+
                 if (!_context.Suppliers.Any(e => e.Id == updatedSupplierDto.Id))
                 {
                     return false; // No encontrado
                 }
-                throw; // Lanzar otras excepciones de concurrencia
+                throw; // Lanzar otras excepciones 
             }
             catch (Exception ex)
             {
@@ -166,18 +165,18 @@ namespace LAFABRICA.Services
 
             try
             {
-                // 3. Guardar los cambios. Retorna el número de filas afectadas (debe ser 1)
+
                 var result = await _context.SaveChangesAsync();
                 return result > 0;
             }
             catch (DbUpdateConcurrencyException)
             {
-                // Manejar la excepción si el proveedor no existe (o si ha habido un conflicto)
+
                 if (!_context.Suppliers.Any(e => e.Id == id))
                 {
-                    return false; // No encontrado
+                    return false; 
                 }
-                throw; // Lanzar otras excepciones de concurrencia
+                throw; // Lanzar otras excepciones 
             }
             catch (Exception ex)
             {

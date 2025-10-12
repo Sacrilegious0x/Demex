@@ -5,13 +5,14 @@
 @inject ISupplierService SupplierService
 @inject NavigationManager NavigationManager
 
+<Toasts Class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight"></Toasts>
 <ConfirmDialog @ref="dialog" />
 
 @* --- Estructura HTML (Razor) --- *@
 <div class="card shadow-sm h-100 d-flex flex-column">
     <div class="card-header p-4 border-bottom">
 
-        @* Título y Botón de Creación (Gestión de Proveedores) *@
+        @* Título y Botón de agregado *@
         <div class="d-flex align-items-center justify-content-between mb-3">
             <h1 class="h4 card-title text-gray-900">Gestión de Proveedores</h1>
             <div class="d-flex space-x-2">
@@ -26,7 +27,7 @@
 
         @* Barra de Búsqueda *@
         <div class="d-flex align-items-center">
-            <div class="input-group flex-fill max-w-md">
+            <div class="input-group" style="max-width:480px;">
                 <span class="input-group-text bg-white border-end-0">
                     <i class="bi bi-search text-gray-400"></i>
                 </span>
@@ -39,7 +40,7 @@
         </div>
     </div>
 
-    @* Área de la Tabla (Similar a flex-1 overflow-auto) *@
+    @* Área de la Tabla *@
     <div class="flex-grow-1 overflow-auto">
 
         @if (suppliers == null)
@@ -50,16 +51,17 @@
         }
         else
         {
-            <table class="table table-striped table-hover table-sm">
+
+            <table class="table table-responsive table-hover text-center">
                 <thead class="table-light">
-                    <tr>
-                        <th class="font-weight-bold text-gray-900 textalign=center ">Nombre</th>
+                    <tr >
+                        <th class="font-weight-bold text-gray-900">Nombre</th>
                         <th class="font-weight-bold text-gray-900">Teléfono</th>
                         <th class="font-weight-bold text-gray-900">Correo</th>
                         <th class="font-weight-bold text-gray-900">Última Compra</th>
                         <th class="font-weight-bold text-gray-900">Notas adicionales</th>
                         <th class="font-weight-bold text-gray-900">Dirección</th>
-                        <th class="font-weight-bold text-gray-900 text-end">Acciones</th>
+                        <th class="font-weight-bold text-gray-900">Acciones</th>
                     </tr>
                 </thead>
 
@@ -84,15 +86,15 @@
                                 <td class="max-w-xs text-truncate">@supplier.Notes</td> @* Usamos text-truncate de Bootstrap para el overflow *@
                                 <td>@supplier.Address</td>
 
-                                <td class="text-end">
+                                <td class="">
                                     <div class="d-flex justify-content-center space-x-2">
-                                        <button class="btn btn-lg btn-light  p-0 text-primary"
+                                        <button class="btn btn-edit btn-light text-primary"
                                                 @onclick="() => HandleEdit(supplier)">
-                                            <i class="bi bi-pencil-square h-4 w-4"></i>
+                                            <Icon Class="icon-edit" Name="IconName.PencilSquare"></Icon>
                                         </button>
-                                        <button class="btn btn-lg btn-light p-0 text-danger"
+                                        <button class="btn btn-delete btn-light  text-danger"
                                                 @onclick="() => ShowDeleteConfirmationAsync(supplier.Id)">
-                                            <i class="bi bi-trash-fill h-4 w-4"></i>
+                                            <Icon Name="IconName.Trash" Color="IconColor.Danger"></Icon>
                                         </button>
                                     </div>
                                 </td>
@@ -113,10 +115,12 @@
 
 @code {
 
+
+    [Inject] public ToastService ToastService { get; set; } = default!;
     private List<SupplierDto>? suppliers;
     private string searchTerm = string.Empty;
 
-    // Propiedad calculada para simular el filtro de React (filteredSuppliers)
+    // simular filtrado
     private List<SupplierDto> FilteredSuppliers => 
         suppliers?.Where(s => 
             s.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
@@ -127,31 +131,34 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Obtiene datos directamente del servicio (ya sin HTTP)
+        
         suppliers = await SupplierService.GetSuppliersAsync();
     }
 
     private void NavigateToCreate()
     {
-        // Simula la apertura de un formulario de creación
+        
         NavigationManager.NavigateTo("/Supplier/create");
     }
 
     private void HandleEdit(SupplierDto supplier)
     {
-        // Simula la navegación a la página de edición
+        
         NavigationManager.NavigateTo($"/Supplier/edit/{supplier.Id}");
     }
 
-    private void handleDelete(int id)
+    private async void handleDelete(int id)
     {
         var res = SupplierService.DeleteSupplierAsync(id);
+        ToastService.Notify(new(ToastType.Success, "Se ha eliminado correctamente"));
+
+        await Task.Delay(1000);
         NavigationManager.NavigateTo(NavigationManager.Uri,forceLoad:true);
     }
 
     private void HandleSearch(ChangeEventArgs e)
     {
-        // Actualiza el término de búsqueda y fuerza la re-renderización
+        
         searchTerm = e.Value?.ToString() ?? string.Empty;
     }
 
@@ -165,13 +172,17 @@
 
         if (confirmation)
         {
+
             handleDelete(id);
+
         }
         else
         {
             return;
         }
+        }
+
     }
 
 
-}
+

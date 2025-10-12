@@ -1,12 +1,15 @@
 ﻿@page "/Supplier/create"
+@using BlazorBootstrap
 @using LAFABRICA.Models
 @using LAFABRICA.Services
 @inject ISupplierService SupplierService
 @inject NavigationManager NavigationManager
 
+<Toasts Class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight"></Toasts>
+
 <div class="card shadow-sm h-100 d-flex flex-column">
 
-    @* --- Header (Título) --- *@
+    @* Header (Título) *@
     <div class="card-header p-4 border-bottom">
         <h1 class="h4 card-title text-gray-900 d-flex align-items-center">
             @* Icono de construcción (Bootstrap Icon) *@
@@ -15,19 +18,16 @@
         </h1>
     </div>
 
-    @* --- Cuerpo del Formulario --- *@
+    @* Formulario *@
     <div class="flex-grow-1 overflow-auto p-4">
 
         <EditForm Model="@supplier" OnValidSubmit="@HandleValidSubmit" class="mx-auto" style="max-width: 850px;">
             <DataAnnotationsValidator />
 
             <div class="row g-4">
-                @* grid-cols-1 lg:grid-cols-2 gap-8 -> row g-4 (grid de Bootstrap) *@
-
                 @* Columna 1: Información del Proveedor *@
                 <div class="col-12 col-lg-6">
                     <div class="card h-100">
-                        @* Reemplaza el div bg-gray-50 p-4 rounded-lg *@
                         <div class="card-body">
                             <h3 class="h5 card-title mb-4 d-flex align-items-center text-gray-900">
                                 <i class="bi bi-person me-2" style="color: #0f54a1;"></i>
@@ -35,8 +35,6 @@
                             </h3>
 
                             <div class="space-y-4">
-                                @* space-y-4 -> divs con mb-3/mb-4 *@
-
                                 @* Campo: Nombre *@
                                 <div class="mb-3">
                                     <label for="name" class="form-label">Nombre de la empresa *</label>
@@ -63,7 +61,6 @@
                 @* Columna 2: Ubicación y Detalles *@
                 <div class="col-12 col-lg-6">
                     <div class="card h-100">
-                        @* Reemplaza el div bg-gray-50 p-4 rounded-lg *@
                         <div class="card-body">
                             <h3 class="h5 card-title mb-4 d-flex align-items-center text-gray-900">
                                 <i class="bi bi-geo-alt me-2" style="color: #0f54a1;"></i>
@@ -93,7 +90,7 @@
                 </div>
             </div>
 
-            @* --- Nota (Alerta Azul de Bootstrap) --- *@
+            @* Alerta Azul de Bootstrap *@
             <div class="alert alert-info alert-note my-4 p-4" role="alert">
                 <div class="d-flex align-items-start">
                     <i class="bi bi-info-circle-fill me-3" style="font-size: 1.25rem;"></i>
@@ -106,7 +103,7 @@
                 </div>
             </div>
 
-            @* --- Botones de Acción (Footer) --- *@
+            @*Botones de Acción (Footer) *@
             <div class="d-flex justify-content-end space-x-4 pt-4 border-top">
                 <button type="button" class="btn btn-outline-secondary px-4" @onclick="HandleCancel">
                     Cancelar
@@ -120,39 +117,43 @@
     </div>
 </div>
 
-
-@* --- Bloque de Código C# --- *@
 @code {
-    // 1. Instancia del DTO que contendrá los datos del formulario
+
+
+    [Inject] protected ToastService ToastService { get; set; }
+
+    //  Instancia del DTO que contendrá los datos del formulario
     private SupplierDto supplier = new SupplierDto();
-    
 
 
-    // 2. Método que se ejecuta al enviar el formulario (si es válido)
+
+    // Método que se ejecuta al enviar el formulario solo es valido ojito :v
     private async Task HandleValidSubmit()
     {
         supplier.IsActive = true;
 
         try
         {
-            
-            // Llama al nuevo método del servicio para agregar el proveedor
+
+
             var newSupplier = await SupplierService.AddSupplierAsync(supplier);
 
-            // TODO: Agregar notificación de éxito
+            ToastService.Notify(new(ToastType.Success, $"Se agrego correctamente a {supplier.Name}"));
+
             Console.WriteLine($"Proveedor creado con ID: {newSupplier.Id}");
 
-            // 3. Redirige a la lista de proveedores
+            await Task.Delay(500);
+
             NavigationManager.NavigateTo("/Supplier");
         }
         catch (Exception ex)
         {
-            // TODO: Manejo de error y mostrar mensaje al usuario
+            ToastService.Notify(new(ToastType.Danger, $"Se agrego correctamente a {supplier.Name}"));
+            await Task.Delay(500);
             Console.WriteLine($"Error al crear proveedor: {ex.Message}");
         }
     }
 
-    // 4. Método para Cancelar y Redirigir
     private void HandleCancel()
     {
         NavigationManager.NavigateTo("/Supplier");
