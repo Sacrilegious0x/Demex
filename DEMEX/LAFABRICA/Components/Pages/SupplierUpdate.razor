@@ -62,19 +62,27 @@ else
                                     <div class="mb-3">
                                         <label for="name" class="form-label">Nombre de la empresa *</label>
                                         <InputText id="name" @bind-Value="supplier.Name" class="form-control" placeholder="Ej: Cerámica Nacional" required />
+                                        <ValidationMessage For="@(() => supplier.Name)" />
                                     </div>
 
                                     @* Campo: Correo Electrónico *@
                                     <div class="mb-3">
                                         <label for="email" class="form-label">Correo electrónico</label>
                                         <InputText id="email" @bind-Value="supplier.Email" class="form-control" placeholder="correo@ejemplo.com" type="email" />
+                                        <ValidationMessage For="@(() => supplier.Email)" />
                                     </div>
 
                                     @* Campo: Teléfono *@
                                     <div class="mb-3">
                                         <label for="phone" class="form-label">Teléfono *</label>
                                         <InputText id="phone" @bind-Value="supplier.Phone" class="form-control" placeholder="+506 8888-8888" required />
+                                        <ValidationMessage For="@(() => supplier.Phone)" />
+                                        <div>
+                                            <p class="text-black-50">Formato admitido: xxxx-xxxx</p>
+                                        </div>
                                     </div>
+
+
 
                                 </div>
                             </div>
@@ -96,6 +104,7 @@ else
                                     <div class="mb-3">
                                         <label for="address" class="form-label">Dirección</label>
                                         <InputText id="address" @bind-Value="supplier.Address" class="form-control" placeholder="Dirección completa" />
+                                        <ValidationMessage For="@(() => supplier.Address)" />
                                     </div>
 
                                     @* Campo: Notas Adicionales  *@
