@@ -62,7 +62,10 @@ h1:focus {
 /* === Footer === */
 footer {
     font-size: 0.9rem;
+<<<<<<< HEAD
+=======
     background-color: #2665aa !important;
+>>>>>>> DEV
 }
 
 /* === General === */
@@ -75,9 +78,17 @@ body {
 .icon-show {
     color: #2665aa;
 }
+<<<<<<< HEAD
+
 .icon-edit {
     color: #893914;
 }
+
+=======
+.icon-edit {
+    color: #893914;
+}
+>>>>>>> DEV
 .btn-show:hover {
     background-color: rgba(161, 161, 161, 0.3);
 }
@@ -88,4 +99,8 @@ body {
 
 .btn-delete:hover {
     background-color: rgba(161, 161, 161, 0.3);
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> DEV

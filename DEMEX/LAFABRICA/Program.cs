@@ -1,6 +1,8 @@
 using LAFABRICA.Components;
 using LAFABRICA.Data.DB;
+
 using LAFABRICA.Models.Interface;
+
 using LAFABRICA.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Http;
@@ -17,12 +19,22 @@ options.UseSqlServer(connectionString));
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddBlazorBootstrap();
+
+//Se agregan controladores
+builder.Services.AddControllers();
+
+builder.Services.AddScoped<ISupplierService,SupplierService>();
+
+
 //DEPENDENCIAS 
 builder.Services.AddScoped<IClientService, ClientService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddBlazorBootstrap();
+
 
 var app = builder.Build();
 
@@ -35,6 +47,8 @@ if (!app.Environment.IsDevelopment())
 app.UseStaticFiles();
 app.UseAntiforgery();
 
+//Que nos mapee los controladores
+app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 

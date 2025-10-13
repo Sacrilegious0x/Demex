@@ -1,3 +1,4 @@
+@using BlazorBootstrap
 @inherits LayoutComponentBase
 
 <div class="d-flex flex-column min-vh-100">
@@ -7,6 +8,8 @@
         <div class="container-fluid">
             <!-- Brand -->
             <a class="navbar-brand fw-bold d-flex align-items-center" href="/">
+
+
                 <img src="/Demex.ico" alt="Logo Demex" width="80" height="80" class="me-2" />                
             </a>
 
@@ -25,7 +28,9 @@
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
                         <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
+
                             <i class="bi bi-house-door-fill me-1"></i> Inicio
+
                         </NavLink>
                     </li>
                     <li class="nav-item">
@@ -50,7 +55,7 @@
                         </NavLink>
                     </li>
                     <li class="nav-item">
-                        <NavLink class="nav-link disabled" href="/suppliers">
+                        <NavLink class="nav-link " href="/proveedor">
                             <i class="bi bi-truck me-1"></i> Proveedores
                         </NavLink>
                     </li>
@@ -72,6 +77,7 @@
                     <li class="nav-item">
                         <NavLink class="nav-link disabled" href="/users">
                             <i class="bi bi-person-badge-fill me-1"></i> Usuarios
+
                         </NavLink>
                     </li>
                 </ul>
@@ -81,6 +87,7 @@
                     <span class="navbar-text me-3 text-dark">
                         <i class="bi bi-person-circle"></i> Bienvenido
                     </span>
+
                 </div>
             </div>
         </div>
@@ -94,10 +101,12 @@
     </main>
 
     <!-- Footer -->
-     <footer class="bg-dark text-white text-center py-3 mt-auto">
+
+    <footer class="bg-dark text-white text-center py-3 mt-auto">
         <div class="container">
             <small>&copy; 2025 DEMEX - Todos los derechos reservados</small><br />
             <small>&copy; 2025 InfoPapus - Todos los derechos reservados</small>
         </div>
     </footer> 
+
 </div>
