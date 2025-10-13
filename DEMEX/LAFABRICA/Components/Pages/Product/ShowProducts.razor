@@ -1,0 +1,190 @@
+﻿@page "/productos"
+@using LAFABRICA.Data.DB
+@using LAFABRICA.Models.Interface
+@using LAFABRICA.Components.Pages.Product
+@inject IProductService service
+@inject ToastService ToastService
+@inject NavigationManager nav
+
+<PageTitle>Catálogo de Productos</PageTitle>
+
+<Toasts class="p-3" Autohide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+<ConfirmDialog @ref="dialog" />
+<ProductDetailsModal @ref="detailsModal" />
+
+@if (products == null)
+{
+    <div class="d-flex justify-content-center">
+        <Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
+    </div>
+}
+else if (!products.Any())
+{
+    <div>
+        <Alert Color="AlertColor.Primary" class="d-flex justify-content-between align-items-center">
+            <div>
+                <Icon Name="IconName.InfoCircleFill" class="me-2" />
+                <strong>No hay productos registrados</strong>
+            </div>
+
+            <a class="btn btn-outline-primary" href="/productos/crear"><Icon Name="IconName.PlusLg" /> Nuevo Producto</a>
+        </Alert>
+    </div>
+}
+else
+{
+    <div class="container mt-2">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <h3><Icon Name="IconName.BoxSeamFill"></Icon> Gestión de Productos</h3>
+                    <a class="btn btn-primary" href="/productos/crear">
+                        <Icon Name="IconName.PlusLg"></Icon> Nuevo Producto
+                    </a>
+                </div>
+                <div class="d-flex justify-content-sm-start align-items-center gap-3 mt-3">
+                    <div class="d-flex align-items-center border rounded px-2">
+                        <Icon Name="IconName.Search" class="text-secondary me-2" />
+                        <input type="text" class="form-control border-0" @bind="searchText" @bind:event="oninput" placeholder="Buscar Producto..." style="box-shadow:none;" />
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <Icon Name="IconName.Funnel" class="text-secondary" />
+                        <InputSelect class="form-select" @bind-Value="selectedCategory">
+                            <option value="">Todas las categorías</option>
+                            @foreach (var category in categories)
+                            {
+                                <option value="@category">@category</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body text-center">
+                <div class="row">
+                    <div class="col-12 table-responsive" style="max-height: 450px; overflow-y: auto;">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Producto</th>
+                                    <th>Categoría</th>
+                                    <th>Precio Base</th>
+                                    <th>Complejidad</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var (prod, index) in filteredProducts.Select((p, i) => (p, i)))
+                                {
+                                    <tr>
+                                        <td>@(index + 1)</td>
+                                        <td>@prod.Name</td>
+                                        <td>@prod.Category</td>
+                                        <td>@prod.PriceBase.ToString("C", new System.Globalization.CultureInfo("es-CR"))</td>
+                                        <td><Badge Color="@GetComplexityBadgeColor(prod.Complexity)">@prod.Complexity</Badge></td>
+                                        <td>
+                                            <button class="btn btn-show" @onclick="() => detailsModal.ShowAsync(prod.Id)" title="Ver Detalles">
+                                                <Icon Name="IconName.Eye"Class="icon-show" />
+                                            </button>
+                                            <button class="btn btn-edit" @onclick="() => EditProduct(prod)" title="Editar">
+                                                <Icon Name="IconName.PencilSquare" class="icon-edit"/>
+                                            </button>
+                                            <button class="btn btn-delete" @onclick="() => DeleteProduct(prod)" title="Eliminar">
+                                                <Icon Name="IconName.Trash" Color="IconColor.Danger" />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <Icon Name="IconName.BoxSeam"/> Total de productos: @products.Count
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Product>? products;
+    private ConfirmDialog dialog = default!;
+    private ProductDetailsModal detailsModal = default!;
+
+    // Variables para los filtros
+    private string searchText = string.Empty;
+    private string selectedCategory = "";
+    private List<string> categories = new();
+
+    // Propiedad computada para filtrar productos
+    private IEnumerable<Product> filteredProducts =>
+        products?
+            .Where(p => string.IsNullOrEmpty(selectedCategory) || p.Category == selectedCategory)
+            .Where(p => string.IsNullOrEmpty(searchText) || p.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+        ?? Enumerable.Empty<Product>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProducts();
+    }
+
+    private async Task LoadProducts()
+    {
+        products = (await service.GetAllProducts()).ToList();
+        if (products != null)
+        {
+            // Cargar las categorías únicas para el filtro
+            categories = products.Select(p => p.Category).Distinct().OrderBy(c => c).ToList();
+        }
+    }
+
+    private void EditProduct(Product prod)
+    {
+        nav.NavigateTo($"/productos/editar/{prod.Id}");
+    }
+
+    private async Task DeleteProduct(Product product)
+    {
+        var options = new ConfirmDialogOptions
+        {
+            YesButtonText = "Eliminar",
+            YesButtonColor = ButtonColor.Danger,
+            NoButtonText = "Cancelar",
+            NoButtonColor = ButtonColor.Secondary
+        };
+
+        var confirmation = await dialog.ShowAsync(
+            title: "Eliminar Producto",
+            message1: $"¿Estás seguro de eliminar el producto '{product.Name}'?",
+            message2: "Esta acción marcará el producto como descontinuado.",
+            confirmDialogOptions: options);
+
+        if (confirmation)
+        {
+            try
+            {
+                await service.Delete(product.Id);
+                await LoadProducts(); // Recarga la lista de productos
+                ToastService.Notify(new(ToastType.Success, $"Se eliminó correctamente el producto '{product.Name}'"));
+            }
+            catch (Exception e)
+            {
+                ToastService.Notify(new(ToastType.Danger, $"Ocurrió un error al tratar de eliminar a {product.Name}: {e.Message}"));
+            }
+        }
+    }
+
+    private BadgeColor GetComplexityBadgeColor(string complexity)
+    {
+        return complexity switch
+        {
+            "Muy alta" => BadgeColor.Danger,
+            "Alta" => BadgeColor.Warning,
+            "Media" => BadgeColor.Secondary,
+            "Baja" => BadgeColor.Info,
+            "Muy baja" => BadgeColor.Light,
+            _ => BadgeColor.Secondary
+        };
+    }
+}

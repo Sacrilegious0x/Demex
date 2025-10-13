@@ -1,0 +1,218 @@
+﻿@page "/productos/crear"
+@using LAFABRICA.Data.DB
+@using LAFABRICA.Models.Interface
+@inject IProductService productService
+@inject IMaterialService materialService
+@inject NavigationManager NavigationManager
+@inject ToastService ToastService
+@inject IWebHostEnvironment WebHostEnvironment
+
+<PageTitle>Crear Nuevo Producto</PageTitle>
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-plus-circle-fill me-2"></i>Crear Nuevo Producto
+            </h5>
+            <a class="btn btn-outline-secondary" href="/productos"><Icon Name="IconName.ArrowLeft"></Icon></a>
+        </div>
+    </div>
+    <div class="card-body">
+        <EditForm Model="@newProduct" OnValidSubmit="@HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="alert alert-danger" />
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Información Básica</h5>
+                    <div class="mb-3">
+                        <label class="form-label">Nombre del producto *</label>
+                        <InputText @bind-Value="newProduct.Name" class="form-control" />
+                        <ValidationMessage For="@(() => newProduct.Name)" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Categoría *</label>
+                        <InputSelect @bind-Value="newProduct.Category" class="form-select">
+                            <option value="">Seleccione una categoría</option>
+                            <option value="Hogar y Decoración">Hogar y Decoración</option>
+                            <option value="Regalos y Ocasiones">Regalos y Ocasiones</option>
+                            <option value="Accesorios Personales">Accesorios Personales</option>
+                            <option value="Cocina">Cocina</option>
+                            <option value="Manualidades">Manualidades</option>
+                        </InputSelect>
+                        <ValidationMessage For="@(() => newProduct.Category)" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <InputTextArea @bind-Value="newProduct.Description" class="form-control" rows="3" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Precio base (₡) *</label>
+                        <InputNumber @bind-Value="newProduct.PriceBase" class="form-control" />
+                        <ValidationMessage For="@(() => newProduct.PriceBase)" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Foto del Producto</label>
+                        <InputFile OnChange="HandleFileSelected" class="form-control" />
+                        @if (!string.IsNullOrEmpty(selectedFileName))
+                        {
+                            <div class="mt-2 text-muted">
+                                Archivo seleccionado: <strong>@selectedFileName</strong>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <h5>Configuración Avanzada</h5>
+                    <div class="mb-3 form-check form-switch fs-5">
+                        <InputCheckbox @bind-Value="isCustomizable" class="form-check-input" id="customSwitch" />
+                        <label class="form-check-label" for="customSwitch">Producto personalizable</label>
+                    </div>
+
+                    @if (isCustomizable)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label">Complejidad de personalización</label>
+                            <InputSelect @bind-Value="newProduct.Complexity" class="form-select">
+                                <option value="Muy baja">Muy baja</option>
+                                <option value="Baja">Baja</option>
+                                <option value="Media">Media</option>
+                                <option value="Alta">Alta</option>
+                                <option value="Muy alta">Muy alta</option>
+                            </InputSelect>
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <label class="form-label">Materiales</label>
+                        @if (allMaterials == null)
+                        {
+                            <p>Cargando materiales...</p>
+                        }
+                        else
+                        {
+                            <div class="border rounded p-2" style="max-height: 200px; overflow-y: auto;">
+                                @foreach (var material in allMaterials)
+                                {
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox"
+                                               value="@material.Id"
+                                               checked="@(selectedMaterialIds.Contains(material.Id))"
+                                               @onchange="eventArgs => OnMaterialCheckboxChanged(material.Id, eventArgs.Value)" />
+                                        <label class="form-check-label">
+                                            @material.Name
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <hr />
+
+            <div class="d-flex justify-content-end mt-3">
+                <a href="/productos" class="btn btn-secondary me-2">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Crear Producto</button>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private Product newProduct = new();
+    private bool isCustomizable = true;
+
+    private List<Material>? allMaterials;
+    private HashSet<int> selectedMaterialIds = new();
+
+    private IBrowserFile? selectedFile;
+    private string? selectedFileName; // Cambiado para solo guardar el nombre
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            allMaterials = await materialService.GetAllMaterials();
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new(ToastType.Danger, $"Error al cargar materiales: {ex.Message}"));
+        }
+    }
+
+    private void OnMaterialCheckboxChanged(int materialId, object? checkedValue)
+    {
+        if (checkedValue is bool isChecked)
+        {
+            if (isChecked)
+            {
+                selectedMaterialIds.Add(materialId);
+            }
+            else
+            {
+                selectedMaterialIds.Remove(materialId);
+            }
+        }
+    }
+
+  
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+        selectedFileName = selectedFile?.Name;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            if (selectedFile != null)
+            {
+                var uploadsFolder = Path.Combine(WebHostEnvironment.WebRootPath, "images", "products");
+                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(selectedFile.Name)}";
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                await using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await selectedFile.OpenReadStream(maxAllowedSize: 5242880).CopyToAsync(fileStream);
+                }
+
+                newProduct.PhotoUrl = $"/images/products/{uniqueFileName}";
+            }
+
+            newProduct.IsCustom = isCustomizable ? (byte)1 : (byte)0;
+            if (!isCustomizable)
+            {
+                newProduct.Complexity = "Baja";
+            }
+
+            // === LÓGICA CORREGIDA ===
+            // En lugar de asignar a .Materials, creamos la lista de la entidad "puente"
+            // y la asignamos a la propiedad correcta: .ProductMaterials
+            if (selectedMaterialIds.Any())
+            {
+                newProduct.ProductMaterials = selectedMaterialIds.Select(matId => new ProductMaterial
+                {
+                    MaterialId = matId
+                }).ToList();
+            }
+
+            var createdProduct = await productService.Create(newProduct);
+
+            ToastService.Notify(new(ToastType.Success, $"Producto '{createdProduct.Name}' creado exitosamente."));
+            NavigationManager.NavigateTo("/productos");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ERROR DETALLADO AL CREAR PRODUCTO: {ex.ToString()}");
+            ToastService.Notify(new(ToastType.Danger, $"Error al crear el producto: {ex.Message}"));
+        }
+    
+
+	}       }

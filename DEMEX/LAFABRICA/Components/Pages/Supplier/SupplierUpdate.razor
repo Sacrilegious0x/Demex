@@ -1,4 +1,4 @@
-﻿@page "/Supplier/edit/{Id:int}"
+﻿@page "/proveedor/editar/{Id:int}"
 @using BlazorBootstrap
 @using LAFABRICA.Models
 @using LAFABRICA.Services
@@ -174,7 +174,7 @@ else
     
     private void HandleCancel()
     {
-        NavigationManager.NavigateTo("/Supplier");
+        NavigationManager.NavigateTo("/proveedor");
     }
 
     
@@ -212,7 +212,7 @@ else
                     Console.WriteLine($"Proveedor {supplier.Id} actualizado con éxito.");
                     await Task.Delay(600);
 
-                    NavigationManager.NavigateTo("/Supplier");
+                    NavigationManager.NavigateTo("/proveedor");
                 }
                 else
                 {

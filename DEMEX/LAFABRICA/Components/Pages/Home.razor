@@ -1,12 +1,131 @@
 ﻿@page "/"
+@using LAFABRICA.Data.DB
+@using LAFABRICA.Models.Interface
+@inject IProductService productService
+@inject IClientService clientService
+@inject IOrderService orderService
 
-<PageTitle>Home</PageTitle>
-<div class="d-flex justify-content-center align-items-center m">
+<style>
+    .dashboard-card-link {
+        text-decoration: none;
+    }
 
-	<div class="text-center">
-		<h1>DEMEX</h1>
-		<p>Bienvenido al sistema de gestion</p>
-		<p> Administra tus órdenes, clientes, productos e inventario de forma eficiente y organizada.</p>
-	</div>
+        .dashboard-card-link .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+            transition: all 0.2s ease-in-out;
+        }
+</style>
 
+<PageTitle>Inicio - Dashboard</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h3>Bienvenido al Sistema de Gestión DEMEX</h3>
+            <p class="text-muted">Resumen general de la actividad del negocio.</p>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center">
+            <Spinner Color="SpinnerColor.Primary" />
+            <p class="mt-2">Cargando datos del dashboard...</p>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-xl-3 col-md-6 mb-4">
+                <a href="/orders" class="dashboard-card-link">
+                    <div class="card shadow h-100 py-2" style="border-left: 5px solid #0f54a1;">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs fw-bold text-uppercase mb-1" style="color: #0f54a1;">Órdenes Activas</div>
+                                    <div class="h5 mb-0 fw-bold text-gray-800">@activeOrdersCount</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="bi bi-cart-check-fill fs-2 text-black-50 opacity-25"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <a href="/payments" class="dashboard-card-link">
+                    <div class="card shadow h-100 py-2" style="border-left: 5px solid #893914;">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs fw-bold text-uppercase mb-1" style="color: #893914;">Gestión de Pagos</div>
+                                    <div class="h5 mb-0 fw-bold text-gray-800">0</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="bi bi-credit-card-fill fs-2 text-black-50 opacity-25"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <a href="/productos" class="dashboard-card-link">
+                    <div class="card shadow h-100 py-2" style="border-left: 5px solid #189182;">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs fw-bold text-custom-verde text-uppercase mb-1" style="color: #189182;">Productos en Catálogo</div>
+                                    <div class="h5 mb-0 fw-bold text-gray-800">@activeProductsCount</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="bi bi-box-seam-fill fs-2 text-black-50 opacity-25"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <a href="/inventory" class="dashboard-card-link">
+                    <div class="card shadow h-100 py-2" style="border-left: 5px solid #ebcf4f;">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs fw-bold text-uppercase mb-1" style="color: #ebcf4f;">Alertas de Inventario</div>
+                                    <div class="h5 mb-0 fw-bold text-gray-800">0</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="bi bi-exclamation-triangle-fill fs-2 text-black-50 opacity-25"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    }
 </div>
+
+@code {
+    private bool isLoading = true;
+    private int activeOrdersCount = 0;
+    private int activeProductsCount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var allProducts = await productService.GetAllProducts();
+        var allOrders = await orderService.GetAllOrders();
+
+        activeProductsCount = allProducts.Count();
+        activeOrdersCount = allOrders.Count();
+
+        isLoading = false;
+    }
+}
+

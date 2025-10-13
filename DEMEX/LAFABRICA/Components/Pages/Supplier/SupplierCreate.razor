@@ -1,4 +1,4 @@
-﻿@page "/Supplier/create"
+﻿@page "/proveedor/crear"
 @using BlazorBootstrap
 @using LAFABRICA.Models
 @using LAFABRICA.Services
@@ -152,7 +152,7 @@
 
             await Task.Delay(500);
 
-            NavigationManager.NavigateTo("/Supplier");
+            NavigationManager.NavigateTo("/proveedor");
         }
         catch (Exception ex)
         {
@@ -164,6 +164,6 @@
 
     private void HandleCancel()
     {
-        NavigationManager.NavigateTo("/Supplier");
+        NavigationManager.NavigateTo("/proveedor");
     }
 }

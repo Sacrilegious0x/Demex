@@ -1,0 +1,105 @@
+﻿@using LAFABRICA.Data.DB
+@using LAFABRICA.Models.Interface
+@inject IProductService service
+
+<Modal @ref="detailsModal" Title="@(productForDetails == null ? "Cargando Detalles..." : $"Detalles de {productForDetails.Name}")" Size="ModalSize.ExtraLarge">
+    <BodyTemplate>
+        @if (productForDetails == null)
+        {
+            <div class="text-center my-4">
+                <Spinner Color="SpinnerColor.Primary" />
+                <p class="mt-2">Cargando...</p>
+            </div>
+        }
+        else
+        {
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Información Básica</h5>
+                    <p><strong>Categoría:</strong> @productForDetails.Category</p>
+                    <p><strong>Precio base:</strong> @productForDetails.PriceBase.ToString("C", new System.Globalization.CultureInfo("es-CR"))</p>
+                    <p>
+                        <strong>Estado:</strong>
+                        @if (productForDetails.IsActive == 1)
+                        {
+                            <Badge Color="BadgeColor.Success">Disponible</Badge>
+                        }
+                        else
+                        {
+                            <Badge Color="BadgeColor.Danger">Descontinuado</Badge>
+                        }
+                    </p>
+                    <p><strong>Personalizable:</strong> @(productForDetails.IsCustom == 1 ? "Sí" : "No")</p>
+                </div>
+                <div class="col-md-6">
+                    <h5>Especificaciones</h5>   
+                    @* <p><strong>ID:</strong> PROD-@productForDetails.Id.ToString("D3")</p> *@
+                    <p>
+                        <strong>Complejidad:</strong>
+                        <Badge Color="@GetComplexityBadgeColor(productForDetails.Complexity)">@productForDetails.Complexity</Badge>
+                    </p>
+                    <p><strong>Descripción:</strong> @productForDetails.Description</p>
+                </div>
+            </div>
+
+            <hr />
+
+            <h5>Materiales</h5>
+            @if (productForDetails.ProductMaterials != null && productForDetails.ProductMaterials.Any())
+            {
+                <div>
+                    @foreach (var pm in productForDetails.ProductMaterials)
+                    {
+                        <span class="badge text-bg-secondary me-1">@pm.Material.Name</span>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-muted">Este producto no tiene materiales asociados.</p>
+            }
+
+            <hr />
+
+            @if (!string.IsNullOrEmpty(productForDetails.PhotoUrl))
+            {
+                <div class="text-center">
+                    <h5>Imagen del Producto</h5>
+                    <img src="@productForDetails.PhotoUrl" alt="Foto de @productForDetails.Name" class="img-fluid rounded" style="max-height: 250px;" />
+                </div>
+            }
+        }
+    </BodyTemplate>
+</Modal>
+
+@code {
+    private Modal detailsModal = default!;
+    private Product? productForDetails;
+
+    public async Task ShowAsync(int productId)
+    {
+        productForDetails = null;
+        await detailsModal.ShowAsync(); // Ahora esto funcionará
+
+        productForDetails = await service.GetById(productId);
+        StateHasChanged(); // Notificamos a la UI que actualice con los datos cargados
+    }
+
+    public async Task HideAsync()
+    {
+        await detailsModal.HideAsync();
+    }
+
+    private BadgeColor GetComplexityBadgeColor(string complexity)
+    {
+        return complexity switch
+        {
+            "Muy alta" => BadgeColor.Danger,
+            "Alta" => BadgeColor.Warning,
+            "Media" => BadgeColor.Secondary,
+            "Baja" => BadgeColor.Info,
+            "Muy baja" => BadgeColor.Light,
+            _ => BadgeColor.Secondary
+        };
+    }
+}

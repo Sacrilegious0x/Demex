@@ -27,6 +27,8 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Material> Materials { get; set; }
 
+    public virtual DbSet<ProductMaterial> ProductMaterials { get; set; }
+
     public virtual DbSet<MaterialSupplier> MaterialSuppliers { get; set; }
 
     public virtual DbSet<Order> Orders { get; set; }
@@ -320,6 +322,26 @@ public partial class AppDbContext : DbContext
                 .HasConstraintName("FK__PRODUCT_O__ID_PR__59FA5E80");
         });
 
+        modelBuilder.Entity<ProductMaterial>(entity =>
+        {
+            entity.HasKey(e => new { e.ProductId, e.MaterialId });
+
+            entity.ToTable("PRODUCT_MATERIAL");
+
+            entity.Property(e => e.ProductId).HasColumnName("ProductId");
+            entity.Property(e => e.MaterialId).HasColumnName("MaterialId");
+
+            entity.HasOne(d => d.Product).WithMany(p => p.ProductMaterials)
+                .HasForeignKey(d => d.ProductId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__PRODUCT_MATERIAL__ProductId"); 
+
+            entity.HasOne(d => d.Material).WithMany(p => p.ProductMaterials)
+                .HasForeignKey(d => d.MaterialId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__PRODUCT_MATERIAL__MaterialId"); 
+        });
+
         modelBuilder.Entity<Rol>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__ROL__3214EC27B04AB8DD");
@@ -380,7 +402,7 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("PHONE");
         });
 
-        OnModelCreatingPartial(modelBuilder);
+       
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

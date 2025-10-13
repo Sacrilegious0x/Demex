@@ -1,4 +1,4 @@
-﻿@page "/Supplier"
+﻿@page "/proveedor"
 @using BlazorBootstrap
 @using LAFABRICA.Models
 @using LAFABRICA.Services
@@ -138,13 +138,13 @@
     private void NavigateToCreate()
     {
         
-        NavigationManager.NavigateTo("/Supplier/create");
+        NavigationManager.NavigateTo("/proveedor/crear");
     }
 
     private void HandleEdit(SupplierDto supplier)
     {
         
-        NavigationManager.NavigateTo($"/Supplier/edit/{supplier.Id}");
+        NavigationManager.NavigateTo($"/proveedor/editar/{supplier.Id}");
     }
 
     private async void handleDelete(int id)

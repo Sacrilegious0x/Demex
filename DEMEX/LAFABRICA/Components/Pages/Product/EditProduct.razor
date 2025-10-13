@@ -1,0 +1,218 @@
+﻿@page "/productos/editar/{ProductId:int}"
+@using LAFABRICA.Data.DB
+@using LAFABRICA.Models.Interface
+@inject IProductService productService
+@inject IMaterialService materialService
+@inject NavigationManager NavigationManager
+@inject ToastService ToastService
+@inject IWebHostEnvironment WebHostEnvironment
+
+<PageTitle>Editar Producto</PageTitle>
+
+@if (productToEdit == null)
+{
+    <div class="text-center">
+        <Spinner Color="SpinnerColor.Primary" />
+        <p class="mt-2">Cargando producto...</p>
+    </div>
+}
+else
+{
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-pencil-square me-2"></i>Editar Producto: @productToEdit.Name
+                </h5>
+                <a class="btn btn-outline-secondary" href="/productos"><Icon Name="IconName.ArrowLeft"></Icon></a>
+            </div>
+        </div>
+        <div class="card-body">
+            <EditForm Model="@productToEdit" OnValidSubmit="@HandleValidSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="alert alert-danger" />
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Información Básica</h5>
+                        <div class="mb-3">
+                            <label class="form-label">Nombre del producto *</label>
+                            <InputText @bind-Value="productToEdit.Name" class="form-control" />
+                            <ValidationMessage For="@(() => productToEdit.Name)" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Categoría *</label>
+                            <InputSelect @bind-Value="productToEdit.Category" class="form-select">
+                                <option value="">Seleccione una categoría</option>
+                                <option value="Hogar y Decoración">Hogar y Decoración</option>
+                                <option value="Regalos y Ocasiones">Regalos y Ocasiones</option>
+                                <option value="Accesorios Personales">Accesorios Personales</option>
+                                <option value="Cocina">Cocina</option>
+                                <option value="Manualidades">Manualidades</option>
+                            </InputSelect>
+                            <ValidationMessage For="@(() => productToEdit.Category)" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descripción</label>
+                            <InputTextArea @bind-Value="productToEdit.Description" class="form-control" rows="3" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Precio base (₡) *</label>
+                            <InputNumber @bind-Value="productToEdit.PriceBase" class="form-control" />
+                            <ValidationMessage For="@(() => productToEdit.PriceBase)" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Cambiar Foto del Producto</label>
+                            <InputFile OnChange="HandleFileSelected" class="form-control" />
+                            @if (!string.IsNullOrEmpty(currentPhotoUrl))
+                            {
+                                <div class="mt-2 text-center">
+                                    <p class="text-muted mb-1">Foto actual:</p>
+                                    <img src="@currentPhotoUrl" alt="Foto actual" style="max-height: 150px; border-radius: 5px;" />
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h5>Configuración Avanzada</h5>
+                        <div class="mb-3">
+                            <label class="form-label">Complejidad de personalización</label>
+                            <InputSelect @bind-Value="productToEdit.Complexity" class="form-select">
+                                <option value="Muy baja">Muy baja</option>
+                                <option value="Baja">Baja</option>
+                                <option value="Media">Media</option>
+                                <option value="Alta">Alta</option>
+                                <option value="Muy alta">Muy alta</option>
+                            </InputSelect>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Materiales</label>
+                            @if (allMaterials == null)
+                            {
+                                <p>Cargando materiales...</p>
+                            }
+                            else
+                            {
+                                <div class="border rounded p-2" style="max-height: 200px; overflow-y: auto;">
+                                    @foreach (var material in allMaterials)
+                                    {
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox"
+                                                   value="@material.Id"
+                                                   checked="@(selectedMaterialIds.Contains(material.Id))"
+                                                   @onchange="eventArgs => OnMaterialCheckboxChanged(material.Id, eventArgs.Value)" />
+                                            <label class="form-check-label">
+                                                @material.Name
+                                            </label>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+
+                <div class="d-flex justify-content-end">
+                    <a href="/productos" class="btn btn-secondary me-2">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int ProductId { get; set; }
+
+    private Product? productToEdit;
+
+    private List<Material>? allMaterials;
+    private HashSet<int> selectedMaterialIds = new();
+
+    private IBrowserFile? selectedFile;
+    private string? currentPhotoUrl;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            productToEdit = await productService.GetById(ProductId);
+
+            if (productToEdit != null)
+            {
+                currentPhotoUrl = productToEdit.PhotoUrl;
+                allMaterials = await materialService.GetAllMaterials();
+                selectedMaterialIds = productToEdit.ProductMaterials.Select(pm => pm.MaterialId).ToHashSet();
+            
+                Console.WriteLine($"--- DEBUG: Materiales cargados para Producto ID {ProductId}: [{string.Join(", ", selectedMaterialIds)}]");
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new(ToastType.Danger, "Error de Carga", $"No se pudo cargar el producto: {ex.Message}"));
+            NavigationManager.NavigateTo("/productos");
+        }
+    }
+
+    private void OnMaterialCheckboxChanged(int materialId, object? checkedValue)
+    {
+        if (checkedValue is bool isChecked)
+        {
+            if (isChecked)
+            {
+                selectedMaterialIds.Add(materialId);
+            }
+            else
+            {
+                selectedMaterialIds.Remove(materialId);
+            }
+        }
+    }
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+        currentPhotoUrl = null; // Ocultar la foto actual para indicar que se cambiará
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (productToEdit == null) return;
+
+        try
+        {
+            if (selectedFile != null)
+            {
+                var uploadsFolder = Path.Combine(WebHostEnvironment.WebRootPath, "images", "products");
+                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(selectedFile.Name)}";
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                await using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await selectedFile.OpenReadStream(maxAllowedSize: 5242880).CopyToAsync(fileStream);
+                }
+
+                productToEdit.PhotoUrl = $"/images/products/{uniqueFileName}";
+            }
+
+            // Actualizar la lista de materiales en el objeto a guardar
+            productToEdit.ProductMaterials = selectedMaterialIds.Select(id => new ProductMaterial { ProductId = ProductId, MaterialId = id }).ToList();
+
+            await productService.Update(ProductId, productToEdit);
+
+            ToastService.Notify(new(ToastType.Success, "Producto Actualizado", $"'{productToEdit.Name}' se actualizó correctamente."));
+            NavigationManager.NavigateTo("/productos");
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new(ToastType.Danger, "Error al Actualizar", $"No se pudo guardar el producto: {ex.Message}"));
+        }
+    }
+}
