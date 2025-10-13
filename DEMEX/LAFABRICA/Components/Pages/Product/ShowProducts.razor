@@ -4,74 +4,121 @@
 @using LAFABRICA.Components.Pages.Product
 @inject IProductService service
 @inject ToastService ToastService
+@inject NavigationManager nav
 
 <PageTitle>Catálogo de Productos</PageTitle>
 
 <Toasts class="p-3" Autohide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 <ConfirmDialog @ref="dialog" />
-
 <ProductDetailsModal @ref="detailsModal" />
 
-<Card>
-    <CardHeader>
-        <div class="d-flex justify-content-between align-items-center">
-            <CardTitle Size="HeadingSize.H5" Class="mb-0">Catálogo de Productos</CardTitle>
-            <div>
-                <a href="/products/create" class="btn btn-primary">
-                    <Icon Name="IconName.PlusCircleFill" /> Nuevo Producto
-                </a>
+@if (products == null)
+{
+    <div class="d-flex justify-content-center">
+        <Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
+    </div>
+}
+else if (!products.Any())
+{
+    <div>
+        <Alert Color="AlertColor.Primary">
+            <Icon Name="IconName.InfoCircleFill" class="me-2" />
+            <strong>No hay productos registrados</strong>
+        </Alert>
+    </div>
+}
+else
+{
+    <div class="container mt-2">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <h3><Icon Name="IconName.BoxSeamFill"></Icon> Gestión de Productos</h3>
+                    <a class="btn btn-primary" href="/products/create">
+                        <Icon Name="IconName.PlusLg"></Icon> Nuevo Producto
+                    </a>
+                </div>
+                <div class="d-flex justify-content-sm-start align-items-center gap-3 mt-3">
+                    <div class="d-flex align-items-center border rounded px-2">
+                        <Icon Name="IconName.Search" class="text-secondary me-2" />
+                        <input type="text" class="form-control border-0" @bind="searchText" @bind:event="oninput" placeholder="Buscar Producto..." style="box-shadow:none;" />
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <Icon Name="IconName.Funnel" class="text-secondary" />
+                        <InputSelect class="form-select" @bind-Value="selectedCategory">
+                            <option value="">Todas las categorías</option>
+                            @foreach (var category in categories)
+                            {
+                                <option value="@category">@category</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body text-center">
+                <div class="row">
+                    <div class="col-12 table-responsive" style="max-height: 450px; overflow-y: auto;">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Producto</th>
+                                    <th>Categoría</th>
+                                    <th>Precio Base</th>
+                                    <th>Complejidad</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var (prod, index) in filteredProducts.Select((p, i) => (p, i)))
+                                {
+                                    <tr>
+                                        <td>@(index + 1)</td>
+                                        <td>@prod.Name</td>
+                                        <td>@prod.Category</td>
+                                        <td>@prod.PriceBase.ToString("C", new System.Globalization.CultureInfo("es-CR"))</td>
+                                        <td><Badge Color="@GetComplexityBadgeColor(prod.Complexity)">@prod.Complexity</Badge></td>
+                                        <td>
+                                            <button style="border:none; background:none; color: #6c757d;" @onclick="() => detailsModal.ShowAsync(prod.Id)" title="Ver Detalles">
+                                                <Icon Name="IconName.Eye" />
+                                            </button>
+                                            <button style="border:none; background:none; color: #0d6efd;" @onclick="() => EditProduct(prod)" title="Editar">
+                                                <Icon Name="IconName.PencilSquare" />
+                                            </button>
+                                            <button style="border:none; background:none; color: #dc3545;" @onclick="() => DeleteProduct(prod)" title="Eliminar">
+                                                <Icon Name="IconName.Trash" />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                Total de productos: @products.Count
             </div>
         </div>
-    </CardHeader>
-    <CardBody>
-        @if (products == null)
-        {
-            <div class="text-center">
-                <Spinner Color="SpinnerColor.Primary" />
-                <p class="mt-2">Cargando productos...</p>
-            </div>
-        }
-        else
-        {
-            <Grid TItem="Product"
-                  Data="@products"
-                  Class="table table-hover table-striped"
-                  Responsive="true"
-                  AllowSorting="true">
-
-                <GridColumn TItem="Product" HeaderText="#" Sortable="true">@context.Id</GridColumn>
-                <GridColumn TItem="Product" HeaderText="Producto" Sortable="true">@context.Name</GridColumn>
-                <GridColumn TItem="Product" HeaderText="Categoría" Sortable="true">@context.Category</GridColumn>
-                <GridColumn TItem="Product" HeaderText="Precio Base" Sortable="true" TextAlignment="Alignment.End">
-                    @context.PriceBase.ToString("C", new System.Globalization.CultureInfo("es-CR"))
-                </GridColumn>
-                <GridColumn TItem="Product" HeaderText="Personalizable" TextAlignment="Alignment.Center">
-                    @(context.IsCustom == 1 ? "Sí" : "No")
-                </GridColumn>
-                <GridColumn TItem="Product" HeaderText="Complejidad" Sortable="true" TextAlignment="Alignment.Center">
-                    <Badge Color="@GetComplexityBadgeColor(context.Complexity)">@context.Complexity</Badge>
-                </GridColumn>
-                <GridColumn TItem="Product" HeaderText="Acciones" TextAlignment="Alignment.Center">
-                    <Button Color="ButtonColor.Secondary" IsOutlined="true" Size="ButtonSize.Small" Class="me-1" title="Ver"
-                            @onclick="() => detailsModal.ShowAsync(context.Id)">
-                        <Icon Name="IconName.EyeFill" />
-                    </Button>
-                    <a href="@($"/products/edit/{context.Id}")" class="btn btn-outline-primary btn-sm me-1" title="Editar">
-                        <i class="bi bi-pencil-fill"></i>
-                    </a>
-                    <Button Color="ButtonColor.Danger" IsOutlined="true" Size="ButtonSize.Small" title="Eliminar" @onclick="() => DeleteProduct(context)">
-                        <Icon Name="IconName.TrashFill" />
-                    </Button>
-                </GridColumn>
-            </Grid>
-        }
-    </CardBody>
-</Card>
+    </div>
+}
 
 @code {
     private List<Product>? products;
     private ConfirmDialog dialog = default!;
     private ProductDetailsModal detailsModal = default!;
+
+    // Variables para los filtros
+    private string searchText = string.Empty;
+    private string selectedCategory = "";
+    private List<string> categories = new();
+
+    // Propiedad computada para filtrar productos
+    private IEnumerable<Product> filteredProducts =>
+        products?
+            .Where(p => string.IsNullOrEmpty(selectedCategory) || p.Category == selectedCategory)
+            .Where(p => string.IsNullOrEmpty(searchText) || p.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+        ?? Enumerable.Empty<Product>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -81,24 +128,16 @@
     private async Task LoadProducts()
     {
         products = (await service.GetAllProducts()).ToList();
-    }
-
-    private async Task ShowDetailsModal(int productId)
-    {
-        await detailsModal.ShowAsync(productId);
-    }
-
-    private BadgeColor GetComplexityBadgeColor(string complexity)
-    {
-        return complexity switch
+        if (products != null)
         {
-            "Muy alta" => BadgeColor.Danger,
-            "Alta" => BadgeColor.Warning,
-            "Media" => BadgeColor.Secondary,
-            "Baja" => BadgeColor.Info,
-            "Muy baja" => BadgeColor.Light,
-            _ => BadgeColor.Secondary
-        };
+            // Cargar las categorías únicas para el filtro
+            categories = products.Select(p => p.Category).Distinct().OrderBy(c => c).ToList();
+        }
+    }
+
+    private void EditProduct(Product prod)
+    {
+        nav.NavigateTo($"/products/edit/{prod.Id}");
     }
 
     private async Task DeleteProduct(Product product)
@@ -122,8 +161,7 @@
             try
             {
                 await service.Delete(product.Id);
-                await LoadProducts();
-                StateHasChanged();
+                await LoadProducts(); // Recarga la lista de productos
                 ToastService.Notify(new(ToastType.Success, $"Se eliminó correctamente el producto '{product.Name}'"));
             }
             catch (Exception e)
@@ -131,5 +169,18 @@
                 ToastService.Notify(new(ToastType.Danger, $"Ocurrió un error al tratar de eliminar a {product.Name}: {e.Message}"));
             }
         }
+    }
+
+    private BadgeColor GetComplexityBadgeColor(string complexity)
+    {
+        return complexity switch
+        {
+            "Muy alta" => BadgeColor.Danger,
+            "Alta" => BadgeColor.Warning,
+            "Media" => BadgeColor.Secondary,
+            "Baja" => BadgeColor.Info,
+            "Muy baja" => BadgeColor.Light,
+            _ => BadgeColor.Secondary
+        };
     }
 }

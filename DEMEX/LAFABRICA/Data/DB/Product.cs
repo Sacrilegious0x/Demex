@@ -35,6 +35,6 @@ public partial class Product
 
     public virtual ICollection<ProductOrder> ProductOrders { get; set; } = new List<ProductOrder>();
 
-    // Esta es la única propiedad que debe existir para la relación con Materiales
+    
     public virtual ICollection<ProductMaterial> ProductMaterials { get; set; } = new List<ProductMaterial>();
 }
