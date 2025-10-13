@@ -1,4 +1,4 @@
-﻿@page "/products/edit/{ProductId:int}"
+﻿@page "/productos/editar/{ProductId:int}"
 @using LAFABRICA.Data.DB
 @using LAFABRICA.Models.Interface
 @inject IProductService productService
@@ -24,9 +24,7 @@ else
                 <h5 class="mb-0">
                     <i class="bi bi-pencil-square me-2"></i>Editar Producto: @productToEdit.Name
                 </h5>
-                <a href="/products" class="btn btn-secondary btn-sm">
-                    <i class="bi bi-x-lg"></i> Cancelar
-                </a>
+                <a class="btn btn-outline-secondary" href="/productos"><Icon Name="IconName.ArrowLeft"></Icon></a>
             </div>
         </div>
         <div class="card-body">
@@ -119,7 +117,7 @@ else
                 <hr class="my-4" />
 
                 <div class="d-flex justify-content-end">
-                    <a href="/products" class="btn btn-secondary me-2">Cancelar</a>
+                    <a href="/productos" class="btn btn-secondary me-2">Cancelar</a>
                     <button type="submit" class="btn btn-primary">Guardar Cambios</button>
                 </div>
             </EditForm>
@@ -157,7 +155,7 @@ else
         catch (Exception ex)
         {
             ToastService.Notify(new(ToastType.Danger, "Error de Carga", $"No se pudo cargar el producto: {ex.Message}"));
-            NavigationManager.NavigateTo("/products");
+            NavigationManager.NavigateTo("/productos");
         }
     }
 
@@ -210,7 +208,7 @@ else
             await productService.Update(ProductId, productToEdit);
 
             ToastService.Notify(new(ToastType.Success, "Producto Actualizado", $"'{productToEdit.Name}' se actualizó correctamente."));
-            NavigationManager.NavigateTo("/products");
+            NavigationManager.NavigateTo("/productos");
         }
         catch (Exception ex)
         {

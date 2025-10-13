@@ -1,4 +1,4 @@
-﻿@page "/products"
+﻿@page "/productos"
 @using LAFABRICA.Data.DB
 @using LAFABRICA.Models.Interface
 @using LAFABRICA.Components.Pages.Product
@@ -21,9 +21,13 @@
 else if (!products.Any())
 {
     <div>
-        <Alert Color="AlertColor.Primary">
-            <Icon Name="IconName.InfoCircleFill" class="me-2" />
-            <strong>No hay productos registrados</strong>
+        <Alert Color="AlertColor.Primary" class="d-flex justify-content-between align-items-center">
+            <div>
+                <Icon Name="IconName.InfoCircleFill" class="me-2" />
+                <strong>No hay productos registrados</strong>
+            </div>
+
+            <a class="btn btn-outline-primary" href="/productos/crear"><Icon Name="IconName.PlusLg" /> Nuevo Producto</a>
         </Alert>
     </div>
 }
@@ -34,7 +38,7 @@ else
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <h3><Icon Name="IconName.BoxSeamFill"></Icon> Gestión de Productos</h3>
-                    <a class="btn btn-primary" href="/products/create">
+                    <a class="btn btn-primary" href="/productos/crear">
                         <Icon Name="IconName.PlusLg"></Icon> Nuevo Producto
                     </a>
                 </div>
@@ -79,14 +83,14 @@ else
                                         <td>@prod.PriceBase.ToString("C", new System.Globalization.CultureInfo("es-CR"))</td>
                                         <td><Badge Color="@GetComplexityBadgeColor(prod.Complexity)">@prod.Complexity</Badge></td>
                                         <td>
-                                            <button style="border:none; background:none; color: #6c757d;" @onclick="() => detailsModal.ShowAsync(prod.Id)" title="Ver Detalles">
-                                                <Icon Name="IconName.Eye" />
+                                            <button class="btn btn-show" @onclick="() => detailsModal.ShowAsync(prod.Id)" title="Ver Detalles">
+                                                <Icon Name="IconName.Eye"Class="icon-show" />
                                             </button>
-                                            <button style="border:none; background:none; color: #0d6efd;" @onclick="() => EditProduct(prod)" title="Editar">
-                                                <Icon Name="IconName.PencilSquare" />
+                                            <button class="btn btn-edit" @onclick="() => EditProduct(prod)" title="Editar">
+                                                <Icon Name="IconName.PencilSquare" class="icon-edit"/>
                                             </button>
-                                            <button style="border:none; background:none; color: #dc3545;" @onclick="() => DeleteProduct(prod)" title="Eliminar">
-                                                <Icon Name="IconName.Trash" />
+                                            <button class="btn btn-delete" @onclick="() => DeleteProduct(prod)" title="Eliminar">
+                                                <Icon Name="IconName.Trash" Color="IconColor.Danger" />
                                             </button>
                                         </td>
                                     </tr>
@@ -97,7 +101,7 @@ else
                 </div>
             </div>
             <div class="card-footer">
-                Total de productos: @products.Count
+                <Icon Name="IconName.BoxSeam"/> Total de productos: @products.Count
             </div>
         </div>
     </div>
@@ -137,7 +141,7 @@ else
 
     private void EditProduct(Product prod)
     {
-        nav.NavigateTo($"/products/edit/{prod.Id}");
+        nav.NavigateTo($"/productos/editar/{prod.Id}");
     }
 
     private async Task DeleteProduct(Product product)

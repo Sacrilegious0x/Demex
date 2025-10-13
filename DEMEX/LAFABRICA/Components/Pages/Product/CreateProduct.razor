@@ -1,4 +1,4 @@
-﻿@page "/products/create"
+﻿@page "/productos/crear"
 @using LAFABRICA.Data.DB
 @using LAFABRICA.Models.Interface
 @inject IProductService productService
@@ -15,9 +15,7 @@
             <h5 class="mb-0">
                 <i class="bi bi-plus-circle-fill me-2"></i>Crear Nuevo Producto
             </h5>
-            <a href="/products" class="btn btn-secondary btn-sm">
-                <i class="bi bi-x-lg"></i> Cancelar
-            </a>
+            <a class="btn btn-outline-secondary" href="/productos"><Icon Name="IconName.ArrowLeft"></Icon></a>
         </div>
     </div>
     <div class="card-body">
@@ -117,7 +115,7 @@
             <hr />
 
             <div class="d-flex justify-content-end mt-3">
-                <a href="/products" class="btn btn-secondary me-2">Cancelar</a>
+                <a href="/productos" class="btn btn-secondary me-2">Cancelar</a>
                 <button type="submit" class="btn btn-primary">Crear Producto</button>
             </div>
         </EditForm>
@@ -208,7 +206,7 @@
             var createdProduct = await productService.Create(newProduct);
 
             ToastService.Notify(new(ToastType.Success, $"Producto '{createdProduct.Name}' creado exitosamente."));
-            NavigationManager.NavigateTo("/products");
+            NavigationManager.NavigateTo("/productos");
         }
         catch (Exception ex)
         {
