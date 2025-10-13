@@ -79,14 +79,14 @@ else
                                         <td>@prod.PriceBase.ToString("C", new System.Globalization.CultureInfo("es-CR"))</td>
                                         <td><Badge Color="@GetComplexityBadgeColor(prod.Complexity)">@prod.Complexity</Badge></td>
                                         <td>
-                                            <button style="border:none; background:none; color: #6c757d;" @onclick="() => detailsModal.ShowAsync(prod.Id)" title="Ver Detalles">
+                                            <button class="btn btn-show" @onclick="() => detailsModal.ShowAsync(prod.Id)" title="Ver Detalles">
                                                 <Icon Name="IconName.Eye" />
                                             </button>
-                                            <button style="border:none; background:none; color: #0d6efd;" @onclick="() => EditProduct(prod)" title="Editar">
+                                            <button class="btn btn-edit" @onclick="() => EditProduct(prod)" title="Editar">
                                                 <Icon Name="IconName.PencilSquare" />
                                             </button>
-                                            <button style="border:none; background:none; color: #dc3545;" @onclick="() => DeleteProduct(prod)" title="Eliminar">
-                                                <Icon Name="IconName.Trash" />
+                                            <button class="btn btn-delete" @onclick="() => DeleteProduct(prod)" title="Eliminar">
+                                                <Icon Name="IconName.Trash" Color="IconColor.Danger"></Icon>
                                             </button>
                                         </td>
                                     </tr>
