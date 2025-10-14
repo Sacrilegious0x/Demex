@@ -7,6 +7,7 @@
 
 <PageTitle>Nuevo Cliente</PageTitle>
 <Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+<ConfirmDialog @ref="dialog" />
 <div class="container mt2">	
 	<div class="card">
 		<div class="card-header">
@@ -48,7 +49,7 @@
 									<ValidationMessage For="@(() => client.PhoneNumber)" />
 								</div>
 								<div>
-									<p class="text-black-50">Formato admitido: xxxx-xxxx</p>
+									<p class="text-black-50">Formato admitido: 8888-8888</p>
 								</div>
 							</div>
 							<div class="form-group row mb-3">
@@ -104,7 +105,7 @@
 						</div>
 					</div>
 					<div class="d-flex justify-content-end">
-						<a class="btn btn-secondary me-2"href="/clientes">Volver</a>
+						<a class="btn btn-outline-secondary me-2"href="/clientes">Cancelar</a>
 						<button class="btn btn-primary" type="submit">Guardar</button>
 					</div>
 				</EditForm>
@@ -128,6 +129,7 @@
 	public int? clientId { get; set; }
 	private readonly string[] provinces = { "San José", "Alajuela", "Heredia", "Cartago",
 									"Guanacaste", "Puntarenas", "Limon"};
+	private ConfirmDialog dialog = default!;
 
 	protected override async Task OnParametersSetAsync()
 	{
@@ -150,25 +152,40 @@
 			editContext = new EditContext(client);
 		}
 
-		
+
 		await InvokeAsync(StateHasChanged);
 	}
 
 
-	
+
 
 	public async Task HandleOnValidSubmit()
 	{
 
 		if (editContext!=null && editContext.Validate())
 		{
-			
-				try
+
+			try
+			{
+				if (clientId.HasValue)
 				{
-					if (clientId.HasValue)
+					var optons = new ConfirmDialogOptions
+						{
+							YesButtonText = "Confirmar",
+							YesButtonColor = ButtonColor.Success,
+							NoButtonText = "Cancelar",
+							NoButtonColor = ButtonColor.Danger
+
+						};
+					var confirmation = await dialog.ShowAsync(
+						title: "Editar cliente",
+						message1: $"¿Estas seguro de editar la informacion de {client!.Name} ?",
+						confirmDialogOptions: optons);
+					if (confirmation)
 					{
-					
 						await service.Update(clientId.Value, client!);
+					}
+						
 						ToastService.Notify(new(ToastType.Success, $"Se actualizaron los datos del cliente {client!.Name}"));
 					}
 					else

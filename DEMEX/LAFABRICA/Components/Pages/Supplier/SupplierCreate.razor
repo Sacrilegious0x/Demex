@@ -1,7 +1,7 @@
 ﻿@page "/proveedor/crear"
 @using BlazorBootstrap
 @using LAFABRICA.Models
-@using LAFABRICA.Services
+@using LAFABRICA.Models.Interface
 @inject ISupplierService SupplierService
 @inject NavigationManager NavigationManager
 
@@ -10,14 +10,16 @@
 <div class="card shadow-sm h-100 d-flex flex-column">
 
     @* Header (Título) *@
-    <div class="card-header p-4 border-bottom">
-        <h1 class="h4 card-title text-gray-900 d-flex align-items-center">
-            @* Icono de construcción (Bootstrap Icon) *@
-            <i class="bi bi-building me-3" style="font-size: 1.5rem; color: #0f54a1;"></i>
-            Registrar Nuevo Proveedor
-        </h1>
+    <div class="card-header p-4 border-bottom ">
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <h1 class="h4 card-title text-gray-900 ">
+                @* Icono de construcción (Bootstrap Icon) *@
+                <i class="bi bi-building me-3" style="font-size: 1.5rem; color: #0f54a1;"></i>
+                Registrar Nuevo Proveedor
+            </h1>
+            <a class="btn btn-outline-secondary" href="/proveedor"><Icon Name="IconName.ArrowLeft"></Icon></a>
+        </div>
     </div>
-
     @* Formulario *@
     <div class="flex-grow-1 overflow-auto p-4">
 
@@ -52,7 +54,7 @@
                                 @* Campo: Teléfono *@
                                 <div class="mb-3">
                                     <label for="phone" class="form-label">Teléfono *</label>
-                                    <TextInput id="phone" @bind-Value="supplier.Phone" class="form-control" placeholder="+506 8888-8888" required />
+                                    <TextInput id="phone" @bind-Value="supplier.Phone" class="form-control" placeholder="8888-8888" required />
                                     <ValidationMessage For="@(() => supplier.Phone)" />
                                     <div>
                                         <p class="text-black-50">Formato admitido: xxxx-xxxx</p>
@@ -117,7 +119,7 @@
                     Cancelar
                 </button>
                 <button type="submit" class="btn text-white px-4 m-1" style="background-color: #0f54a1;">
-                    Crear Proveedor
+                    Guardar
                 </button>
             </div>
 
@@ -150,14 +152,14 @@
 
             Console.WriteLine($"Proveedor creado con ID: {newSupplier.Id}");
 
-            await Task.Delay(500);
+            await Task.Delay(1000);
 
             NavigationManager.NavigateTo("/proveedor");
         }
         catch (Exception ex)
         {
             ToastService.Notify(new(ToastType.Danger, $"Se agrego correctamente a {supplier.Name}"));
-            await Task.Delay(500);
+            await Task.Delay(1000);
             Console.WriteLine($"Error al crear proveedor: {ex.Message}");
         }
     }
