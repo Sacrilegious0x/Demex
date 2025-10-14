@@ -1,7 +1,7 @@
 ﻿@page "/proveedor/editar/{Id:int}"
 @using BlazorBootstrap
 @using LAFABRICA.Models
-@using LAFABRICA.Services
+@using LAFABRICA.Models.Interface
 @inject ISupplierService SupplierService
 @inject NavigationManager NavigationManager
 
@@ -35,10 +35,14 @@ else
 
         @*Header   *@
         <div class="card-header p-4 border-bottom">
-            <h1 class="h4 card-title text-gray-900 d-flex align-items-center">
-                <i class="bi bi-building me-3" style="font-size: 1.5rem; color: #0f54a1;"></i>
-                Editar Proveedor: @supplier.Name
-            </h1>
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <h1 class="h4 card-title text-gray-900 d-flex align-items-center">
+                    <i class="bi bi-building me-3" style="font-size: 1.5rem; color: #0f54a1;"></i>
+                    Editar Proveedor: @supplier.Name
+                </h1>
+                <a class="btn btn-outline-secondary" href="/proveedor"><Icon Name="IconName.ArrowLeft"></Icon></a>
+            </div>
+           
         </div>
 
         @*  Formulario *@
@@ -139,7 +143,7 @@ else
                         Cancelar
                     </button>
                     <button type="submit" class="btn text-white px-4 m-1" style="background-color: #0f54a1;">
-                        Actualizar Proveedor
+                        Guardar
                     </button>
                 </div>
 
@@ -183,9 +187,9 @@ else
     {
         var options = new ConfirmDialogOptions
         {
-            YesButtonText = "Si",
+            YesButtonText = "Confirmar",
             YesButtonColor = ButtonColor.Success,
-            NoButtonText = "No",
+            NoButtonText = "Cancelar",
             NoButtonColor = ButtonColor.Danger
         };
 
@@ -208,24 +212,25 @@ else
                 if (success)
                 {
 
-                    ToastService.Notify(new(ToastType.Success, "¡Éxito!", $"Proveedor '{supplier.Name}' editado con exito "));
+                    ToastService.Notify(new(ToastType.Success, $"Proveedor '{supplier.Name}' editado con exito "));
                     Console.WriteLine($"Proveedor {supplier.Id} actualizado con éxito.");
-                    await Task.Delay(600);
+                    await Task.Delay(1000);
 
                     NavigationManager.NavigateTo("/proveedor");
                 }
                 else
                 {
-                    ToastService.Notify(new(ToastType.Danger, "¡Error!", $"Proveedor '{supplier.Name}' no se pudo editar"));
+                    ToastService.Notify(new(ToastType.Secondary, $"Proveedor '{supplier.Name}' no se realizaron cambios"));
 
 
-                    await Task.Delay(600);
+                    await Task.Delay(1000);
                     Console.WriteLine("Error: El proveedor no pudo ser actualizado.");
+                    NavigationManager.NavigateTo("/proveedor");
                 }
             }
             catch (Exception ex)
             {
-
+                ToastService.Notify(new(ToastType.Danger, $"Ocurrio un error inesperado al intentar actualizar al proveedor '{supplier.Name}' "));
                 Console.WriteLine($"Error al actualizar proveedor desde el metodo en el razor: {ex.Message}");
             }
         }

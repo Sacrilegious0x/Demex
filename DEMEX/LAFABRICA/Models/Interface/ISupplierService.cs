@@ -1,6 +1,6 @@
 ﻿using LAFABRICA.Models;
 
-namespace LAFABRICA.Services
+namespace LAFABRICA.Models.Interface
 {
     public interface ISupplierService
     {

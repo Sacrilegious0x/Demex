@@ -1,60 +1,70 @@
 ﻿@page "/proveedor"
 @using BlazorBootstrap
 @using LAFABRICA.Models
-@using LAFABRICA.Services
+@using LAFABRICA.Models.Interface
 @inject ISupplierService SupplierService
 @inject NavigationManager NavigationManager
 
 <Toasts Class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight"></Toasts>
 <ConfirmDialog @ref="dialog" />
-
-@* --- Estructura HTML (Razor) --- *@
-<div class="card shadow-sm h-100 d-flex flex-column">
-    <div class="card-header p-4 border-bottom">
-
-        @* Título y Botón de agregado *@
-        <div class="d-flex align-items-center justify-content-between mb-3">
-            <h1 class="h4 card-title text-gray-900">Gestión de Proveedores</h1>
-            <div class="d-flex space-x-2">
-                <button class="btn btn-sm text-white"
-                        style="background-color: #0f54a1;"
-                        @onclick="NavigateToCreate">
-                    <i class="bi bi-plus-lg me-2"></i>
-                    Nuevo Proveedor
-                </button>
-            </div>
-        </div>
-
-        @* Barra de Búsqueda *@
-        <div class="d-flex align-items-center">
-            <div class="input-group" style="max-width:480px;">
-                <span class="input-group-text bg-white border-end-0">
-                    <i class="bi bi-search text-gray-400"></i>
-                </span>
-                <input type="text"
-                       class="form-control border-start-0"
-                       placeholder="Buscar proveedores por nombre, contacto, ID o dirección..."
-                       value="@searchTerm"
-                       @oninput="HandleSearch" />
-            </div>
-        </div>
+@if(suppliers == null)
+{
+    <div class="d-flex justify-content-center">
+        <Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
     </div>
-
-    @* Área de la Tabla *@
-    <div class="flex-grow-1 overflow-auto">
-
-        @if (suppliers == null)
-        {
-            <div class="p-4 text-center">
-                <p><em>Cargando proveedores...</em></p>
+}else if (!suppliers.Any())
+{
+    <div>
+        <Alert Color="AlertColor.Primary" class="d-flex justify-content-between align-items-center">
+            <div>
+                <Icon Name="IconName.InfoCircleFill" class="me-2" />
+                <strong>No hay proveedores registrados</strong>
             </div>
-        }
-        else
-        {
 
-            <table class="table table-responsive table-hover text-center">
+            <a class="btn btn-outline-primary" href="/proveedor/crear"><Icon Name="IconName.PlusLg" /> Nuevo Proveedor</a>
+        </Alert>
+    </div>
+}
+else
+{
+    @* --- Estructura HTML (Razor) --- *@
+    <div class="card shadow-sm h-100 d-flex flex-column">
+        <div class="card-header p-4 border-bottom">
+
+            @* Título y Botón de agregado *@
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h1 class="h4 card-title text-gray-900">Gestión de Proveedores</h1>
+                <div class="d-flex space-x-2">
+                    <button class="btn btn-sm text-white"
+                            style="background-color: #0f54a1;"
+                            @onclick="NavigateToCreate">
+                        <i class="bi bi-plus-lg me-2"></i>
+                        Nuevo Proveedor
+                    </button>
+                </div>
+            </div>
+
+            @* Barra de Búsqueda *@
+            <div class="d-flex align-items-center">
+                <div class="input-group" style="max-width:480px;">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="bi bi-search text-gray-400"></i>
+                    </span>
+                    <input type="text"
+                           class="form-control border-start-0"
+                           placeholder="Buscar proveedores por nombre, contacto, ID o dirección..."
+                           value="@searchTerm"
+                           @oninput="HandleSearch" />
+                </div>
+            </div>
+        </div>
+
+        @* Área de la Tabla *@
+        <div class="  table-responsive flex-grow-1 overflow-auto" style="max-height: 370px; overflow-y: auto;">
+            <table class="table table-hover text-center" >
                 <thead class="table-light">
-                    <tr >
+                    <tr>
+                        <th class="font-weight-bold text-gray-900">#</th>
                         <th class="font-weight-bold text-gray-900">Nombre</th>
                         <th class="font-weight-bold text-gray-900">Teléfono</th>
                         <th class="font-weight-bold text-gray-900">Correo</th>
@@ -66,51 +76,45 @@
                 </thead>
 
                 <tbody>
-                    @if (FilteredSuppliers.Count == 0)
-                    {
-                        <tr>
-                            <td colspan="7" class="text-center py-4 text-muted">
-                                No se encontraron proveedores
-                            </td>
-                        </tr>
-                    }
-                    else
-                    {
-                        @foreach (var supplier in FilteredSuppliers)
+
+
+                    @foreach (var supplier in FilteredSuppliers.Select((c, index) => new { c, index }))
                         {
                             <tr class="hover:bg-gray-50 m-1">
-                                <td class="font-weight-bold ">@supplier.Name</td>
-                                <td>@supplier.Phone</td>
-                                <td>@supplier.Email</td>
-                                <td>@(supplier.DateLastPurchase.HasValue? supplier.DateLastPurchase.Value.ToShortDateString() : "N/A")</td>
-                                <td class="max-w-xs text-truncate">@supplier.Notes</td> @* Usamos text-truncate de Bootstrap para el overflow *@
-                                <td>@supplier.Address</td>
+                                <td>@(supplier.index+1)</td>
+                                <td class="font-weight-bold ">@supplier.c.Name</td>
+                                <td>@supplier.c.Phone</td>
+                                <td>@supplier.c.Email</td>
+                                <td>@(supplier.c.DateLastPurchase.HasValue? supplier.c.DateLastPurchase.Value.ToShortDateString() : "N/A")</td>
+                                <td class="max-w-xs text-truncate">@supplier.c.Notes</td> @* Usamos text-truncate de Bootstrap para el overflow *@
+                                <td>@supplier.c.Address</td>
 
                                 <td class="">
                                     <div class="d-flex justify-content-center space-x-2">
                                         <button class="btn btn-edit text-primary"
-                                                @onclick="() => HandleEdit(supplier)">
+                                                @onclick="() => HandleEdit(supplier.c)">
                                             <Icon Class="icon-edit" Name="IconName.PencilSquare"></Icon>
                                         </button>
                                         <button class="btn btn-delete  text-danger"
-                                                @onclick="() => ShowDeleteConfirmationAsync(supplier.Id)">
+                                                @onclick="() => ShowDeleteConfirmationAsync(supplier.c.Id)">
                                             <Icon Name="IconName.Trash" Color="IconColor.Danger"></Icon>
                                         </button>
                                     </div>
                                 </td>
                             </tr>
                         }
-                    }
+                 
                 </tbody>
             </table>
-        }
+
+        </div>
+
+
+        <div class="card-footer p-3 border-top bg-light">
+        </div>
     </div>
+}
 
-
-    <div class="card-footer p-3 border-top bg-light">
-
-    </div>
-</div>
 
 
 @code {
@@ -166,9 +170,17 @@
 
     private async Task ShowDeleteConfirmationAsync(int id)
     {
+        var options = new ConfirmDialogOptions
+        {
+            YesButtonText = "Eliminar",
+            YesButtonColor = ButtonColor.Danger,
+            NoButtonText = "Cancelar",
+            NoButtonColor = ButtonColor.Secondary
+        };
         var confirmation = await dialog.ShowAsync(
             title: "Seguro que desea eliminar este proveedor?",
-            message1: "Esta accion es irreversible.");
+            message1: "Esta accion es irreversible.",
+            confirmDialogOptions: options);
 
         if (confirmation)
         {
