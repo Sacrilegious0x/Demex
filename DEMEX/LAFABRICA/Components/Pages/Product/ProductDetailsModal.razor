@@ -32,8 +32,8 @@
                     <p><strong>Personalizable:</strong> @(productForDetails.IsCustom == 1 ? "Sí" : "No")</p>
                 </div>
                 <div class="col-md-6">
-                    <h5>Especificaciones</h5>
-                    <p><strong>ID:</strong> PROD-@productForDetails.Id.ToString("D3")</p>
+                    <h5>Especificaciones</h5>   
+                    @* <p><strong>ID:</strong> PROD-@productForDetails.Id.ToString("D3")</p> *@
                     <p>
                         <strong>Complejidad:</strong>
                         <Badge Color="@GetComplexityBadgeColor(productForDetails.Complexity)">@productForDetails.Complexity</Badge>
@@ -70,9 +70,6 @@
             }
         }
     </BodyTemplate>
-    <FooterTemplate>
-        <Button Color="ButtonColor.Secondary" @onclick="HideAsync">Cerrar</Button>
-    </FooterTemplate>
 </Modal>
 
 @code {

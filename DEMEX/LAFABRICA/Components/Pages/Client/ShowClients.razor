@@ -20,10 +20,13 @@
 	}else if (!clients.Any())
 	{
 		<div>
-			<Alert Color="AlertColor.Primary"> 
-				<Icon Name="IconName.InfoCircleFill" class="me-2"/>
-			<strong>No hay clientes registrados </strong>
-			</Alert>
+		<Alert Color="AlertColor.Primary" class="d-flex justify-content-between align-items-center">
+			<div>
+				<Icon Name="IconName.InfoCircleFill" class="me-2" />
+				<strong>No hay clientes registrados </strong>
+			</div>
+			<a class="btn btn-outline-primary" href="/clientes/crear"><Icon Name="IconName.PlusLg" /> Nuevo Cliente</a>
+		</Alert>
 		</div>
 	}
 	else

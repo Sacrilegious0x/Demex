@@ -24,7 +24,7 @@ public partial class Product
 
     public byte IsCustom { get; set; }
 
-    [Required]
+ 
     [StringLength(50)]
     public string Complexity { get; set; } = null!;
 

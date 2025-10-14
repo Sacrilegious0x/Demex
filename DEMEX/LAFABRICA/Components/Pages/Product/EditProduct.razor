@@ -1,4 +1,4 @@
-﻿@page "/products/edit/{ProductId:int}"
+﻿@page "/productos/editar/{ProductId:int}"
 @using LAFABRICA.Data.DB
 @using LAFABRICA.Models.Interface
 @inject IProductService productService
@@ -8,6 +8,10 @@
 @inject IWebHostEnvironment WebHostEnvironment
 
 <PageTitle>Editar Producto</PageTitle>
+
+<Toasts class="p-3" Autohide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+<ConfirmDialog @ref="dialog" />
+
 
 @if (productToEdit == null)
 {
@@ -24,13 +28,11 @@ else
                 <h5 class="mb-0">
                     <i class="bi bi-pencil-square me-2"></i>Editar Producto: @productToEdit.Name
                 </h5>
-                <a href="/products" class="btn btn-secondary btn-sm">
-                    <i class="bi bi-x-lg"></i> Cancelar
-                </a>
+                <a class="btn btn-outline-secondary" href="/productos"><Icon Name="IconName.ArrowLeft"></Icon></a>
             </div>
         </div>
         <div class="card-body">
-            <EditForm Model="@productToEdit" OnValidSubmit="@HandleValidSubmit">
+            <EditForm Model="@productToEdit" OnValidSubmit="@ShowConfirmationAsync">
                 <DataAnnotationsValidator />
                 <ValidationSummary class="alert alert-danger" />
 
@@ -78,16 +80,24 @@ else
 
                     <div class="col-md-6">
                         <h5>Configuración Avanzada</h5>
-                        <div class="mb-3">
-                            <label class="form-label">Complejidad de personalización</label>
-                            <InputSelect @bind-Value="productToEdit.Complexity" class="form-select">
-                                <option value="Muy baja">Muy baja</option>
-                                <option value="Baja">Baja</option>
-                                <option value="Media">Media</option>
-                                <option value="Alta">Alta</option>
-                                <option value="Muy alta">Muy alta</option>
-                            </InputSelect>
+                        <div class="mb-3 form-check form-switch fs-5">
+                            <InputCheckbox @bind-Value="isCustomizable" class="form-check-input" id="customSwitch" />
+                            <label class="form-check-label" for="customSwitch">Producto personalizable</label>
                         </div>
+
+                        @if (isCustomizable)
+                        {
+                            <div class="mb-3">
+                                <label class="form-label">Complejidad de personalización</label>
+                                <InputSelect @bind-Value="productToEdit.Complexity" class="form-select">
+                                    <option value="Muy baja">Muy baja</option>
+                                    <option value="Baja">Baja</option>
+                                    <option value="Media">Media</option>
+                                    <option value="Alta">Alta</option>
+                                    <option value="Muy alta">Muy alta</option>
+                                </InputSelect>
+                            </div>
+                        }
 
                         <div class="mb-3">
                             <label class="form-label">Materiales</label>
@@ -119,7 +129,7 @@ else
                 <hr class="my-4" />
 
                 <div class="d-flex justify-content-end">
-                    <a href="/products" class="btn btn-secondary me-2">Cancelar</a>
+                    <a href="/productos" class="btn btn-secondary me-2">Cancelar</a>
                     <button type="submit" class="btn btn-primary">Guardar Cambios</button>
                 </div>
             </EditForm>
@@ -132,12 +142,15 @@ else
     public int ProductId { get; set; }
 
     private Product? productToEdit;
+    private bool isCustomizable;
 
     private List<Material>? allMaterials;
     private HashSet<int> selectedMaterialIds = new();
 
     private IBrowserFile? selectedFile;
     private string? currentPhotoUrl;
+
+    private ConfirmDialog dialog = default!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -147,17 +160,16 @@ else
 
             if (productToEdit != null)
             {
+                isCustomizable = productToEdit.IsCustom == 1;
                 currentPhotoUrl = productToEdit.PhotoUrl;
                 allMaterials = await materialService.GetAllMaterials();
                 selectedMaterialIds = productToEdit.ProductMaterials.Select(pm => pm.MaterialId).ToHashSet();
-            
-                Console.WriteLine($"--- DEBUG: Materiales cargados para Producto ID {ProductId}: [{string.Join(", ", selectedMaterialIds)}]");
             }
         }
         catch (Exception ex)
         {
             ToastService.Notify(new(ToastType.Danger, "Error de Carga", $"No se pudo cargar el producto: {ex.Message}"));
-            NavigationManager.NavigateTo("/products");
+            NavigationManager.NavigateTo("/productos");
         }
     }
 
@@ -179,10 +191,11 @@ else
     private void HandleFileSelected(InputFileChangeEventArgs e)
     {
         selectedFile = e.File;
-        currentPhotoUrl = null; // Ocultar la foto actual para indicar que se cambiará
+        currentPhotoUrl = null;
     }
 
-    private async Task HandleValidSubmit()
+    // Método que guarda los cambios, ahora se llama desde la confirmación
+    private async Task UpdateProduct()
     {
         if (productToEdit == null) return;
 
@@ -204,17 +217,46 @@ else
                 productToEdit.PhotoUrl = $"/images/products/{uniqueFileName}";
             }
 
-            // Actualizar la lista de materiales en el objeto a guardar
+            productToEdit.IsCustom = isCustomizable ? (byte)1 : (byte)0;
+            if (!isCustomizable)
+            {
+                productToEdit.Complexity = "Baja";
+            }
+
             productToEdit.ProductMaterials = selectedMaterialIds.Select(id => new ProductMaterial { ProductId = ProductId, MaterialId = id }).ToList();
 
             await productService.Update(ProductId, productToEdit);
 
             ToastService.Notify(new(ToastType.Success, "Producto Actualizado", $"'{productToEdit.Name}' se actualizó correctamente."));
-            NavigationManager.NavigateTo("/products");
+            NavigationManager.NavigateTo("/productos");
         }
         catch (Exception ex)
         {
             ToastService.Notify(new(ToastType.Danger, "Error al Actualizar", $"No se pudo guardar el producto: {ex.Message}"));
+        }
+    }
+
+    // Nuevo método que se llama al enviar el formulario
+    private async Task ShowConfirmationAsync()
+    {
+        var options = new ConfirmDialogOptions
+        {
+            YesButtonText = "Sí, guardar cambios",
+            YesButtonColor = ButtonColor.Success,
+            NoButtonText = "No, cancelar",
+            NoButtonColor = ButtonColor.Secondary
+        };
+
+        var confirmation = await dialog.ShowAsync(
+            title: "¿Confirmar Cambios?",
+            message1: $"¿Estás seguro de que deseas guardar las modificaciones para '{productToEdit?.Name}'?",
+            message2: "Esta acción sobrescribirá los datos anteriores.",
+            confirmDialogOptions: options);
+
+        if (confirmation)
+        {
+            // Si el usuario confirma, entonces llamamos al método para guardar
+            await UpdateProduct();
         }
     }
 }
