@@ -241,10 +241,10 @@ else
     {
         var options = new ConfirmDialogOptions
         {
-            YesButtonText = "Sí, guardar cambios",
+            YesButtonText = "Confirmar",
             YesButtonColor = ButtonColor.Success,
-            NoButtonText = "No, cancelar",
-            NoButtonColor = ButtonColor.Secondary
+            NoButtonText = "Cancelar",
+            NoButtonColor = ButtonColor.Danger
         };
 
         var confirmation = await dialog.ShowAsync(

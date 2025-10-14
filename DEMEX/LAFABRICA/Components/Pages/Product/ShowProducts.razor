@@ -84,10 +84,10 @@ else
                                         <td><Badge Color="@GetComplexityBadgeColor(prod.Complexity)">@prod.Complexity</Badge></td>
                                         <td>
                                             <button class="btn btn-show" @onclick="() => detailsModal.ShowAsync(prod.Id)" title="Ver Detalles">
-                                                <Icon Name="IconName.Eye" Color="IconColor.Primary" />
+                                                <Icon Name="IconName.Eye" class="icon-show" />
                                             </button>
                                             <button class="btn btn-edit" @onclick="() => EditProduct(prod)" title="Editar">
-                                                <Icon Name="IconName.PencilSquare" />
+                                                <Icon Name="IconName.PencilSquare" Class="icon-edit"/>
                                             </button>
                                             <button class="btn btn-delete" @onclick="() => DeleteProduct(prod)" title="Eliminar">
                                                 <Icon Name="IconName.Trash" Color="IconColor.Danger"></Icon>
