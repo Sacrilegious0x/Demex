@@ -15,12 +15,12 @@
 				<h2>
 					@if (clientId.HasValue)
 					{
-						<Icon Name="IconName.PersonFillGear" />
+						<Icon Name="IconName.PersonFillGear"Class="me-2" />
 						<text>Editar cliente</text>
 					}
 					else
 					{
-						<Icon Name="IconName.PersonFillAdd"/>
+						<Icon Name="IconName.PersonFillAdd" Class="me-2"/>
 						<text>Nuevo cliente</text>
 					}
 				</h2>
@@ -104,6 +104,16 @@
 							</div>
 						</div>
 					</div>
+					@if (showAlert)
+					{
+						<div>
+							<Alert Color="AlertColor.Warning">
+								<Icon Name="IconName.ExclamationTriangleFill" />
+								<strong>@alertMessage</strong>									
+							</Alert>
+						</div>
+					}
+					
 					<div class="d-flex justify-content-end">
 						<a class="btn btn-outline-secondary me-2"href="/clientes">Cancelar</a>
 						<button class="btn btn-primary" type="submit">Guardar</button>
@@ -130,7 +140,8 @@
 	private readonly string[] provinces = { "San José", "Alajuela", "Heredia", "Cartago",
 									"Guanacaste", "Puntarenas", "Limon"};
 	private ConfirmDialog dialog = default!;
-
+	bool showAlert;
+	string alertMessage;
 	protected override async Task OnParametersSetAsync()
 	{
 		client = new Client(); 
@@ -185,26 +196,32 @@
 					{
 						await service.Update(clientId.Value, client!);
 					}
-						
-						ToastService.Notify(new(ToastType.Success, $"Se actualizaron los datos del cliente {client!.Name}"));
-					}
-					else
-					{
-						client!.QuantityPurchase = 0;
-						client.IsActive = 1;
-						client.IsFrequent = 0;
-						await service.Create(client!);
-						ToastService.Notify(new(ToastType.Success, $"Se registro correctamente al cliente {client.Name}"));
 
-					}
-					await Task.Delay(1000);
-					nav.NavigateTo("/clientes");
-
-				}catch(Exception e)
-				{
-
-					ToastService.Notify(new(ToastType.Danger, $"Ocurrio un error inesperado:\n {e.Message}"));
+					ToastService.Notify(new(ToastType.Success, $"Se actualizaron los datos del cliente {client!.Name}"));
 				}
+				else
+				{
+					client!.QuantityPurchase = 0;
+					client.IsActive = 1;
+					client.IsFrequent = 0;
+					await service.Create(client!);
+					ToastService.Notify(new(ToastType.Success, $"Se registro correctamente al cliente {client.Name}"));
+
+				}
+				await Task.Delay(1000);
+				nav.NavigateTo("/clientes");
+			}
+			catch (InvalidOperationException ex)
+			{
+				// ToastService.Notify(new(ToastType.Warning, ex.Message));
+				showAlert = true;
+				alertMessage = ex.Message;
+
+
+			}catch(Exception e)
+			{
+					ToastService.Notify(new(ToastType.Danger, $"Ocurrio un error inesperado:\n{e.Message}"));
+			}
 
 		}
 	}

@@ -38,7 +38,7 @@ else
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <h3><Icon Name="IconName.BoxSeamFill"></Icon> Gestión de Productos</h3>
-                    <a class="btn btn-primary" href="/productos/crear">
+                    <a class="btn text-white" style="background-color: #0f54a1;" href="/productos/crear">
                         <Icon Name="IconName.PlusLg"></Icon> Nuevo Producto
                     </a>
                 </div>
@@ -84,10 +84,10 @@ else
                                         <td><Badge Color="@GetComplexityBadgeColor(prod.Complexity)">@prod.Complexity</Badge></td>
                                         <td>
                                             <button class="btn btn-show" @onclick="() => detailsModal.ShowAsync(prod.Id)" title="Ver Detalles">
-                                                <Icon Name="IconName.Eye" Color="IconColor.Primary" />
+                                                <Icon Name="IconName.Eye" class="icon-show" />
                                             </button>
                                             <button class="btn btn-edit" @onclick="() => EditProduct(prod)" title="Editar">
-                                                <Icon Name="IconName.PencilSquare" />
+                                                <Icon Name="IconName.PencilSquare" Class="icon-edit"/>
                                             </button>
                                             <button class="btn btn-delete" @onclick="() => DeleteProduct(prod)" title="Eliminar">
                                                 <Icon Name="IconName.Trash" Color="IconColor.Danger"></Icon>

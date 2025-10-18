@@ -16,6 +16,24 @@ namespace LAFABRICA.Services
 
         public async Task<Client> Create(Client client)
         {
+
+
+            bool existEmail = await _contex.Clients.AnyAsync(c => c.Email == client.Email);
+            if (existEmail)
+            {
+                throw new InvalidOperationException("El correo ya esta registrado");
+            }
+            bool existPhone = await _contex.Clients.AnyAsync(c => c.PhoneNumber == client.PhoneNumber);
+            if (existPhone)
+            {
+                throw new InvalidOperationException("El contacto de la empresa ya esta registrado");
+            }
+            bool existManagerPhone = await _contex.Clients.AnyAsync(c => c.ManagerPhoneNumber == client.ManagerPhoneNumber);
+            if (existManagerPhone)
+            {
+                throw new InvalidOperationException("El contacto del encargado ya esta registrado");
+            }
+
             _contex.Clients.Add(client);
             await _contex.SaveChangesAsync();
             return client;
@@ -49,7 +67,21 @@ namespace LAFABRICA.Services
             var oldClient = await _contex.Clients.FindAsync(id);
             if (oldClient == null)
                 throw new KeyNotFoundException($"El cliente con el id {id} no encontrado");
-
+            bool existEmail = await _contex.Clients.AnyAsync(c => c.Id != id && c.Email == client.Email);
+            if (existEmail)
+            {
+                throw new InvalidOperationException("El correo ya esta registrado");
+            }
+            bool existPhone = await _contex.Clients.AnyAsync(c => c.Id != id && c.PhoneNumber == client.PhoneNumber);
+            if (existPhone)
+            {
+                throw new InvalidOperationException("El contacto de la empresa ya esta registrado");
+            }
+            bool existManagerPhone = await _contex.Clients.AnyAsync(c => c.Id != id && c.ManagerPhoneNumber == client.ManagerPhoneNumber);
+            if (existManagerPhone)
+            {
+                throw new InvalidOperationException("El contacto del encargado ya esta registrado");
+            }
             _contex.Entry(oldClient).CurrentValues.SetValues(client);
             await _contex.SaveChangesAsync();
             return client;
