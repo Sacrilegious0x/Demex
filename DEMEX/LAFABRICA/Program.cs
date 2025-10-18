@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Net.Http;
 
 var builder = WebApplication.CreateBuilder(args);
-
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 //DATABASE
 //Crea variable para la cadena de conexion
 var connectionString = builder.Configuration.GetConnectionString("DEMEX");

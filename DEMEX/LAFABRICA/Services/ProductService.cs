@@ -10,32 +10,36 @@ namespace LAFABRICA.Services
 {
     public class ProductService : IProductService
     {
-        private readonly AppDbContext _context;
+        private readonly AppDbContext _context; // Conexion a la db
+        // Nota: readonly = Final en java 
 
         public ProductService(AppDbContext context)
         {
             _context = context;
         }
 
-        public async Task<IEnumerable<Product>> GetAllProducts()
+        // Nota: IEnmerable es similar a un List<T> pero no se puede editar la lista 
+        public async Task<IEnumerable<Product>> GetAllProducts()   // Nota: Task = Future<T> en java, basicamente un promesa de lo que se va a enviar al finalizar 
         {
-            return await _context.Products
-                .Where(p => p.IsActive == 1) // <-- Filtrar sólo activos
+            return await _context.Products   // Nota: Debido a este async y await se permite manejar esas pausas sin bloquear el programa
+                .Where(p => p.IsActive == 1) // Filtrar sólo activos
                 .Include(p => p.ProductMaterials)
                 .ThenInclude(pm => pm.Material)
                 .ToListAsync();
         }
 
-        public async Task<Product?> GetById(int id)
+        public async Task<Product?> GetById(int id)   // Nota: "?" = Significa que se puede devolver un producto a como se puede devolver un NULL
         {
             return await _context.Products
-                .Include(p => p.ProductMaterials)
-                .FirstOrDefaultAsync(p => p.Id == id);
-        }
+                .Include(p => p.ProductMaterials)   // Nota: "Include" = sirve para traer informacion de tablas relacionadas a la identidad
+                .FirstOrDefaultAsync(p => p.Id == id);   // Nota: "FirstOrDefaultAsync" = Devuelve el primero en cumplir con la condicion
+            
+            // Nota: Esa: "p" solo es el nombre del elemento, puede ser cualquier caracter o palabra, solo es una forma de referirse a los elementos de la coleccion
+        }       
 
         public async Task<Product> Create(Product product)
         {
-            var materialIds = product.ProductMaterials?
+            var materialIds = product.ProductMaterials?   // Nta: Var = "Deja que el compilador averigüe el tipo de dato por mí"
                                 .Select(pm => pm.MaterialId)
                                 .Where(id => id != 0)
                                 .Distinct()

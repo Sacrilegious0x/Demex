@@ -38,3 +38,5 @@ public partial class Product
     
     public virtual ICollection<ProductMaterial> ProductMaterials { get; set; } = new List<ProductMaterial>();
 }
+
+// Nota: ICollection es una interfaz de C# que representa una colección de objetos.

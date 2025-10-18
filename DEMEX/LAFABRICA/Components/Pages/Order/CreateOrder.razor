@@ -1,0 +1,291 @@
+﻿@page "/ordenes/crear"
+@using LAFABRICA.Data.DB
+@using LAFABRICA.Models.Interface
+@inject IOrderService orderService
+@inject IClientService clientService
+@inject IProductService productService
+@inject NavigationManager NavigationManager
+@inject ToastService ToastService
+@inject IJSRuntime JSRuntime
+@inject IWebHostEnvironment WebHostEnvironment
+<PageTitle>Crear Nueva Orden</PageTitle>
+
+@if (allClients == null || allProducts == null)
+{
+    <div class="text-center p-4">
+        <Spinner Color="SpinnerColor.Primary" />
+        <p class="mt-2">Cargando clientes y productos...</p>
+    </div>
+}
+else
+{
+    <EditForm Model="@newOrder" OnValidSubmit="() => SaveOrder(true)">
+        <DataAnnotationsValidator />
+        <Card>
+            <CardHeader>
+                <CardTitle Size="HeadingSize.H5">Crear Nueva Orden / Cotización</CardTitle>
+            </CardHeader>
+            <CardBody>
+                <ValidationSummary class="alert alert-danger mb-3" />
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <h5>1. Información del Cliente</h5>
+                        <div class="mb-3">
+                            <label class="form-label">Seleccionar Cliente *</label>
+                            <InputSelect @bind-Value="newOrder.ClientId" class="form-select" @onchange="ClientSelectionChanged">
+                                <option value="0">-- Seleccione un cliente --</option>
+                                @foreach (var client in allClients)
+                                {
+                                    <option value="@client.Id">@client.Name</option>
+                                }
+                            </InputSelect>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Prioridad de la Orden</label>
+                            <InputSelect @bind-Value="newOrder.Priority" class="form-select">
+                                <option value="Baja">Baja</option>
+                                <option value="Media">Media</option>
+                                <option value="Alta">Alta</option>
+                            </InputSelect>
+                        </div>
+                    </div>
+
+                    <div class="col-md-8">
+                        <h5>2. Productos de la Orden</h5>
+                        <div class="input-group mb-3">
+                            <select @bind="selectedProductId" class="form-select" style="max-width: 60%;">
+                                <option value="0">-- Seleccione un producto para añadir --</option>
+                                @foreach (var product in allProducts)
+                                {
+                                    <option value="@product.Id">@product.Name (@product.PriceBase.ToString("C"))</option>
+                                }
+                            </select>
+                            <InputNumber @bind-Value="selectedProductQuantity" class="form-control" placeholder="Cant." />
+                            <Button Color="ButtonColor.Success" @onclick="AddProductToCart">Añadir</Button>
+                        </div>
+
+                        @if (cartItems.Any())
+                        {
+                            <ul class="list-group">
+                                @foreach (var item in cartItems)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            @item.Quantity x @item.ProductName
+                                            <small class="d-block text-muted">@item.PriceBase.ToString("C") c/u</small>
+                                        </div>
+                                        <span class="fw-bold">@((item.Quantity * item.PriceBase).ToString("C"))</span>
+                                        <Button Color="ButtonColor.Danger" IsOutlined="true" Size="ButtonSize.Small" @onclick="() => RemoveProductFromCart(item.ProductId)">
+                                            <Icon Name="IconName.Trash" />
+                                        </Button>
+                                    </li>
+                                }
+                                <li class="list-group-item d-flex justify-content-between align-items-center bg-light">
+                                    <span class="fw-bold">Subtotal (base)</span>
+                                    <span class="fw-bold">@cartItems.Sum(i => i.Quantity * i.PriceBase).ToString("C")</span>
+                                </li>
+                            </ul>
+                        }
+                        else
+                        {
+                            <p class="text-muted text-center">Aún no hay productos en la orden.</p>
+                        }
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+
+                <h5>3. Resumen y Pago</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label class="form-label">Total Acordado (₡)</label>
+                        <InputNumber @bind-Value="newOrder.TotalAmount" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Descuento (%)</label>
+                        <InputNumber @bind-Value="newOrder.Discount" class="form-control" />
+                        @if (!string.IsNullOrEmpty(discountSuggestion))
+                        {
+                            <div class="form-text text-success">@discountSuggestion</div>
+                        }
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Adelanto (₡)</label>
+                        <InputNumber @bind-Value="newOrder.Advancement" class="form-control" />
+                        @if (newOrder.TotalAmount > 0)
+                        {
+                            <div class="form-text">Sugerido (50%): @((newOrder.TotalAmount * 0.5m).ToString("C"))</div>
+                        }
+                    </div>
+                </div>
+
+            </CardBody>
+            <CardFooter>
+                <div class="d-flex justify-content-end gap-2">
+                    <Button Color="ButtonColor.Secondary" @onclick="() => SaveOrder(false)">Guardar como Cotización</Button>
+
+                    @* --- BOTÓN MODIFICADO --- *@
+                    <Button Color="ButtonColor.Info" IsOutlined="true"
+                            @onclick="GeneratePdfPreview"
+                            disabled="@(!cartItems.Any() || newOrder.ClientId == null)">
+                        <Icon Name="IconName.FileEarmarkPdf" /> Generar Resumen
+                    </Button>
+
+                    <button type="submit" class="btn btn-primary">Comenzar Orden</button>
+                </div>
+            </CardFooter>
+        </Card>
+    </EditForm>
+}
+
+@code {
+    // Clase auxiliar para manejar los ítems del carrito
+    public class CartItem
+    {
+        public int ProductId { get; set; }
+        public string ProductName { get; set; } = "";
+        public int Quantity { get; set; }
+        public decimal PriceBase { get; set; }
+    }
+
+    private Order newOrder = new() { Priority = "Media", Discount = 0 };
+    private List<Client>? allClients;
+    private List<Product>? allProducts;
+    private List<CartItem> cartItems = new();
+
+    private int selectedProductId;
+    private int selectedProductQuantity = 1;
+
+    private string discountSuggestion = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        allClients = (await clientService.GetAllClient()).ToList();
+        allProducts = (await productService.GetAllProducts()).ToList();
+    }
+
+    private void ClientSelectionChanged(ChangeEventArgs e)
+    {
+        var clientId = int.Parse(e.Value?.ToString() ?? "0");
+        newOrder.ClientId = clientId > 0 ? clientId : null;
+        UpdateDiscountSuggestion();
+    }
+
+    private void AddProductToCart()
+    {
+        if (selectedProductId == 0 || selectedProductQuantity <= 0) return;
+        var product = allProducts?.FirstOrDefault(p => p.Id == selectedProductId);
+        if (product == null) return;
+
+        var existingItem = cartItems.FirstOrDefault(i => i.ProductId == selectedProductId);
+        if (existingItem != null)
+        {
+            existingItem.Quantity += selectedProductQuantity;
+        }
+        else
+        {
+            cartItems.Add(new CartItem
+            {
+                ProductId = product.Id,
+                ProductName = product.Name,
+                Quantity = selectedProductQuantity,
+                PriceBase = product.PriceBase
+            });
+        }
+
+        // Reseteamos los selectores
+        selectedProductId = 0;
+        selectedProductQuantity = 1;
+        UpdateDiscountSuggestion();
+    }
+
+    private void RemoveProductFromCart(int productId)
+    {
+        cartItems.RemoveAll(i => i.ProductId == productId);
+        UpdateDiscountSuggestion();
+    }
+
+    private void UpdateDiscountSuggestion()
+    {
+        discountSuggestion = "";
+        var client = allClients?.FirstOrDefault(c => c.Id == newOrder.ClientId);
+
+        bool isFrequent = client?.IsFrequent == 1;
+        bool hasVolume = cartItems.Sum(i => i.Quantity) > 5;
+
+        if (isFrequent && hasVolume)
+            discountSuggestion = "Sugerencia: 5% (cliente frecuente y >5 artículos).";
+        else if (isFrequent)
+            discountSuggestion = "Sugerencia: 5% (cliente frecuente).";
+        else if (hasVolume)
+            discountSuggestion = "Sugerencia: 5% (más de 5 artículos).";
+    }
+
+    private async Task SaveOrder(bool beginOrder)
+    {
+        try
+        {
+            newOrder.CreationDate = DateOnly.FromDateTime(DateTime.Now);
+            newOrder.DaliveryDate = DateOnly.FromDateTime(DateTime.Now.AddDays(15)); // Fecha de entrega por defecto (ej. 15 días)
+            newOrder.AdminId = 1; // Valor quemado como solicitaste
+            newOrder.State = beginOrder ? "Diseño" : "Cotizando";
+
+            newOrder.ProductOrders = cartItems.Select(item => new ProductOrder
+            {
+                IdProduct = item.ProductId,
+                Quantity = item.Quantity
+            }).ToList();
+
+            await orderService.Create(newOrder);
+
+            ToastService.Notify(new(ToastType.Success, "Orden Guardada", $"La orden ha sido guardada exitosamente como '{newOrder.State}'."));
+            NavigationManager.NavigateTo("/ordenes");
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new(ToastType.Danger, "Error", $"No se pudo guardar la orden: {ex.Message}"));
+        }
+    }
+
+    // Este método se activa con el botón principal "Comenzar Orden"
+    private async Task HandleValidSubmit()
+    {
+        await SaveOrder(true);
+    }
+
+    private async Task GeneratePdfPreview()
+    {
+        if (!cartItems.Any() || newOrder.ClientId == null)
+        {
+            ToastService.Notify(new(ToastType.Warning, "Faltan datos", "Debe seleccionar un cliente y añadir al menos un producto."));
+            return;
+        }
+
+        // Poblamos el objeto de la orden con los datos actuales del formulario
+        newOrder.ProductOrders = cartItems.Select(item => new ProductOrder
+        {
+            IdProductNavigation = allProducts.First(p => p.Id == item.ProductId),
+            Quantity = item.Quantity,
+            IdProduct = item.ProductId
+        }).ToList();
+
+        var client = allClients.FirstOrDefault(c => c.Id == newOrder.ClientId);
+
+        // Creamos el modelo de datos para el PDF
+        var pdfModel = new OrderPdfModel
+        {
+            Order = newOrder,
+            Client = client
+        };
+
+        // Instanciamos el generador y creamos el PDF
+        var generator = new OrderPdfGenerator(pdfModel);
+        var pdfBytes = generator.GenerateDocument();
+
+        // Usamos JS Interop para descargar el archivo
+        var fileName = $"Cotizacion_{client.Name.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd}.pdf";
+        var base64 = Convert.ToBase64String(pdfBytes);
+        await JSRuntime.InvokeVoidAsync("saveAsFile", fileName, base64);
+    }
+}
