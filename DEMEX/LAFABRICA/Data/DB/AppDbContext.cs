@@ -70,6 +70,13 @@ public partial class AppDbContext : DbContext
             entity.HasOne(d => d.Rol).WithMany(p => p.Administrators)
                 .HasForeignKey(d => d.RolId)
                 .HasConstraintName("FK__ADMINISTR__ROL_I__412EB0B6");
+            //PARA VALIDACIONES
+            entity.HasIndex(d => d.Email)
+                .IsUnique()
+                .HasDatabaseName("UQ_ADMIN_EMAIL");
+            entity.HasIndex(d => d.Identification)
+                .IsUnique()
+                .HasDatabaseName("UQ_ADMIN_IDENTIFICATION");
         });
 
         modelBuilder.Entity<Client>(entity =>
@@ -105,6 +112,16 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.SpecificLocation)
                 .HasMaxLength(100)
                 .HasColumnName("SPECIFIC_LOCATION");
+            //Para validaciones de unicidad
+            entity.HasIndex(e => e.Email)
+                .IsUnique()
+                .HasDatabaseName("UQ_CLIENT_EMAIL");
+            entity.HasIndex(e => e.PhoneNumber)
+               .IsUnique()
+               .HasDatabaseName("UQ_CLIENT_PHONE_NUMBER");
+            entity.HasIndex(e => e.ManagerPhoneNumber)
+               .IsUnique()
+               .HasDatabaseName("UQ_CLIENT_MANAGER_PHONE_NUMBER");
         });
 
         modelBuilder.Entity<ClientPayment>(entity =>
@@ -159,6 +176,14 @@ public partial class AppDbContext : DbContext
             entity.HasOne(d => d.Rol).WithMany(p => p.Employees)
                 .HasForeignKey(d => d.RolId)
                 .HasConstraintName("FK__EMPLOYEE__ROL_ID__44FF419A");
+
+            //para validaciones
+            entity.HasIndex(d => d.Email)
+                .IsUnique()
+                .HasDatabaseName("UQ_EMPLOYEE_EMAIL");
+            entity.HasIndex(d => d.Identification)
+                .IsUnique()
+                .HasDatabaseName("UQ_EMPLOYEE_IDENTIFICATION");
         });
 
         modelBuilder.Entity<Inventory>(entity =>
@@ -400,6 +425,13 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Phone)
                 .HasMaxLength(15)
                 .HasColumnName("PHONE");
+            //PARA VALIDACIONES
+            entity.HasIndex(e => e.Email)
+                .IsUnique()
+                .HasDatabaseName("UQ_SUPPLIER_EMAIL");
+            entity.HasIndex(e => e.Phone)
+                .IsUnique()
+                .HasDatabaseName("UQ_SUPPLIER_PHONE");
         });
 
        
