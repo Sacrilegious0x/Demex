@@ -115,8 +115,8 @@
             <hr />
 
             <div class="d-flex justify-content-end mt-3">
-                <a href="/productos" class="btn btn-secondary me-2">Cancelar</a>
-                <button type="submit" class="btn btn-primary">Crear Producto</button>
+                <a href="/productos" class="btn btn-outline-secondary me-2">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Guardar</button>
             </div>
         </EditForm>
     </div>
@@ -190,12 +190,10 @@
             newProduct.IsCustom = isCustomizable ? (byte)1 : (byte)0;
             if (!isCustomizable)
             {
-                newProduct.Complexity = "Baja";
+                newProduct.Complexity = "Muy baja";   // por defecto en caso de no ser personalizable
             }
 
-            // === LÓGICA CORREGIDA ===
-            // En lugar de asignar a .Materials, creamos la lista de la entidad "puente"
-            // y la asignamos a la propiedad correcta: .ProductMaterials
+           
             if (selectedMaterialIds.Any())
             {
                 newProduct.ProductMaterials = selectedMaterialIds.Select(matId => new ProductMaterial

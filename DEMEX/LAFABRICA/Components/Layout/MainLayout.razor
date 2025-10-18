@@ -8,8 +8,6 @@
         <div class="container-fluid">
             <!-- Brand -->
             <a class="navbar-brand fw-bold d-flex align-items-center" href="/">
-
-
                 <img src="/Demex.ico" alt="Logo Demex" width="80" height="80" class="me-2" />                
             </a>
 
@@ -44,7 +42,13 @@
                         </NavLink>
                     </li>
                     <li class="nav-item">
-                        <NavLink class="nav-link" href="/inventory">
+ 
+                        <NavLink class="nav-link " href="/proveedor">
+                            <i class="bi bi-truck me-1"></i> Proveedores
+                        </NavLink>
+                    </li>
+                    <li class="nav-item">
+                        <NavLink class="nav-link disabled" href="/inventory">
                             <i class="bi bi-archive-fill me-1"></i> Inventario
                         </NavLink>
                     </li>
@@ -54,11 +58,7 @@
                             <i class="bi bi-cart-fill me-1"></i> Órdenes
                         </NavLink>
                     </li>
-                    <li class="nav-item">
-                        <NavLink class="nav-link " href="/proveedor">
-                            <i class="bi bi-truck me-1"></i> Proveedores
-                        </NavLink>
-                    </li>
+                    
                     <li class="nav-item">
                         <NavLink class="nav-link disabled" href="/payments">
                             <i class="bi bi-credit-card-fill me-1"></i> Pagos
@@ -85,7 +85,8 @@
                 <!-- Usuario -->
                 <div class="d-flex align-items-center">
                     <span class="navbar-text me-3 text-dark">
-                        <i class="bi bi-person-circle"></i> Bienvenido
+                        @* <i class="bi bi-person-circle"></i> Bienvenido *@
+                        <i class="bi bi-tux"></i> Bienvenido
                     </span>
 
                 </div>

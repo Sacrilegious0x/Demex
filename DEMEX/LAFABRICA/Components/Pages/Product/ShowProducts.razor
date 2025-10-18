@@ -61,7 +61,7 @@ else
             </div>
             <div class="card-body text-center">
                 <div class="row">
-                    <div class="col-12 table-responsive" style="max-height: 450px; overflow-y: auto;">
+                    <div class="col-12 table-responsive" style=" max-height: 370px; overflow-y: auto;">
                         <table class="table table-hover">
                             <thead>
                                 <tr>
@@ -84,13 +84,13 @@ else
                                         <td><Badge Color="@GetComplexityBadgeColor(prod.Complexity)">@prod.Complexity</Badge></td>
                                         <td>
                                             <button class="btn btn-show" @onclick="() => detailsModal.ShowAsync(prod.Id)" title="Ver Detalles">
-                                                <Icon Name="IconName.Eye"Class="icon-show" />
+                                                <Icon Name="IconName.Eye" class="icon-show" />
                                             </button>
                                             <button class="btn btn-edit" @onclick="() => EditProduct(prod)" title="Editar">
-                                                <Icon Name="IconName.PencilSquare" class="icon-edit"/>
+                                                <Icon Name="IconName.PencilSquare" Class="icon-edit"/>
                                             </button>
                                             <button class="btn btn-delete" @onclick="() => DeleteProduct(prod)" title="Eliminar">
-                                                <Icon Name="IconName.Trash" Color="IconColor.Danger" />
+                                                <Icon Name="IconName.Trash" Color="IconColor.Danger"></Icon>
                                             </button>
                                         </td>
                                     </tr>

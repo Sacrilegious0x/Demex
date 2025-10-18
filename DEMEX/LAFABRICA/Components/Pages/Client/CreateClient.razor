@@ -7,6 +7,7 @@
 
 <PageTitle>Nuevo Cliente</PageTitle>
 <Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+<ConfirmDialog @ref="dialog" />
 <div class="container mt2">	
 	<div class="card">
 		<div class="card-header">
@@ -37,24 +38,24 @@
 							<div class="form-group row mb-3">
 								<label class="col-md-5 col-form-label">Nombre de la Empresa: <span class="text-danger">*</span></label>
 								<div class="col-md-8">
-									<TextInput Class="border-0" @bind-Value="@client.Name" Placeholder="Ingrese el nombre de la Empresa" />
+									<TextInput Class="border-1" @bind-Value="@client.Name" Placeholder="Ingrese el nombre de la Empresa" />
 									<ValidationMessage For="@(() => client.Name)" />
 								</div>
 							</div>
 							<div class="form-group row mb-3">
 								<label class="col-md-5 col-form-label">Contacto <span class="text-danger">*</span></label>
 								<div class="col-md-8">
-									<TextInput Class="border-0" @bind-Value="@client.PhoneNumber" Placeholder="Ingrese el contacto de la empresa" />
+									<TextInput Class="border-1" @bind-Value="@client.PhoneNumber" Placeholder="Ingrese el contacto de la empresa" />
 									<ValidationMessage For="@(() => client.PhoneNumber)" />
 								</div>
 								<div>
-									<p class="text-black-50">Formato admitido: xxxx-xxxx</p>
+									<p class="text-black-50">Formato admitido: 8888-8888</p>
 								</div>
 							</div>
 							<div class="form-group row mb-3">
 								<label class="col-md-5 col-form-label">Correo <span class="text-danger">*</span></label>
 								<div class="col-md-8">
-									<TextInput Class="border-0" @bind-Value="@client.Email" Placeholder="Ingrese el correo electronico" />
+									<TextInput Class="border-1" @bind-Value="@client.Email" Placeholder="Ingrese el correo electronico" />
 									<ValidationMessage For="@(() => client.Email)" />
 								</div>
 							</div>
@@ -64,14 +65,14 @@
 							<div class="form-group row mb-3">
 								<label class="col-md-5 col-form-label">Nombre del Encargado: <span class="text-danger">*</span></label>
 								<div class="col-md-8">
-									<TextInput Class="border-0" @bind-Value="@client.Manager" Placeholder="Ingrese el nombre del Encargado" />
+									<TextInput Class="border-1" @bind-Value="@client.Manager" Placeholder="Ingrese el nombre del Encargado" />
 									<ValidationMessage For="@(() => client.Manager)" />
 								</div>
 							</div>
 							<div class="form-group row mb-3">
 								<label class="col-md-5 col-form-label">Contacto <span class="text-danger">*</span></label>
 								<div class="col-md-8">
-									<TextInput Class="border-0" @bind-Value="@client.ManagerPhoneNumber" Placeholder="Ingrese el contacto del Encargado" />
+									<TextInput Class="border-1" @bind-Value="@client.ManagerPhoneNumber" Placeholder="Ingrese el contacto del Encargado" />
 									<ValidationMessage For="@(() => client.ManagerPhoneNumber)" />
 								</div>
 								<div>
@@ -96,7 +97,7 @@
 								<div class="form-group row mb-3">
 									<label class="col-md-5 col-form-label ">Locacion Especifica <span class="text-danger">*</span></label>
 									<div class="col-md-8">
-										<TextInput Class="border-0" @bind-Value="@client.SpecificLocation" Placeholder="Ingrese ubicacion detallada" />
+										<TextInput Class="border-1" @bind-Value="@client.SpecificLocation" Placeholder="Ingrese ubicacion detallada" />
 										<ValidationMessage For="@(() => client.SpecificLocation)" />
 									</div>
 								</div>
@@ -104,7 +105,7 @@
 						</div>
 					</div>
 					<div class="d-flex justify-content-end">
-						<a class="btn btn-secondary me-2">Volver</a>
+						<a class="btn btn-outline-secondary me-2"href="/clientes">Cancelar</a>
 						<button class="btn btn-primary" type="submit">Guardar</button>
 					</div>
 				</EditForm>
@@ -128,6 +129,7 @@
 	public int? clientId { get; set; }
 	private readonly string[] provinces = { "San José", "Alajuela", "Heredia", "Cartago",
 									"Guanacaste", "Puntarenas", "Limon"};
+	private ConfirmDialog dialog = default!;
 
 	protected override async Task OnParametersSetAsync()
 	{
@@ -150,25 +152,40 @@
 			editContext = new EditContext(client);
 		}
 
-		
+
 		await InvokeAsync(StateHasChanged);
 	}
 
 
-	
+
 
 	public async Task HandleOnValidSubmit()
 	{
 
 		if (editContext!=null && editContext.Validate())
 		{
-			
-				try
+
+			try
+			{
+				if (clientId.HasValue)
 				{
-					if (clientId.HasValue)
+					var optons = new ConfirmDialogOptions
+						{
+							YesButtonText = "Confirmar",
+							YesButtonColor = ButtonColor.Success,
+							NoButtonText = "Cancelar",
+							NoButtonColor = ButtonColor.Danger
+
+						};
+					var confirmation = await dialog.ShowAsync(
+						title: "Editar cliente",
+						message1: $"¿Estas seguro de editar la informacion de {client!.Name} ?",
+						confirmDialogOptions: optons);
+					if (confirmation)
 					{
-					
 						await service.Update(clientId.Value, client!);
+					}
+						
 						ToastService.Notify(new(ToastType.Success, $"Se actualizaron los datos del cliente {client!.Name}"));
 					}
 					else

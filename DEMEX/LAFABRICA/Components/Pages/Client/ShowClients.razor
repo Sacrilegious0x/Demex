@@ -201,22 +201,9 @@
 
 	private async void EditClient(Client clt)
 	{
-		var optons = new ConfirmDialogOptions
-		{
-			YesButtonText = "Confirmar",
-			YesButtonColor = ButtonColor.Primary,
-			NoButtonText = "Cancelar",
-			NoButtonColor = ButtonColor.Secondary
-
-		};
-		var confirmation = await dialog.ShowAsync(
-			title: "Editar cliente",
-			message1: $"¿Estas seguro de editar la informacion de {clt.Name} ?",
-			confirmDialogOptions: optons);
-		if (confirmation)
-		{
+		
 			nav.NavigateTo($"/clientes/editar/{clt.Id}");
-		}
+		
 	}
 	private async Task ViewClientInfo(Client clt)
 	{
