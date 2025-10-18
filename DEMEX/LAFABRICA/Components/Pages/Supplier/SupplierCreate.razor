@@ -1,6 +1,7 @@
 ﻿@page "/proveedor/crear"
 @using BlazorBootstrap
 @using LAFABRICA.Models
+@using LAFABRICA.Models.Interface
 @using LAFABRICA.Services
 @inject ISupplierService SupplierService
 @inject NavigationManager NavigationManager
@@ -132,6 +133,8 @@
 
     //  Instancia del DTO que contendrá los datos del formulario
     private SupplierDto supplier = new SupplierDto();
+
+    
 
 
 

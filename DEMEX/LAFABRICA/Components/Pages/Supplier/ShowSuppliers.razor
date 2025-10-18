@@ -1,7 +1,9 @@
 ﻿@page "/proveedor"
 @using BlazorBootstrap
 @using LAFABRICA.Models
+@using LAFABRICA.Models.Interface
 @using LAFABRICA.Services
+@using LAFABRICA.Data.DB
 @inject ISupplierService SupplierService
 @inject NavigationManager NavigationManager
 
@@ -118,6 +120,9 @@
 
     [Inject] public ToastService ToastService { get; set; } = default!;
     private List<SupplierDto>? suppliers;
+
+    private List<Supplier>? supps;
+
     private string searchTerm = string.Empty;
 
     // simular filtrado

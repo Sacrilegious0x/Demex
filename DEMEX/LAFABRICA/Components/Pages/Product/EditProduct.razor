@@ -131,7 +131,7 @@ else
 
     private Product? productToEdit;
 
-    private List<Material>? allMaterials;
+    private IEnumerable<Material> allMaterials = null!;
     private HashSet<int> selectedMaterialIds = new();
 
     private IBrowserFile? selectedFile;

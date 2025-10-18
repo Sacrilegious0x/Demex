@@ -20,4 +20,6 @@ public partial class Inventory
     public virtual Material? Material { get; set; }
 
     public virtual Supplier? Supplier { get; set; }
+
+    public bool? IsActive { get; set; }
 }

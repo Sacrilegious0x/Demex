@@ -15,6 +15,8 @@ public partial class Material
 
     public int? SupplierId { get; set; }
 
+    public bool? IsActive { get; set; }
+
     // --- Propiedades de Navegación Correctas ---
 
     public virtual Supplier? Supplier { get; set; }
