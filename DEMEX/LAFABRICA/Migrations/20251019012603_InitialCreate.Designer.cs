@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LAFABRICA.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251019003535_InitialCreate")]
+    [Migration("20251019012603_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -335,13 +335,8 @@ namespace LAFABRICA.Migrations
                         .HasColumnType("decimal(18, 0)")
                         .HasColumnName("PRICE_PURCHASE");
 
-                    b.Property<int?>("SupplierId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id")
                         .HasName("PK__MATERIAL__3214EC27EDDBBA52");
-
-                    b.HasIndex("SupplierId");
 
                     b.ToTable("MATERIAL", (string)null);
                 });
@@ -360,8 +355,7 @@ namespace LAFABRICA.Migrations
                         .HasColumnType("int")
                         .HasColumnName("QUANTITY");
 
-                    b.HasKey("MaterialId", "SupplierId")
-                        .HasName("PK__MATERIAL__6E61AFCB20AE3228");
+                    b.HasKey("MaterialId", "SupplierId");
 
                     b.HasIndex("SupplierId");
 
@@ -693,26 +687,17 @@ namespace LAFABRICA.Migrations
                     b.Navigation("Material");
                 });
 
-            modelBuilder.Entity("LAFABRICA.Data.DB.Material", b =>
-                {
-                    b.HasOne("LAFABRICA.Data.DB.Supplier", null)
-                        .WithMany("Materials")
-                        .HasForeignKey("SupplierId");
-                });
-
             modelBuilder.Entity("LAFABRICA.Data.DB.MaterialSupplier", b =>
                 {
                     b.HasOne("LAFABRICA.Data.DB.Material", "Material")
                         .WithMany("MaterialSuppliers")
                         .HasForeignKey("MaterialId")
-                        .IsRequired()
-                        .HasConstraintName("FK__MATERIAL___MATER__628FA481");
+                        .IsRequired();
 
                     b.HasOne("LAFABRICA.Data.DB.Supplier", "Supplier")
                         .WithMany("MaterialSuppliers")
                         .HasForeignKey("SupplierId")
-                        .IsRequired()
-                        .HasConstraintName("FK__MATERIAL___SUPPL__6383C8BA");
+                        .IsRequired();
 
                     b.Navigation("Material");
 
@@ -832,8 +817,6 @@ namespace LAFABRICA.Migrations
                     b.Navigation("Inventories");
 
                     b.Navigation("MaterialSuppliers");
-
-                    b.Navigation("Materials");
                 });
 #pragma warning restore 612, 618
         }

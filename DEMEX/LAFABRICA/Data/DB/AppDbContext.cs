@@ -229,7 +229,7 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<MaterialSupplier>(entity =>
         {
-            entity.HasKey(e => new { e.MaterialId, e.SupplierId }).HasName("PK__MATERIAL__6E61AFCB20AE3228");
+            entity.HasKey(e => new { e.MaterialId, e.SupplierId });
 
             entity.ToTable("MATERIAL_SUPPLIER");
 
@@ -239,14 +239,13 @@ public partial class AppDbContext : DbContext
 
             entity.HasOne(d => d.Material).WithMany(p => p.MaterialSuppliers)
                 .HasForeignKey(d => d.MaterialId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__MATERIAL___MATER__628FA481");
+                .OnDelete(DeleteBehavior.ClientSetNull);
 
             entity.HasOne(d => d.Supplier).WithMany(p => p.MaterialSuppliers)
                 .HasForeignKey(d => d.SupplierId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__MATERIAL___SUPPL__6383C8BA");
+                .OnDelete(DeleteBehavior.ClientSetNull);
         });
+
 
         modelBuilder.Entity<Order>(entity =>
         {

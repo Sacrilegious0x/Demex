@@ -29,5 +29,4 @@ public partial class Supplier
 
     public virtual ICollection<MaterialSupplier> MaterialSuppliers { get; set; } = new List<MaterialSupplier>();
 
-    public virtual ICollection<Material> Materials { get; set; } = new List<Material>();
 }

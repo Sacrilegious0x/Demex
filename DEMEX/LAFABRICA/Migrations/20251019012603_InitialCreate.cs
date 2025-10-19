@@ -34,6 +34,21 @@ namespace LAFABRICA.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "MATERIAL",
+                columns: table => new
+                {
+                    ID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    NAME = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    PRICE_PURCHASE = table.Column<decimal>(type: "decimal(18,0)", nullable: true),
+                    PHOTO_URL = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__MATERIAL__3214EC27EDDBBA52", x => x.ID);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "PRODUCTS",
                 columns: table => new
                 {
@@ -83,6 +98,28 @@ namespace LAFABRICA.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK__SUPPLIER__3214EC27FB64233E", x => x.ID);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PRODUCT_MATERIAL",
+                columns: table => new
+                {
+                    ProductId = table.Column<int>(type: "int", nullable: false),
+                    MaterialId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PRODUCT_MATERIAL", x => new { x.ProductId, x.MaterialId });
+                    table.ForeignKey(
+                        name: "FK__PRODUCT_MATERIAL__MaterialId",
+                        column: x => x.MaterialId,
+                        principalTable: "MATERIAL",
+                        principalColumn: "ID");
+                    table.ForeignKey(
+                        name: "FK__PRODUCT_MATERIAL__ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "PRODUCTS",
+                        principalColumn: "ID");
                 });
 
             migrationBuilder.CreateTable(
@@ -154,60 +191,6 @@ namespace LAFABRICA.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "MATERIAL",
-                columns: table => new
-                {
-                    ID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    NAME = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    PRICE_PURCHASE = table.Column<decimal>(type: "decimal(18,0)", nullable: true),
-                    PHOTO_URL = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
-                    SupplierId = table.Column<int>(type: "int", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK__MATERIAL__3214EC27EDDBBA52", x => x.ID);
-                    table.ForeignKey(
-                        name: "FK_MATERIAL_SUPPLIERS_SupplierId",
-                        column: x => x.SupplierId,
-                        principalTable: "SUPPLIERS",
-                        principalColumn: "ID");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ORDERS",
-                columns: table => new
-                {
-                    ID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    CREATION_DATE = table.Column<DateOnly>(type: "date", nullable: false),
-                    DALIVERY_DATE = table.Column<DateOnly>(type: "date", nullable: false),
-                    STATE = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    PRIORITY = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
-                    TOTAL_AMOUNT = table.Column<decimal>(type: "decimal(18,0)", nullable: false),
-                    DISCOUNT = table.Column<decimal>(type: "decimal(18,0)", nullable: true),
-                    ADVANCEMENT = table.Column<decimal>(type: "decimal(18,0)", nullable: false),
-                    RESUME_PATH = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
-                    IS_ACTIVE = table.Column<byte>(type: "tinyint", nullable: false, defaultValue: (byte)1),
-                    CLIENT_ID = table.Column<int>(type: "int", nullable: true),
-                    ADMIN_ID = table.Column<int>(type: "int", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK__ORDERS__3214EC270D9964BC", x => x.ID);
-                    table.ForeignKey(
-                        name: "FK__ORDERS__ADMIN_ID__4D94879B",
-                        column: x => x.ADMIN_ID,
-                        principalTable: "ADMINISTRATOR",
-                        principalColumn: "ID");
-                    table.ForeignKey(
-                        name: "FK__ORDERS__CLIENT_I__4CA06362",
-                        column: x => x.CLIENT_ID,
-                        principalTable: "CLIENT",
-                        principalColumn: "ID");
-                });
-
-            migrationBuilder.CreateTable(
                 name: "INVENTORY",
                 columns: table => new
                 {
@@ -244,38 +227,49 @@ namespace LAFABRICA.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__MATERIAL__6E61AFCB20AE3228", x => new { x.MATERIAL_ID, x.SUPPLIER_ID });
+                    table.PrimaryKey("PK_MATERIAL_SUPPLIER", x => new { x.MATERIAL_ID, x.SUPPLIER_ID });
                     table.ForeignKey(
-                        name: "FK__MATERIAL___MATER__628FA481",
+                        name: "FK_MATERIAL_SUPPLIER_MATERIAL_MATERIAL_ID",
                         column: x => x.MATERIAL_ID,
                         principalTable: "MATERIAL",
                         principalColumn: "ID");
                     table.ForeignKey(
-                        name: "FK__MATERIAL___SUPPL__6383C8BA",
+                        name: "FK_MATERIAL_SUPPLIER_SUPPLIERS_SUPPLIER_ID",
                         column: x => x.SUPPLIER_ID,
                         principalTable: "SUPPLIERS",
                         principalColumn: "ID");
                 });
 
             migrationBuilder.CreateTable(
-                name: "PRODUCT_MATERIAL",
+                name: "ORDERS",
                 columns: table => new
                 {
-                    ProductId = table.Column<int>(type: "int", nullable: false),
-                    MaterialId = table.Column<int>(type: "int", nullable: false)
+                    ID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CREATION_DATE = table.Column<DateOnly>(type: "date", nullable: false),
+                    DALIVERY_DATE = table.Column<DateOnly>(type: "date", nullable: false),
+                    STATE = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    PRIORITY = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    TOTAL_AMOUNT = table.Column<decimal>(type: "decimal(18,0)", nullable: false),
+                    DISCOUNT = table.Column<decimal>(type: "decimal(18,0)", nullable: true),
+                    ADVANCEMENT = table.Column<decimal>(type: "decimal(18,0)", nullable: false),
+                    RESUME_PATH = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    IS_ACTIVE = table.Column<byte>(type: "tinyint", nullable: false, defaultValue: (byte)1),
+                    CLIENT_ID = table.Column<int>(type: "int", nullable: true),
+                    ADMIN_ID = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PRODUCT_MATERIAL", x => new { x.ProductId, x.MaterialId });
+                    table.PrimaryKey("PK__ORDERS__3214EC270D9964BC", x => x.ID);
                     table.ForeignKey(
-                        name: "FK__PRODUCT_MATERIAL__MaterialId",
-                        column: x => x.MaterialId,
-                        principalTable: "MATERIAL",
+                        name: "FK__ORDERS__ADMIN_ID__4D94879B",
+                        column: x => x.ADMIN_ID,
+                        principalTable: "ADMINISTRATOR",
                         principalColumn: "ID");
                     table.ForeignKey(
-                        name: "FK__PRODUCT_MATERIAL__ProductId",
-                        column: x => x.ProductId,
-                        principalTable: "PRODUCTS",
+                        name: "FK__ORDERS__CLIENT_I__4CA06362",
+                        column: x => x.CLIENT_ID,
+                        principalTable: "CLIENT",
                         principalColumn: "ID");
                 });
 
@@ -392,11 +386,6 @@ namespace LAFABRICA.Migrations
                 column: "SupplierId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_MATERIAL_SupplierId",
-                table: "MATERIAL",
-                column: "SupplierId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_MATERIAL_SUPPLIER_SUPPLIER_ID",
                 table: "MATERIAL_SUPPLIER",
                 column: "SUPPLIER_ID");
@@ -459,6 +448,9 @@ namespace LAFABRICA.Migrations
                 name: "ROLE_PERMISSIONS");
 
             migrationBuilder.DropTable(
+                name: "SUPPLIERS");
+
+            migrationBuilder.DropTable(
                 name: "MATERIAL");
 
             migrationBuilder.DropTable(
@@ -466,9 +458,6 @@ namespace LAFABRICA.Migrations
 
             migrationBuilder.DropTable(
                 name: "PRODUCTS");
-
-            migrationBuilder.DropTable(
-                name: "SUPPLIERS");
 
             migrationBuilder.DropTable(
                 name: "ADMINISTRATOR");
