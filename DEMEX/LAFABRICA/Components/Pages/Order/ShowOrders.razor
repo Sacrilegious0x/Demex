@@ -1,1 +1,212 @@
-﻿
+﻿@page "/ordenes"
+@using LAFABRICA.Data.DB
+@using LAFABRICA.Models.Interface
+@using LAFABRICA.Components.Pages.Product
+@using LAFABRICA.Components.Pages.Order
+@inject IOrderService orderService
+@inject ToastService ToastService
+@inject NavigationManager nav
+
+<PageTitle>Gestión de Órdenes</PageTitle>
+
+<Toasts class="p-3" Autohide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+<ConfirmDialog @ref="dialog" />
+<OrderDetailsModal @ref="detailsModal" /> 
+
+@if (orders == null)
+{
+    <div class="d-flex justify-content-center">
+        <Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
+    </div>
+}
+else if (!orders.Any())
+{
+    <div>
+        <Alert Color="AlertColor.Primary" class="d-flex justify-content-between align-items-center">
+            <div>
+                <Icon Name="IconName.InfoCircleFill" class="me-2" />
+                <strong>No hay órdenes registradas</strong>
+            </div>
+            <a class="btn btn-outline-primary" href="/ordenes/crear"><Icon Name="IconName.PlusLg" /> Nueva Orden</a>
+        </Alert>
+    </div>
+}
+else
+{
+    <div class="container mt-2">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <h3><Icon Name="IconName.FileTextFill"></Icon> Gestión de Órdenes</h3>
+                    <a class="btn btn-primary" href="/ordenes/crear">
+                        <Icon Name="IconName.PlusLg"></Icon> Nueva Orden
+                    </a>
+                </div>
+                <div class="d-flex justify-content-sm-start align-items-center gap-3 mt-3">
+                    <div class="d-flex align-items-center border rounded px-2">
+                        <Icon Name="IconName.Search" class="text-secondary me-2" />
+                        <input type="text" class="form-control border-0" @bind="searchText" @bind:event="oninput" placeholder="Buscar por Cliente, ID..." style="box-shadow:none;" />
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <Icon Name="IconName.Funnel" class="text-secondary" />
+                        <InputSelect class="form-select" @bind-Value="selectedState">
+                            <option value="">Todos los estados</option>
+                            @foreach (var state in states)
+                            {
+                                <option value="@state">@state</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body text-center">
+                <div class="row">
+                    <div class="col-12 table-responsive" style=" max-height: 370px; overflow-y: auto;">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Cliente</th>
+                                    <th>Ubicación</th>
+                                    <th>Estado</th>
+                                    <th>Prioridad</th>
+                                    <th>Total</th>
+                                    <th>Adelanto</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var (ord, index) in filteredOrders.Select((o, i) => (o, i)))
+                                {
+                                    <tr>
+                                        <td>@(index + 1)</td>
+                                        <td>
+                                            @ord.Client?.Name
+                                            @if (ord.Client?.IsFrequent == 1)
+                                            {
+                                                <Badge Color="BadgeColor.Success" class="d-block mt-1">Cliente Frecuente</Badge>
+                                            }
+                                        </td>
+                                        <td>@ord.Client?.Location</td>
+                                        <td><Badge Color="@GetStateBadgeColor(ord.State)">@ord.State</Badge></td>
+                                        <td><Badge Color="@GetPriorityBadgeColor(ord.Priority)">@ord.Priority</Badge></td>
+                                        <td>@ord.TotalAmount.ToString("C", new System.Globalization.CultureInfo("es-CR"))</td>
+                                        <td>@ord.Advancement.ToString("C", new System.Globalization.CultureInfo("es-CR"))</td>
+                                        <td>
+                                            <button class="btn btn-show" @onclick="() => detailsModal.ShowAsync(ord.Id)" title="Ver Detalles">
+                                                <Icon Name="IconName.Eye" Color="IconColor.Primary" />
+                                            </button>
+                                            <button class="btn btn-edit" @onclick="() => EditOrder(ord)" title="Editar">
+                                                <Icon Name="IconName.PencilSquare" />
+                                            </button>
+                                            <button class="btn btn-delete" @onclick="() => DeleteOrder(ord)" title="Eliminar">
+                                                <Icon Name="IconName.Trash" Color="IconColor.Danger"></Icon>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <Icon Name="IconName.FileEarmarkText" /> Total de órdenes: @filteredOrders.Count()
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Order>? orders;
+    private ConfirmDialog dialog = default!;
+    private OrderDetailsModal detailsModal = default!;
+    // Variables para los filtros
+    private string searchText = string.Empty;
+    private string selectedState = "";
+    private List<string> states = new();
+
+    // Propiedad computada para filtrar órdenes
+    private IEnumerable<Order> filteredOrders =>
+        orders?
+            .Where(o => string.IsNullOrEmpty(selectedState) || o.State == selectedState)
+            .Where(o => string.IsNullOrEmpty(searchText) ||
+                        (o.Client?.Name?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                        o.Id.ToString().Contains(searchText))
+        ?? Enumerable.Empty<Order>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrders();
+    }
+
+    private async Task LoadOrders()
+    {
+        orders = (await orderService.GetAllOrders()).ToList();
+        if (orders != null)
+        {
+            // Cargar los estados únicos para el filtro
+            states = orders.Select(o => o.State).Distinct().OrderBy(s => s).ToList();
+        }
+    }
+
+    private void EditOrder(Order ord)
+    {
+        nav.NavigateTo($"/ordenes/editar/{ord.Id}");
+    }
+
+    private async Task DeleteOrder(Order order)
+    {
+        var options = new ConfirmDialogOptions
+        {
+            YesButtonText = "Eliminar",
+            YesButtonColor = ButtonColor.Danger,
+            NoButtonText = "Cancelar",
+            NoButtonColor = ButtonColor.Secondary
+        };
+
+        var confirmation = await dialog.ShowAsync(
+            title: "Eliminar Orden",
+            message1: $"¿Estás seguro de eliminar la orden #{order.Id}?",
+            message2: "Esta acción marcará la orden como inactiva.",
+            confirmDialogOptions: options);
+
+        if (confirmation)
+        {
+            try
+            {
+                await orderService.Delete(order.Id);
+                await LoadOrders();
+                ToastService.Notify(new(ToastType.Success, $"Se eliminó correctamente la orden #{order.Id}"));
+            }
+            catch (Exception e)
+            {
+                ToastService.Notify(new(ToastType.Danger, $"Ocurrió un error al tratar de eliminar la orden: {e.Message}"));
+            }
+        }
+    }
+
+    private BadgeColor GetStateBadgeColor(string state)
+    {
+        return state.ToLower() switch
+        {
+            "diseño" => BadgeColor.Primary,
+            "cotizando" => BadgeColor.Info,
+            "entregable" => BadgeColor.Success,
+            "corte" => BadgeColor.Dark,
+            "acabados" => BadgeColor.Warning,
+            _ => BadgeColor.Secondary
+        };
+    }
+
+    private BadgeColor GetPriorityBadgeColor(string priority)
+    {
+        return priority.ToLower() switch
+        {
+            "alta" => BadgeColor.Danger,
+            "media" => BadgeColor.Warning,
+            "baja" => BadgeColor.Info,
+            _ => BadgeColor.Secondary
+        };
+    }
+}

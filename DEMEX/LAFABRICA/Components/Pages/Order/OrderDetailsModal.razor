@@ -1,0 +1,148 @@
+﻿@using LAFABRICA.Data.DB
+@using LAFABRICA.Models.Interface
+@inject IOrderService orderService
+
+<Modal @ref="detailsModal" Title="@(orderForDetails == null ? "Cargando Detalles..." : $"Detalles de la Orden #{orderForDetails.Id}")" Size="ModalSize.ExtraLarge">
+    <BodyTemplate>
+        @if (orderForDetails == null && errorMessage == null)
+        {
+            <div class="text-center my-4">
+                <Spinner Color="SpinnerColor.Primary" />
+                <p class="mt-2">Cargando datos de la orden...</p>
+            </div>
+        }
+        else if (errorMessage != null)
+        {
+            <Alert Color="AlertColor.Danger">
+                <Icon Name="IconName.ExclamationTriangleFill" /> @errorMessage
+            </Alert>
+        }
+        else if (orderForDetails != null)
+        {
+            <div class="row">
+                @* --- COLUMNA DE INFORMACIÓN GENERAL --- *@
+                <div class="col-md-6">
+                    <h5><Icon Name="IconName.PersonFill" /> Cliente</h5>
+                    <p><strong>Nombre:</strong> @orderForDetails.Client?.Name</p>
+                    <p><strong>Ubicación:</strong> @(string.IsNullOrEmpty(orderForDetails.Client?.Location) ? "No especificada" : orderForDetails.Client.Location)</p>
+
+                    <h5 class="mt-4"><Icon Name="IconName.InfoCircleFill" /> Estado de la Orden</h5>
+                    <p>
+                        <strong>Estado:</strong>
+                        <Badge Color="@GetStateBadgeColor(orderForDetails.State)">@orderForDetails.State</Badge>
+                    </p>
+                    <p>
+                        <strong>Prioridad:</strong>
+                        <Badge Color="@GetPriorityBadgeColor(orderForDetails.Priority)">@orderForDetails.Priority</Badge>
+                    </p>
+                </div>
+
+                @* --- COLUMNA DE INFORMACIÓN FINANCIERA --- *@
+                <div class="col-md-6">
+                    <h5><Icon Name="IconName.CashCoin" /> Resumen Financiero</h5>
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Total Acordado:
+                            <span class="fw-bold">@orderForDetails.TotalAmount.ToString("C")</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Adelanto:
+                            <span class="fw-bold text-success">@orderForDetails.Advancement.ToString("C")</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Saldo Pendiente:
+                            <span class="fw-bold text-danger">@((orderForDetails.TotalAmount - orderForDetails.Advancement).ToString("C"))</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <hr />
+
+            @* --- SECCIÓN DE PRODUCTOS --- *@
+            <h5><Icon Name="IconName.BoxSeam" /> Productos Incluidos</h5>
+            @if (orderForDetails.ProductOrders != null && orderForDetails.ProductOrders.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Producto</th>
+                                <th class="text-center">Cantidad</th>
+                                <th class="text-end">Precio Unit.</th>
+                                <th class="text-end">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var po in orderForDetails.ProductOrders)
+                            {
+                                <tr>
+                                    <td>@po.IdProductNavigation?.Name</td>
+                                    <td class="text-center">@po.Quantity</td>
+                                    <td class="text-end">@po.IdProductNavigation?.PriceBase.ToString("C")</td>
+                                    <td class="text-end fw-bold">@((po.Quantity * (po.IdProductNavigation?.PriceBase ?? 0)).ToString("C"))</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-muted">Esta orden no tiene productos asociados.</p>
+            }
+        } @* <-- El error estaba causado por un </div> extra que había después de este 'else if' *@
+    </BodyTemplate>
+</Modal>
+
+@code {
+    private Modal detailsModal = default!;
+    private Order? orderForDetails;
+    private string? errorMessage;
+
+    public async Task ShowAsync(int orderId)
+    {
+        orderForDetails = null;
+        errorMessage = null;
+        await detailsModal.ShowAsync();
+
+        try
+        {
+            orderForDetails = await orderService.GetById(orderId);
+            if (orderForDetails == null)
+            {
+                errorMessage = $"La orden con ID #{orderId} no fue encontrada.";
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "Ocurrió un error al cargar los detalles de la orden.";
+        }
+
+        StateHasChanged();
+    }
+
+    private BadgeColor GetStateBadgeColor(string state)
+    {
+        return state.ToLower() switch
+        {
+            "diseño" => BadgeColor.Primary,
+            "cotizando" => BadgeColor.Info,
+            "entrega" => BadgeColor.Success,
+            "corte" => BadgeColor.Dark,
+            "acabados" => BadgeColor.Warning,
+            _ => BadgeColor.Secondary
+        };
+    }
+
+    private BadgeColor GetPriorityBadgeColor(string priority)
+    {
+        return priority.ToLower() switch
+        {
+            "alta" => BadgeColor.Danger,
+            "media" => BadgeColor.Warning,
+            "baja" => BadgeColor.Info,
+            _ => BadgeColor.Secondary
+        };
+    }
+}

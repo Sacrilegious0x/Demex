@@ -1,0 +1,275 @@
+﻿@page "/ordenes/editar/{OrderId:int}"
+@using LAFABRICA.Data.DB
+@using LAFABRICA.Models.Interface
+@inject IOrderService orderService
+@inject IClientService clientService
+@inject IProductService productService
+@inject NavigationManager NavigationManager
+@inject ToastService ToastService
+
+<PageTitle>Editar Orden</PageTitle>
+
+<Toasts class="p-3" Autohide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+<ConfirmDialog @ref="dialog" />
+
+@if (orderToEdit == null || allClients == null || allProducts == null)
+{
+    <div class="text-center p-4">
+        <Spinner Color="SpinnerColor.Primary" />
+        <p class="mt-2">Cargando datos de la orden...</p>
+    </div>
+}
+else
+{
+    <EditForm Model="@orderToEdit" OnValidSubmit="ShowConfirmationAsync">
+        <DataAnnotationsValidator />
+        <Card>
+            <CardHeader>
+                <CardTitle Size="HeadingSize.H5">Editando Orden #@orderToEdit.Id - @orderToEdit.Client?.Name</CardTitle>
+            </CardHeader>
+            <CardBody>
+                <ValidationSummary class="alert alert-danger mb-3" />
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <h5>1. Información del Cliente</h5>
+                        <div class="mb-3">
+                            <label class="form-label">Cliente *</label>
+                            <InputSelect @bind-Value="orderToEdit.ClientId" class="form-select" @onchange="ClientSelectionChanged">
+                                <option value="0">-- Seleccione un cliente --</option>
+                                @foreach (var client in allClients)
+                                {
+                                    <option value="@client.Id">@client.Name</option>
+                                }
+                            </InputSelect>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Prioridad de la Orden</label>
+                            <InputSelect @bind-Value="orderToEdit.Priority" class="form-select">
+                                <option value="Baja">Baja</option>
+                                <option value="Media">Media</option>
+                                <option value="Alta">Alta</option>
+                            </InputSelect>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Estado de la Orden</label>
+                            <InputSelect @bind-Value="orderToEdit.State" class="form-select">
+                                <option value="Diseño">Diseño</option>
+                                <option value="Corte">Corte</option>
+                                <option value="Acabados">Acabados</option>
+                                <option value="Entregable">Entregable</option>
+                            </InputSelect>
+                        </div>
+                    </div>
+
+                    <div class="col-md-8">
+                        <h5>2. Productos de la Orden</h5>
+                        <div class="input-group mb-3">
+                            <select @bind="selectedProductId" class="form-select" style="max-width: 60%;">
+                                <option value="0">-- Seleccione un producto para añadir --</option>
+                                @foreach (var product in allProducts)
+                                {
+                                    <option value="@product.Id">@product.Name (@product.PriceBase.ToString("C"))</option>
+                                }
+                            </select>
+                            <InputNumber @bind-Value="selectedProductQuantity" class="form-control" placeholder="Cant." />
+                            <Button Color="ButtonColor.Success" @onclick="AddProductToCart">Añadir</Button>
+                        </div>
+
+                        @if (cartItems.Any())
+                        {
+                            <ul class="list-group">
+                                @foreach (var item in cartItems)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>@item.Quantity x @item.ProductName</span>
+                                        <span class="fw-bold">@((item.Quantity * item.PriceBase).ToString("C"))</span>
+                                        <Button Color="ButtonColor.Danger" IsOutlined="true" Size="ButtonSize.Small" @onclick="() => RemoveProductFromCart(item.ProductId)">
+                                            <Icon Name="IconName.Trash" />
+                                        </Button>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+
+                <h5>3. Resumen y Pago</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label class="form-label">Total Acordado (₡)</label>
+                        <InputNumber @bind-Value="orderToEdit.TotalAmount" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Descuento (%)</label>
+                        <InputNumber @bind-Value="orderToEdit.Discount" class="form-control" />
+                        @if (!string.IsNullOrEmpty(discountSuggestion))
+                        {
+                            <div class="form-text text-success">@discountSuggestion</div>
+                        }
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Adelanto (₡)</label>
+                        <InputNumber @bind-Value="orderToEdit.Advancement" class="form-control" />
+                        @if (orderToEdit.TotalAmount > 0)
+                        {
+                            <div class="form-text">Sugerido (50%): @((orderToEdit.TotalAmount * 0.5m).ToString("C"))</div>
+                        }
+                    </div>
+                </div>
+
+            </CardBody>
+            <CardFooter>
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="/ordenes" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </CardFooter>
+        </Card>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int OrderId { get; set; }
+
+    public class CartItem
+    {
+        public int ProductId { get; set; }
+        public string ProductName { get; set; } = "";
+        public int Quantity { get; set; }
+        public decimal PriceBase { get; set; }
+    }
+
+    private Order? orderToEdit;
+    private List<Client>? allClients;
+    private List<Product>? allProducts;
+    private List<CartItem> cartItems = new();
+
+    private int selectedProductId;
+    private int selectedProductQuantity = 1;
+    private string discountSuggestion = "";
+    private ConfirmDialog dialog = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        allClients = (await clientService.GetAllClient()).ToList();
+        allProducts = (await productService.GetAllProducts()).ToList();
+        orderToEdit = await orderService.GetById(OrderId);
+
+        if (orderToEdit != null)
+        {
+            // Cargar los productos de la orden al carrito de compras local
+            cartItems = orderToEdit.ProductOrders.Select(po => new CartItem
+            {
+                ProductId = po.IdProduct,
+                ProductName = po.IdProductNavigation?.Name ?? "Producto no encontrado",
+                Quantity = po.Quantity,
+                PriceBase = po.IdProductNavigation?.PriceBase ?? 0
+            }).ToList();
+            UpdateDiscountSuggestion();
+        }
+    }
+
+    private void ClientSelectionChanged(ChangeEventArgs e)
+    {
+        if (orderToEdit is null) return;
+
+        var clientId = int.Parse(e.Value?.ToString() ?? "0");
+        orderToEdit.ClientId = clientId > 0 ? clientId : null;
+        UpdateDiscountSuggestion();
+    }
+
+    private void AddProductToCart()
+    {
+        if (selectedProductId == 0 || selectedProductQuantity <= 0) return;
+        var product = allProducts?.FirstOrDefault(p => p.Id == selectedProductId);
+        if (product == null) return;
+
+        var existingItem = cartItems.FirstOrDefault(i => i.ProductId == selectedProductId);
+        if (existingItem != null)
+        {
+            existingItem.Quantity += selectedProductQuantity;
+        }
+        else
+        {
+            cartItems.Add(new CartItem
+            {
+                ProductId = product.Id,
+                ProductName = product.Name,
+                Quantity = selectedProductQuantity,
+                PriceBase = product.PriceBase
+            });
+        }
+
+        selectedProductId = 0;
+        selectedProductQuantity = 1;
+        UpdateDiscountSuggestion();
+    }
+
+    private void RemoveProductFromCart(int productId)
+    {
+        cartItems.RemoveAll(i => i.ProductId == productId);
+        UpdateDiscountSuggestion();
+    }
+
+    private void UpdateDiscountSuggestion()
+    {
+        discountSuggestion = "";
+        if (orderToEdit == null) return;
+
+        var client = allClients?.FirstOrDefault(c => c.Id == orderToEdit.ClientId);
+
+        bool isFrequent = client?.IsFrequent == 1;
+        bool hasVolume = cartItems.Sum(i => i.Quantity) > 5;
+
+        if (isFrequent && hasVolume) discountSuggestion = "Sugerencia: 5% (cliente frecuente y >5 artículos).";
+        else if (isFrequent) discountSuggestion = "Sugerencia: 5% (cliente frecuente).";
+        else if (hasVolume) discountSuggestion = "Sugerencia: 5% (más de 5 artículos).";
+    }
+
+    private async Task UpdateOrder()
+    {
+        if (orderToEdit == null) return;
+
+        try
+        {
+            orderToEdit.ProductOrders = cartItems.Select(item => new ProductOrder
+            {
+                IdProduct = item.ProductId,
+                Quantity = item.Quantity
+            }).ToList();
+
+            await orderService.Update(OrderId, orderToEdit);
+
+            ToastService.Notify(new(ToastType.Success, "Orden Actualizada", "La orden ha sido guardada exitosamente."));
+            NavigationManager.NavigateTo("/ordenes");
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new(ToastType.Danger, "Error", $"No se pudo guardar la orden: {ex.Message}"));
+        }
+    }
+
+    private async Task ShowConfirmationAsync()
+    {
+        var options = new ConfirmDialogOptions
+        {
+            YesButtonText = "Sí, guardar cambios",
+            YesButtonColor = ButtonColor.Success,
+            NoButtonText = "No, cancelar",
+            NoButtonColor = ButtonColor.Secondary
+        };
+        var confirmation = await dialog.ShowAsync(
+            title: "¿Confirmar Cambios?",
+            message1: $"¿Estás seguro de que deseas guardar las modificaciones para la orden #{orderToEdit?.Id}?",
+            confirmDialogOptions: options);
+
+        if (confirmation)
+        {
+            await UpdateOrder();
+        }
+    }
+}

@@ -70,6 +70,13 @@ public partial class AppDbContext : DbContext
             entity.HasOne(d => d.Rol).WithMany(p => p.Administrators)
                 .HasForeignKey(d => d.RolId)
                 .HasConstraintName("FK__ADMINISTR__ROL_I__412EB0B6");
+            //PARA VALIDACIONES
+            entity.HasIndex(d => d.Email)
+                .IsUnique()
+                .HasDatabaseName("UQ_ADMIN_EMAIL");
+            entity.HasIndex(d => d.Identification)
+                .IsUnique()
+                .HasDatabaseName("UQ_ADMIN_IDENTIFICATION");
         });
 
         modelBuilder.Entity<Client>(entity =>
@@ -105,6 +112,16 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.SpecificLocation)
                 .HasMaxLength(100)
                 .HasColumnName("SPECIFIC_LOCATION");
+            //Para validaciones de unicidad
+            entity.HasIndex(e => e.Email)
+                .IsUnique()
+                .HasDatabaseName("UQ_CLIENT_EMAIL");
+            entity.HasIndex(e => e.PhoneNumber)
+               .IsUnique()
+               .HasDatabaseName("UQ_CLIENT_PHONE_NUMBER");
+            entity.HasIndex(e => e.ManagerPhoneNumber)
+               .IsUnique()
+               .HasDatabaseName("UQ_CLIENT_MANAGER_PHONE_NUMBER");
         });
 
         modelBuilder.Entity<ClientPayment>(entity =>
@@ -159,6 +176,14 @@ public partial class AppDbContext : DbContext
             entity.HasOne(d => d.Rol).WithMany(p => p.Employees)
                 .HasForeignKey(d => d.RolId)
                 .HasConstraintName("FK__EMPLOYEE__ROL_ID__44FF419A");
+
+            //para validaciones
+            entity.HasIndex(d => d.Email)
+                .IsUnique()
+                .HasDatabaseName("UQ_EMPLOYEE_EMAIL");
+            entity.HasIndex(d => d.Identification)
+                .IsUnique()
+                .HasDatabaseName("UQ_EMPLOYEE_IDENTIFICATION");
         });
 
         modelBuilder.Entity<Inventory>(entity =>
@@ -174,15 +199,11 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.State)
                 .HasMaxLength(10)
                 .HasColumnName("STATE");
-            entity.Property(e => e.SupplierId).HasColumnName("SUPPLIER_ID");
 
             entity.HasOne(d => d.Material).WithMany(p => p.Inventories)
                 .HasForeignKey(d => d.MaterialId)
                 .HasConstraintName("FK__INVENTORY__MATER__68487DD7");
 
-            entity.HasOne(d => d.Supplier).WithMany(p => p.Inventories)
-                .HasForeignKey(d => d.SupplierId)
-                .HasConstraintName("FK__INVENTORY__SUPPL__693CA210");
         });
 
         modelBuilder.Entity<Material>(entity =>
@@ -201,16 +222,14 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.PricePurchase)
                 .HasColumnType("decimal(18, 0)")
                 .HasColumnName("PRICE_PURCHASE");
-            entity.Property(e => e.SupplierId).HasColumnName("SUPPLIER_ID");
+          
 
-            entity.HasOne(d => d.Supplier).WithMany(p => p.Materials)
-                .HasForeignKey(d => d.SupplierId)
-                .HasConstraintName("FK__MATERIAL__SUPPLI__5FB337D6");
+            
         });
 
         modelBuilder.Entity<MaterialSupplier>(entity =>
         {
-            entity.HasKey(e => new { e.MaterialId, e.SupplierId }).HasName("PK__MATERIAL__6E61AFCB20AE3228");
+            entity.HasKey(e => new { e.MaterialId, e.SupplierId });
 
             entity.ToTable("MATERIAL_SUPPLIER");
 
@@ -220,14 +239,13 @@ public partial class AppDbContext : DbContext
 
             entity.HasOne(d => d.Material).WithMany(p => p.MaterialSuppliers)
                 .HasForeignKey(d => d.MaterialId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__MATERIAL___MATER__628FA481");
+                .OnDelete(DeleteBehavior.ClientSetNull);
 
             entity.HasOne(d => d.Supplier).WithMany(p => p.MaterialSuppliers)
                 .HasForeignKey(d => d.SupplierId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__MATERIAL___SUPPL__6383C8BA");
+                .OnDelete(DeleteBehavior.ClientSetNull);
         });
+
 
         modelBuilder.Entity<Order>(entity =>
         {
@@ -400,6 +418,13 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Phone)
                 .HasMaxLength(15)
                 .HasColumnName("PHONE");
+            //PARA VALIDACIONES
+            entity.HasIndex(e => e.Email)
+                .IsUnique()
+                .HasDatabaseName("UQ_SUPPLIER_EMAIL");
+            entity.HasIndex(e => e.Phone)
+                .IsUnique()
+                .HasDatabaseName("UQ_SUPPLIER_PHONE");
         });
 
        

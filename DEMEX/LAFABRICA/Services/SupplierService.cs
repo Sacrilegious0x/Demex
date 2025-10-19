@@ -76,6 +76,16 @@ namespace LAFABRICA.Services
 
             };
 
+            bool existEmail = await _context.Suppliers.AnyAsync(s =>  s.Email == supplierEntity.Email);
+            if (existEmail)
+            {
+                throw new InvalidOperationException("El correo ya esta registrado");
+            }
+            bool existPhone = await _context.Suppliers.AnyAsync(s =>  s.Phone == supplierEntity.Phone);
+            if (existPhone)
+            {
+                throw new InvalidOperationException("El contacto del proveedor ya esta registrado");
+            }
             _context.Suppliers.Add(supplierEntity);
 
             //  Guardar los cambios en la base de datos
@@ -126,6 +136,17 @@ namespace LAFABRICA.Services
             var supplier = await _context.Suppliers.FindAsync(updatedSupplierDto.Id);
             if (supplier == null) return false;
 
+            bool existEmail = await _context.Suppliers.AnyAsync(s => s.Id != supplier.Id && s.Email == updatedSupplierDto.Email);
+            if (existEmail)
+            {
+                throw new InvalidOperationException("El correo ya esta registrado");
+            }
+            bool existPhone = await _context.Suppliers.AnyAsync(s => s.Id != supplier.Id && s.Phone == updatedSupplierDto.Phone);
+            if (existPhone)
+            {
+                throw new InvalidOperationException("El contacto del proveedor ya esta registrado");
+            }
+            
             supplier.Name = updatedSupplierDto.Name;
             supplier.Address = updatedSupplierDto.Address;
             supplier.Phone = updatedSupplierDto.Phone;

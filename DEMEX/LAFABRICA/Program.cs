@@ -8,13 +8,18 @@ using Microsoft.EntityFrameworkCore;
 using System.Net.Http;
 
 var builder = WebApplication.CreateBuilder(args);
-
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 //DATABASE
 //Crea variable para la cadena de conexion
 var connectionString = builder.Configuration.GetConnectionString("DEMEX");
 //registra servicio  para la conexion
 builder.Services.AddDbContext<AppDbContext>(options =>
-options.UseSqlServer(connectionString));
+{
+options.UseSqlServer(connectionString)
+.LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information)
+           .EnableSensitiveDataLogging();
+    });
+
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

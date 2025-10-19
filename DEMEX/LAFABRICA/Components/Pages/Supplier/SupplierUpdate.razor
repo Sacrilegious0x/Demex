@@ -17,8 +17,8 @@
      supplier es la que se precarga y se usa para el binding
      isBusy se usa para manejar el estado de carga y evitar broncas feas si el objeto es nulo
 *@
-<Toasts Class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight"></Toasts>
-
+<PageTitle>Editar Proveedor</PageTitle>
+<Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 <ConfirmDialog @ref="dialog" />
 
 @if (isBusy)
@@ -38,126 +38,104 @@ else if (supplier == null)
 }
 else
 {
-    <div class="card shadow-sm h-100 d-flex flex-column">
-
-        @*Header   *@
-        <div class="card-header p-4 border-bottom">
-            <div class="d-flex justify-content-between align-items-center mt-3">
-                <h1 class="h4 card-title text-gray-900 d-flex align-items-center">
-                    <i class="bi bi-building me-3" style="font-size: 1.5rem; color: #0f54a1;"></i>
-                    Editar Proveedor: @supplier.Name
-                </h1>
-                <a class="btn btn-outline-secondary" href="/proveedor"><Icon Name="IconName.ArrowLeft"></Icon></a>
+    <div class="container mt-2">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <h2>
+                        <Icon Name="IconName.Building" />
+                        <text>Editar Proveedor</text>
+                    </h2>
+                    <a class="btn btn-outline-secondary" href="/proveedor">
+                        <Icon Name="IconName.ArrowLeft"></Icon>
+                    </a>
+                </div>
             </div>
-           
-        </div>
 
-        @*  Formulario *@
-        <div class="flex-grow-1 overflow-auto p-4">
+            <div class="card-body">
+                <EditForm Model="@supplier" OnValidSubmit="@ShowConfirmationAsync">
+                    <DataAnnotationsValidator />
 
-            <EditForm Model="@supplier" OnValidSubmit="@ShowConfirmationAsync" class="mx-auto" style="max-width: 850px;">
-                <DataAnnotationsValidator />
-                <div class="row g-4">
-                    @* Columna 1: Información del Proveedor *@
-                    <div class="col-12 col-lg-6">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h3 class="h5 card-title mb-4 d-flex align-items-center text-gray-900">
-                                    <i class="bi bi-person me-2" style="color: #0f54a1;"></i>
-                                    Información del Proveedor
-                                </h3>
+                    <div class="d-flex justify-content-between">
+                        <!-- Columna izquierda -->
+                        <div class="container-sm">
+                            <h3>Información del proveedor</h3>
 
-                                <div class="space-y-4">
+                            <div class="form-group row mb-3">
+                                <label class="col-md-5 col-form-label">Nombre de la empresa: <span class="text-danger">*</span></label>
+                                <div class="col-md-8">
+                                    <InputText class="form-control border-1" id="name" @bind-Value="supplier.Name" placeholder="Ej: Cerámica Nacional" required />
+                                    <ValidationMessage For="@(() => supplier.Name)" />
+                                </div>
+                            </div>
 
-                                    @* Campo: Nombre *@
-                                    <div class="mb-3">
-                                        <label for="name" class="form-label">Nombre de la empresa *</label>
-                                        <InputText id="name" @bind-Value="supplier.Name" class="form-control" placeholder="Ej: Cerámica Nacional" required />
-                                        <ValidationMessage For="@(() => supplier.Name)" />
-                                    </div>
+                            <div class="form-group row mb-3">
+                                <label class="col-md-5 col-form-label">Correo electrónico:</label>
+                                <div class="col-md-8">
+                                    <InputText class="form-control border-1" id="email" @bind-Value="supplier.Email" type="email" placeholder="correo@ejemplo.com" />
+                                    <ValidationMessage For="@(() => supplier.Email)" />
+                                </div>
+                            </div>
 
-                                    @* Campo: Correo Electrónico *@
-                                    <div class="mb-3">
-                                        <label for="email" class="form-label">Correo electrónico</label>
-                                        <InputText id="email" @bind-Value="supplier.Email" class="form-control" placeholder="correo@ejemplo.com" type="email" />
-                                        <ValidationMessage For="@(() => supplier.Email)" />
-                                    </div>
+                            <div class="form-group row mb-3">
+                                <label class="col-md-5 col-form-label">Teléfono: <span class="text-danger">*</span></label>
+                                <div class="col-md-8">
+                                    <InputText class="form-control border-1" id="phone" @bind-Value="supplier.Phone" placeholder="8888-8888" required />
+                                    <ValidationMessage For="@(() => supplier.Phone)" />
+                                </div>
+                                <div>
+                                    <p class="text-black-50">Formato admitido: xxxx-xxxx</p>
+                                </div>
+                            </div>
+                        </div>
 
-                                    @* Campo: Teléfono *@
-                                    <div class="mb-3">
-                                        <label for="phone" class="form-label">Teléfono *</label>
-                                        <InputText id="phone" @bind-Value="supplier.Phone" class="form-control" placeholder="+506 8888-8888" required />
-                                        <ValidationMessage For="@(() => supplier.Phone)" />
-                                        <div>
-                                            <p class="text-black-50">Formato admitido: xxxx-xxxx</p>
-                                        </div>
-                                    </div>
+                        <!-- Columna derecha -->
+                        <div class="container-sm">
+                            <h3>Ubicación y detalles</h3>
 
+                            <div class="form-group row mb-3">
+                                <label class="col-md-5 col-form-label">Dirección:</label>
+                                <div class="col-md-8">
+                                    <InputText class="form-control border-1" id="address" @bind-Value="supplier.Address" placeholder="Dirección completa" />
+                                    <ValidationMessage For="@(() => supplier.Address)" />
+                                </div>
+                            </div>
 
-
+                            <div class="form-group row mb-3">
+                                <label class="col-md-5 col-form-label">Notas adicionales:</label>
+                                <div class="col-md-8">
+                                    <InputTextArea id="notes" @bind-Value="supplier.Notes" class="form-control border-1" placeholder="Información adicional..." rows="3" />
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    @* Columna 2: Ubicación y Detalles *@
-                    <div class="col-12 col-lg-6">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h3 class="h5 card-title mb-4 d-flex align-items-center text-gray-900">
-                                    <i class="bi bi-geo-alt me-2" style="color: #0f54a1;"></i>
-                                    Ubicación y detalles
-                                </h3>
-
-                                <div class="space-y-4">
-
-                                    @* Campo: Dirección *@
-                                    <div class="mb-3">
-                                        <label for="address" class="form-label">Dirección</label>
-                                        <InputText id="address" @bind-Value="supplier.Address" class="form-control" placeholder="Dirección completa" />
-                                        <ValidationMessage For="@(() => supplier.Address)" />
-                                    </div>
-
-                                    @* Campo: Notas Adicionales  *@
-                                    <div class="mb-3">
-                                        <label for="notes" class="form-label">Notas adicionales</label>
-                                        <InputTextArea id="notes" @bind-Value="supplier.Notes" class="form-control" placeholder="Información adicional..." rows="3" />
-                                    </div>
-
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                @*  NotaAlerta Azul de Bootstrap*@
-                <div class="alert alert-info alert-note my-4 p-4" role="alert">
-                    <div class="d-flex align-items-start">
-                        <i class="bi bi-info-circle-fill me-3" style="font-size: 1.25rem;"></i>
-                        <div>
-                            <h4 class="alert-heading h6 m-0">Nota</h4>
-                            <p class="mb-0 text-sm">
+                    <!-- Nota informativa -->
+                    <div class="alert alert-info mt-4" role="alert">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-info-circle-fill me-2" style="font-size: 1.2rem;"></i>
+                            <div>
+                                <strong>Nota:</strong>
                                 Los proveedores creados podrán asignarse a materiales más adelante.
-                            </p>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                @* --- Botones de Acción (Footer) --- *@
-                <div class="d-flex justify-content-end space-x-4 pt-4 border-top">
-
-                    <button type="button" class="btn btn-outline-secondary px-4 m-1" @onclick="HandleCancel">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="btn text-white px-4 m-1" style="background-color: #0f54a1;">
-                        Guardar
-                    </button>
-                </div>
-
-            </EditForm>
+                    <!-- Botones de acción -->
+                    <div class="d-flex justify-content-end mt-3 border-top pt-3">
+                        <button type="button" class="btn btn-outline-secondary me-2" @onclick="HandleCancel">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            Guardar
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
         </div>
     </div>
 }
+
 
 
 @code {
