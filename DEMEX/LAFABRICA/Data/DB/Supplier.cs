@@ -25,8 +25,6 @@ public partial class Supplier
 
     public bool IsActive { get; set; }
 
-    public virtual ICollection<Inventory> Inventories { get; set; } = new List<Inventory>();
-
     public virtual ICollection<MaterialSupplier> MaterialSuppliers { get; set; } = new List<MaterialSupplier>();
 
 }

@@ -101,6 +101,27 @@ namespace LAFABRICA.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "INVENTORY",
+                columns: table => new
+                {
+                    ID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MINIMUN_QUANTITY = table.Column<int>(type: "int", nullable: false),
+                    QUANTITY = table.Column<int>(type: "int", nullable: false),
+                    STATE = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    MATERIAL_ID = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__INVENTOR__3214EC2756497961", x => x.ID);
+                    table.ForeignKey(
+                        name: "FK__INVENTORY__MATER__68487DD7",
+                        column: x => x.MATERIAL_ID,
+                        principalTable: "MATERIAL",
+                        principalColumn: "ID");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "PRODUCT_MATERIAL",
                 columns: table => new
                 {
@@ -187,33 +208,6 @@ namespace LAFABRICA.Migrations
                         name: "FK__ROLE_PERM__ROLE___3D5E1FD2",
                         column: x => x.ROLE_ID,
                         principalTable: "ROL",
-                        principalColumn: "ID");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "INVENTORY",
-                columns: table => new
-                {
-                    ID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    MINIMUN_QUANTITY = table.Column<int>(type: "int", nullable: false),
-                    QUANTITY = table.Column<int>(type: "int", nullable: false),
-                    STATE = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
-                    MATERIAL_ID = table.Column<int>(type: "int", nullable: true),
-                    SupplierId = table.Column<int>(type: "int", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK__INVENTOR__3214EC2756497961", x => x.ID);
-                    table.ForeignKey(
-                        name: "FK_INVENTORY_SUPPLIERS_SupplierId",
-                        column: x => x.SupplierId,
-                        principalTable: "SUPPLIERS",
-                        principalColumn: "ID");
-                    table.ForeignKey(
-                        name: "FK__INVENTORY__MATER__68487DD7",
-                        column: x => x.MATERIAL_ID,
-                        principalTable: "MATERIAL",
                         principalColumn: "ID");
                 });
 
@@ -379,11 +373,6 @@ namespace LAFABRICA.Migrations
                 name: "IX_INVENTORY_MATERIAL_ID",
                 table: "INVENTORY",
                 column: "MATERIAL_ID");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_INVENTORY_SupplierId",
-                table: "INVENTORY",
-                column: "SupplierId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_MATERIAL_SUPPLIER_SUPPLIER_ID",

@@ -294,15 +294,10 @@ namespace LAFABRICA.Migrations
                         .HasColumnType("nvarchar(10)")
                         .HasColumnName("STATE");
 
-                    b.Property<int?>("SupplierId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id")
                         .HasName("PK__INVENTOR__3214EC2756497961");
 
                     b.HasIndex("MaterialId");
-
-                    b.HasIndex("SupplierId");
 
                     b.ToTable("INVENTORY", (string)null);
                 });
@@ -677,10 +672,6 @@ namespace LAFABRICA.Migrations
                         .HasForeignKey("MaterialId")
                         .HasConstraintName("FK__INVENTORY__MATER__68487DD7");
 
-                    b.HasOne("LAFABRICA.Data.DB.Supplier", null)
-                        .WithMany("Inventories")
-                        .HasForeignKey("SupplierId");
-
                     b.Navigation("Material");
                 });
 
@@ -811,8 +802,6 @@ namespace LAFABRICA.Migrations
 
             modelBuilder.Entity("LAFABRICA.Data.DB.Supplier", b =>
                 {
-                    b.Navigation("Inventories");
-
                     b.Navigation("MaterialSuppliers");
                 });
 #pragma warning restore 612, 618
