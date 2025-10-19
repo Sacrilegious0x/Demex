@@ -13,11 +13,8 @@ public partial class Material
 
     public string PhotoUrl { get; set; } = null!;
 
-    public int? SupplierId { get; set; }
 
     // --- Propiedades de Navegación Correctas ---
-
-    public virtual Supplier? Supplier { get; set; }
 
     public virtual ICollection<Inventory> Inventories { get; set; } = new List<Inventory>();
 

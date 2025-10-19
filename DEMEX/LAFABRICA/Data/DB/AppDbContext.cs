@@ -199,15 +199,11 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.State)
                 .HasMaxLength(10)
                 .HasColumnName("STATE");
-            entity.Property(e => e.SupplierId).HasColumnName("SUPPLIER_ID");
 
             entity.HasOne(d => d.Material).WithMany(p => p.Inventories)
                 .HasForeignKey(d => d.MaterialId)
                 .HasConstraintName("FK__INVENTORY__MATER__68487DD7");
 
-            entity.HasOne(d => d.Supplier).WithMany(p => p.Inventories)
-                .HasForeignKey(d => d.SupplierId)
-                .HasConstraintName("FK__INVENTORY__SUPPL__693CA210");
         });
 
         modelBuilder.Entity<Material>(entity =>
@@ -226,11 +222,9 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.PricePurchase)
                 .HasColumnType("decimal(18, 0)")
                 .HasColumnName("PRICE_PURCHASE");
-            entity.Property(e => e.SupplierId).HasColumnName("SUPPLIER_ID");
+          
 
-            entity.HasOne(d => d.Supplier).WithMany(p => p.Materials)
-                .HasForeignKey(d => d.SupplierId)
-                .HasConstraintName("FK__MATERIAL__SUPPLI__5FB337D6");
+            
         });
 
         modelBuilder.Entity<MaterialSupplier>(entity =>

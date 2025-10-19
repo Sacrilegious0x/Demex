@@ -14,7 +14,12 @@ QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 var connectionString = builder.Configuration.GetConnectionString("DEMEX");
 //registra servicio  para la conexion
 builder.Services.AddDbContext<AppDbContext>(options =>
-options.UseSqlServer(connectionString));
+{
+options.UseSqlServer(connectionString)
+.LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information)
+           .EnableSensitiveDataLogging();
+    });
+
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

@@ -295,8 +295,7 @@ namespace LAFABRICA.Migrations
                         .HasColumnName("STATE");
 
                     b.Property<int?>("SupplierId")
-                        .HasColumnType("int")
-                        .HasColumnName("SUPPLIER_ID");
+                        .HasColumnType("int");
 
                     b.HasKey("Id")
                         .HasName("PK__INVENTOR__3214EC2756497961");
@@ -334,8 +333,7 @@ namespace LAFABRICA.Migrations
                         .HasColumnName("PRICE_PURCHASE");
 
                     b.Property<int?>("SupplierId")
-                        .HasColumnType("int")
-                        .HasColumnName("SUPPLIER_ID");
+                        .HasColumnType("int");
 
                     b.HasKey("Id")
                         .HasName("PK__MATERIAL__3214EC27EDDBBA52");
@@ -685,24 +683,18 @@ namespace LAFABRICA.Migrations
                         .HasForeignKey("MaterialId")
                         .HasConstraintName("FK__INVENTORY__MATER__68487DD7");
 
-                    b.HasOne("LAFABRICA.Data.DB.Supplier", "Supplier")
+                    b.HasOne("LAFABRICA.Data.DB.Supplier", null)
                         .WithMany("Inventories")
-                        .HasForeignKey("SupplierId")
-                        .HasConstraintName("FK__INVENTORY__SUPPL__693CA210");
+                        .HasForeignKey("SupplierId");
 
                     b.Navigation("Material");
-
-                    b.Navigation("Supplier");
                 });
 
             modelBuilder.Entity("LAFABRICA.Data.DB.Material", b =>
                 {
-                    b.HasOne("LAFABRICA.Data.DB.Supplier", "Supplier")
+                    b.HasOne("LAFABRICA.Data.DB.Supplier", null)
                         .WithMany("Materials")
-                        .HasForeignKey("SupplierId")
-                        .HasConstraintName("FK__MATERIAL__SUPPLI__5FB337D6");
-
-                    b.Navigation("Supplier");
+                        .HasForeignKey("SupplierId");
                 });
 
             modelBuilder.Entity("LAFABRICA.Data.DB.MaterialSupplier", b =>
