@@ -12,7 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LAFABRICA.Migrations
 {
     [DbContext(typeof(AppDbContext))]
+<<<<<<<< HEAD:DEMEX/LAFABRICA/Migrations/20251019015306_InitialCreate.Designer.cs
     [Migration("20251019015306_InitialCreate")]
+========
+    [Migration("20251019015012_InitialCreate")]
+>>>>>>>> 1bf7dedc84ce119d790666f2ddd9f5d5c29834a7:DEMEX/LAFABRICA/Migrations/20251019015012_InitialCreate.Designer.cs
     partial class InitialCreate
     {
         /// <inheritdoc />
