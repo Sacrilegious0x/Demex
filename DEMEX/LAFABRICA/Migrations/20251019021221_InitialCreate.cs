@@ -41,7 +41,8 @@ namespace LAFABRICA.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     NAME = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     PRICE_PURCHASE = table.Column<decimal>(type: "decimal(18,0)", nullable: true),
-                    PHOTO_URL = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false)
+                    PHOTO_URL = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -217,7 +218,8 @@ namespace LAFABRICA.Migrations
                 {
                     MATERIAL_ID = table.Column<int>(type: "int", nullable: false),
                     SUPPLIER_ID = table.Column<int>(type: "int", nullable: false),
-                    QUANTITY = table.Column<int>(type: "int", nullable: true)
+                    QUANTITY = table.Column<int>(type: "int", nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: true)
                 },
                 constraints: table =>
                 {

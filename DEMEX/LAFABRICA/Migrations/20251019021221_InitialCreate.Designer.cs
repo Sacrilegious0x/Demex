@@ -12,11 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LAFABRICA.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-<<<<<<<< HEAD:DEMEX/LAFABRICA/Migrations/20251019015306_InitialCreate.Designer.cs
-    [Migration("20251019015306_InitialCreate")]
-========
-    [Migration("20251019015012_InitialCreate")]
->>>>>>>> 1bf7dedc84ce119d790666f2ddd9f5d5c29834a7:DEMEX/LAFABRICA/Migrations/20251019015012_InitialCreate.Designer.cs
+    [Migration("20251019021221_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -318,6 +314,9 @@ namespace LAFABRICA.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool?>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -349,6 +348,9 @@ namespace LAFABRICA.Migrations
                     b.Property<int>("SupplierId")
                         .HasColumnType("int")
                         .HasColumnName("SUPPLIER_ID");
+
+                    b.Property<bool?>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<int?>("Quantity")
                         .HasColumnType("int")

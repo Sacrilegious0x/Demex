@@ -311,6 +311,9 @@ namespace LAFABRICA.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool?>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -342,6 +345,9 @@ namespace LAFABRICA.Migrations
                     b.Property<int>("SupplierId")
                         .HasColumnType("int")
                         .HasColumnName("SUPPLIER_ID");
+
+                    b.Property<bool?>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<int?>("Quantity")
                         .HasColumnType("int")
