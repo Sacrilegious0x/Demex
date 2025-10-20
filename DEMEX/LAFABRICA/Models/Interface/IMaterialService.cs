@@ -1,4 +1,5 @@
 ﻿using LAFABRICA.Data.DB;
+using LAFABRICA.Models.AuxiliarDTOS;
 
 namespace LAFABRICA.Models.Interface
 {
@@ -13,6 +14,8 @@ namespace LAFABRICA.Models.Interface
         Task<Material> UpdateMaterial(int id, Material material);   
 
         Task DeleteMaterial(int id);
+
+        Task<IEnumerable<MaterialSupplierInventoryDto>> GetMaterialDetails();
 
 
     }

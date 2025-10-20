@@ -1,6 +1,9 @@
 ﻿// En LAFABRICA/Services/MaterialService.cs
+using AspNetCoreGeneratedDocument;
 using LAFABRICA.Data.DB;
+using LAFABRICA.Models.AuxiliarDTOS;
 using LAFABRICA.Models.Interface;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace LAFABRICA.Services
@@ -46,6 +49,8 @@ namespace LAFABRICA.Services
             return material;
         }
 
+
+
         public async Task<Material> UpdateMaterial(int id, Material material)
         {
             var oldMaterial = await _context.Materials.FindAsync(id);
@@ -58,6 +63,36 @@ namespace LAFABRICA.Services
             await _context.SaveChangesAsync();
             return material;
         }
+
+
+        public async Task<IEnumerable<MaterialSupplierInventoryDto>> GetMaterialDetails()
+        {
+            var queryMaterialsToInventory =
+        from m in _context.Materials
+        join ms in _context.MaterialSuppliers on m.Id equals ms.MaterialId
+        join s in _context.Suppliers on ms.SupplierId equals s.Id
+        join i in _context.Inventories on m.Id equals i.MaterialId
+        select new MaterialSupplierInventoryDto // <--- Aquí seleccionas el ViewModel
+        {
+            MaterialId = m.Id,
+            SupplierId = s.Id,
+            MaterialName = m.Name,
+            SupplierName = s.Name,
+            Quantity = ms.Quantity,
+            Unit = m.Unit,
+            MinimumQuantity = i.MinimunQuantity, // Asumiendo este nombre en el modelo Inventory
+            PricePurchase = m.PricePurchase,
+            photoUrl = m.PhotoUrl
+        };
+
+            return await queryMaterialsToInventory.ToListAsync();
+        }
+
+
+
+
+
+
 
     }
 }

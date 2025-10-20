@@ -1,5 +1,5 @@
 ﻿using LAFABRICA.Data.DB;
-using LAFABRICA.Models;
+using LAFABRICA.Models.AuxiliarDTOS;
 using LAFABRICA.Models.Interface;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;

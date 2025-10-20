@@ -13,6 +13,8 @@ public partial class Material
 
     public string PhotoUrl { get; set; } = null!;
 
+    public string Unit {  get; set; } = null!;
+
 
     public bool? IsActive { get; set; }
 
