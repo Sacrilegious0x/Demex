@@ -1,11 +1,16 @@
 ﻿@page "/ordenes/editar/{OrderId:int}"
 @using LAFABRICA.Data.DB
 @using LAFABRICA.Models.Interface
+@using System.ComponentModel.DataAnnotations // Necesario si añades validaciones aquí
 @inject IOrderService orderService
 @inject IClientService clientService
 @inject IProductService productService
 @inject NavigationManager NavigationManager
 @inject ToastService ToastService
+@inject IJSRuntime JSRuntime
+@inject IWebHostEnvironment WebHostEnvironment
+@* @using LAFABRICA.Utilities.PdfGeneration (EJEMPLO) *@
+
 
 <PageTitle>Editar Orden</PageTitle>
 
@@ -21,7 +26,8 @@
 }
 else
 {
-    <EditForm Model="@orderToEdit" OnValidSubmit="ShowConfirmationAsync">
+    <EditForm EditContext="@editContext" OnValidSubmit="ShowConfirmationAsync">
+        @* EditContext se asocia aquí *@
         <DataAnnotationsValidator />
         <Card>
             <CardHeader>
@@ -42,6 +48,7 @@ else
                                     <option value="@client.Id">@client.Name</option>
                                 }
                             </InputSelect>
+                            <ValidationMessage For="@(() => orderToEdit.ClientId)" />
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Prioridad de la Orden</label>
@@ -63,7 +70,11 @@ else
                     </div>
 
                     <div class="col-md-8">
-                        <h5>2. Productos de la Orden</h5>
+                        <h5>2. Productos de la Orden *</h5>
+                        @if (!cartItems.Any())
+                        {
+                            <div class="alert alert-warning small">Debe añadir al menos un producto.</div>
+                        }
                         <div class="input-group mb-3">
                             <select @bind="selectedProductId" class="form-select" style="max-width: 60%;">
                                 <option value="0">-- Seleccione un producto para añadir --</option>
@@ -103,8 +114,9 @@ else
                 <h5>3. Resumen y Pago</h5>
                 <div class="row">
                     <div class="col-md-4">
-                        <label class="form-label">Total Acordado (₡)</label>
+                        <label class="form-label">Total Acordado (₡) *</label>
                         <InputNumber @bind-Value="orderToEdit.TotalAmount" class="form-control" />
+                        <ValidationMessage For="@(() => orderToEdit.TotalAmount)" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Descuento (%)</label>
@@ -130,15 +142,17 @@ else
 
                     <a href="/ordenes" class="btn btn-secondary">Cancelar</a>
 
-                    <button type="button" class="btn btn-info" @onclick="GenerateSummary">
-                        <Icon Name="IconName.FileEarmarkText" /> Generar Resumen
-                    </button>
+                    <Button Color="ButtonColor.Info" IsOutlined="true"
+                            @onclick="GeneratePdfPreview"
+                            disabled="@(!cartItems.Any() || orderToEdit.ClientId == null)">
+                        <Icon Name="IconName.FileEarmarkPdf" /> Generar Resumen
+                    </Button>
 
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-primary" disabled="@(!cartItems.Any())">
                         <Icon Name="IconName.Save" /> Guardar Cambios
                     </button>
 
-                    <button type="button" class="btn btn-success" @onclick="ShowFinishConfirmationAsync">
+                    <button type="button" class="btn btn-success" @onclick="ShowFinishConfirmationAsync" disabled="@(!cartItems.Any())">
                         <Icon Name="IconName.CheckCircle" /> Finalizar Orden
                     </button>
 
@@ -169,10 +183,8 @@ else
     private int selectedProductQuantity = 1;
     private string discountSuggestion = "";
     private ConfirmDialog dialog = default!;
+    private EditContext editContext = default!;
 
-    // === OnInitializedAsync (Carga Inicial) ===
-    // Lee la orden y llena 'cartItems' (la lista de la UI) buscando detalles en 'allProducts'.
-    // Esto funciona bien porque la primera vez sí ves los productos.
     protected override async Task OnInitializedAsync()
     {
         allClients = (await clientService.GetAllClient()).ToList();
@@ -181,6 +193,8 @@ else
 
         if (orderToEdit != null)
         {
+            editContext = new EditContext(orderToEdit); // Inicializar EditContext
+
             cartItems = orderToEdit.ProductOrders.Select(po =>
             {
                 var productDetails = allProducts?.FirstOrDefault(p => p.Id == po.IdProduct);
@@ -200,10 +214,10 @@ else
     private void ClientSelectionChanged(ChangeEventArgs e)
     {
         if (orderToEdit is null) return;
-
         var clientId = int.Parse(e.Value?.ToString() ?? "0");
         orderToEdit.ClientId = clientId > 0 ? clientId : null;
         UpdateDiscountSuggestion();
+        editContext?.NotifyFieldChanged(FieldIdentifier.Create(() => orderToEdit.ClientId));
     }
 
     private void AddProductToCart()
@@ -227,128 +241,141 @@ else
                 PriceBase = product.PriceBase
             });
         }
-
         selectedProductId = 0;
         selectedProductQuantity = 1;
         UpdateDiscountSuggestion();
+        StateHasChanged();
     }
 
     private void RemoveProductFromCart(int productId)
     {
         cartItems.RemoveAll(i => i.ProductId == productId);
         UpdateDiscountSuggestion();
+        StateHasChanged();
     }
 
     private void UpdateDiscountSuggestion()
     {
         discountSuggestion = "";
         if (orderToEdit == null) return;
-
         var client = allClients?.FirstOrDefault(c => c.Id == orderToEdit.ClientId);
-
         bool isFrequent = client?.IsFrequent == 1;
         bool hasVolume = cartItems.Sum(i => i.Quantity) > 5;
-
         if (isFrequent && hasVolume) discountSuggestion = "Sugerencia: 5% (cliente frecuente y >5 artículos).";
         else if (isFrequent) discountSuggestion = "Sugerencia: 5% (cliente frecuente).";
         else if (hasVolume) discountSuggestion = "Sugerencia: 5% (más de 5 artículos).";
     }
 
-    // === SyncProductList (Lógica Clave para Guardar) ===
-    // Compara 'orderToEdit.ProductOrders' (lo que EF rastrea) con 'cartItems' (lo que quieres guardar)
-    // y le dice a EF qué borrar, añadir o actualizar, sin romper los enlaces.
     private void SyncProductList()
     {
-        if (orderToEdit == null || allProducts == null) return; // Añadido chequeo de allProducts
-
-        // 1. Encontrar productos para ELIMINAR
+        if (orderToEdit == null || allProducts == null) return;
         var productsToRemove = orderToEdit.ProductOrders
             .Where(dbProduct => !cartItems.Any(cartItem => cartItem.ProductId == dbProduct.IdProduct))
-            .ToList(); // Materializa la lista antes de iterar
-
-        // Elimínalos de la lista rastreada por EF
+            .ToList();
         foreach (var product in productsToRemove)
         {
             orderToEdit.ProductOrders.Remove(product);
         }
-
-        // 2. Encontrar productos para AÑADIR o ACTUALIZAR
         foreach (var cartItem in cartItems)
         {
             var existingProduct = orderToEdit.ProductOrders
                 .FirstOrDefault(p => p.IdProduct == cartItem.ProductId);
-
             if (existingProduct != null)
             {
-                // 3. ACTUALIZAR: Solo cambia la cantidad
                 existingProduct.Quantity = cartItem.Quantity;
             }
             else
             {
-                // 4. AÑADIR: Es nuevo, crea el objeto completo
                 var productDetails = allProducts.FirstOrDefault(p => p.Id == cartItem.ProductId);
-                if (productDetails != null) // Asegúrate que el producto aún existe
+                if (productDetails != null)
                 {
                     orderToEdit.ProductOrders.Add(new ProductOrder
                     {
                         IdProduct = cartItem.ProductId,
                         Quantity = cartItem.Quantity,
-                        IdOrderNavigation = orderToEdit,     // Enlace a la Orden
-                        IdProductNavigation = productDetails // Enlace al Producto
+                        IdOrderNavigation = orderToEdit,
+                        IdProductNavigation = productDetails
                     });
                 }
             }
         }
     }
 
-    // === UpdateOrder (Usa SyncProductList antes de guardar) ===
     private async Task UpdateOrder()
     {
         if (orderToEdit == null) return;
+        if (!cartItems.Any())
+        {
+            ToastService.Notify(new(ToastType.Warning, "Faltan Productos", "Debe haber al menos un producto para guardar los cambios."));
+            return;
+        }
+        // Validar EditContext (DataAnnotations)
+        if (!editContext.Validate())
+        {
+            ToastService.Notify(new(ToastType.Warning, "Datos incompletos", "Revise los campos marcados en rojo."));
+            return;
+        }
 
         try
         {
-            SyncProductList(); // Sincroniza las listas
-
-            await orderService.Update(OrderId, orderToEdit); // Guarda los cambios
-
+            SyncProductList();
+            await orderService.Update(OrderId, orderToEdit);
             ToastService.Notify(new(ToastType.Success, "Orden Actualizada", "La orden ha sido guardada exitosamente."));
             NavigationManager.NavigateTo("/ordenes");
         }
         catch (Exception ex)
         {
-            // Loguear el error completo puede ayudar
             Console.WriteLine($"Error al actualizar orden: {ex}");
             ToastService.Notify(new(ToastType.Danger, "Error", $"No se pudo guardar la orden: {ex.Message}"));
         }
     }
 
-    // === FinishOrder (Usa SyncProductList antes de guardar) ===
     private async Task FinishOrder()
     {
         if (orderToEdit == null) return;
+        if (!cartItems.Any())
+        {
+            ToastService.Notify(new(ToastType.Warning, "Faltan Productos", "Debe haber al menos un producto para finalizar la orden."));
+            return;
+        }
+        // Validar EditContext (DataAnnotations)
+        if (!editContext.Validate())
+        {
+            ToastService.Notify(new(ToastType.Warning, "Datos incompletos", "Revise los campos marcados en rojo."));
+            return;
+        }
 
         try
         {
             orderToEdit.State = "Finalizada";
-            SyncProductList(); // Sincroniza las listas
-
-            await orderService.Update(OrderId, orderToEdit); // Guarda los cambios
-
+            SyncProductList();
+            await orderService.Update(OrderId, orderToEdit);
             ToastService.Notify(new(ToastType.Success, "Orden Finalizada", "La orden ha sido completada exitosamente."));
             NavigationManager.NavigateTo("/ordenes");
         }
         catch (Exception ex)
         {
-            // Loguear el error completo puede ayudar
             Console.WriteLine($"Error al finalizar orden: {ex}");
             ToastService.Notify(new(ToastType.Danger, "Error", $"No se pudo finalizar la orden: {ex.Message}"));
         }
     }
 
-    // --- Métodos de confirmación y resumen (sin cambios) ---
+    // === ShowConfirmationAsync CORREGIDO ===
     private async Task ShowConfirmationAsync()
     {
+        // Validaciones previas
+        if (!cartItems.Any())
+        {
+            ToastService.Notify(new(ToastType.Warning, "Faltan Productos", "Añada productos antes de guardar."));
+            return;
+        }
+        if (!editContext.Validate())
+        {
+            ToastService.Notify(new(ToastType.Warning, "Datos incompletos", "Revise los campos marcados en rojo."));
+            return;
+        }
+
+        // Definir opciones del diálogo
         var options = new ConfirmDialogOptions
         {
             YesButtonText = "Sí, guardar cambios",
@@ -356,10 +383,11 @@ else
             NoButtonText = "No, cancelar",
             NoButtonColor = ButtonColor.Secondary
         };
+        // Mostrar diálogo CON ARGUMENTOS
         var confirmation = await dialog.ShowAsync(
             title: "¿Confirmar Cambios?",
             message1: $"¿Estás seguro de que deseas guardar las modificaciones para la orden #{orderToEdit?.Id}?",
-            confirmDialogOptions: options);
+            confirmDialogOptions: options); // Pasar las opciones
 
         if (confirmation)
         {
@@ -367,13 +395,22 @@ else
         }
     }
 
-    private void GenerateSummary()
-    {
-        Console.WriteLine("Botón 'Generar Resumen' presionado.");
-    }
-
+    // === ShowFinishConfirmationAsync CORREGIDO ===
     private async Task ShowFinishConfirmationAsync()
     {
+        // Validaciones previas
+        if (!cartItems.Any())
+        {
+            ToastService.Notify(new(ToastType.Warning, "Faltan Productos", "Añada productos antes de finalizar."));
+            return;
+        }
+        if (!editContext.Validate())
+        {
+            ToastService.Notify(new(ToastType.Warning, "Datos incompletos", "Revise los campos marcados en rojo."));
+            return;
+        }
+
+        // Definir opciones del diálogo
         var options = new ConfirmDialogOptions
         {
             YesButtonText = "Sí, finalizar orden",
@@ -381,16 +418,77 @@ else
             NoButtonText = "No, cancelar",
             NoButtonColor = ButtonColor.Secondary
         };
+        // Mostrar diálogo CON ARGUMENTOS
         var confirmation = await dialog.ShowAsync(
             title: "¿Confirmar Finalización?",
             message1: $"¿Estás seguro de que deseas marcar la orden #{orderToEdit?.Id} como finalizada?",
             message2: "Esta acción usualmente no se puede revertir.",
-            confirmDialogOptions: options);
+            confirmDialogOptions: options); // Pasar las opciones
 
         if (confirmation)
         {
             await FinishOrder();
         }
+    }
+
+    // Método GeneratePdfPreview (sin cambios respecto a la versión anterior)
+    private async Task GeneratePdfPreview()
+    {
+        if (!cartItems.Any() || orderToEdit?.ClientId == null)
+        {
+            ToastService.Notify(new(ToastType.Warning, "Faltan datos", "Debe seleccionar un cliente y añadir al menos un producto."));
+            return;
+        }
+
+        if (allProducts == null || orderToEdit == null)
+        {
+            ToastService.Notify(new(ToastType.Danger, "Error interno", "Los datos de la orden o productos no están cargados."));
+            return;
+        }
+
+        var pdfProductOrders = cartItems.Select(item =>
+        {
+            var product = allProducts.FirstOrDefault(p => p.Id == item.ProductId);
+            return new ProductOrder
+            {
+                IdProductNavigation = product,
+                Quantity = item.Quantity,
+                IdProduct = item.ProductId
+            };
+        }).ToList();
+
+        var orderForPdf = new Order
+        {
+            Id = orderToEdit.Id,
+            ClientId = orderToEdit.ClientId,
+            TotalAmount = orderToEdit.TotalAmount,
+            Discount = orderToEdit.Discount,
+            Advancement = orderToEdit.Advancement,
+            Priority = orderToEdit.Priority,
+            State = orderToEdit.State,
+            CreationDate = orderToEdit.CreationDate,
+            ProductOrders = pdfProductOrders
+        };
+
+        var client = allClients?.FirstOrDefault(c => c.Id == orderToEdit.ClientId);
+        if (client == null)
+        {
+            ToastService.Notify(new(ToastType.Warning, "Cliente no encontrado", "No se pudo encontrar el cliente seleccionado."));
+            return;
+        }
+
+        var pdfModel = new OrderPdfModel
+        {
+            Order = orderForPdf,
+            Client = client
+        };
+
+        var generator = new OrderPdfGenerator(pdfModel);
+        var pdfBytes = generator.GenerateDocument();
+
+        var fileName = $"Resumen_Orden_{orderToEdit.Id}_{client.Name?.Replace(" ", "_") ?? "Cliente"}_{DateTime.Now:yyyyMMdd}.pdf";
+        var base64 = Convert.ToBase64String(pdfBytes);
+        await JSRuntime.InvokeVoidAsync("saveAsFile", fileName, base64);
     }
 }
 

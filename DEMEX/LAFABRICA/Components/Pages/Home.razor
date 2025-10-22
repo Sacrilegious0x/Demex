@@ -18,7 +18,7 @@
 
     .disabled-card {
         opacity: 0.65;
-        pointer-events: none; 
+        pointer-events: none;
     }
 
         .disabled-card .fw-bold,
@@ -130,7 +130,11 @@
         var allOrders = await orderService.GetAllOrders();
 
         activeProductsCount = allProducts.Count();
-        activeOrdersCount = allOrders.Count();
+
+        // === INICIO DE LA CORRECCIÓN ===
+        // Contamos solo las órdenes cuyo estado NO sea "Finalizada"
+        activeOrdersCount = allOrders.Count(o => o.State != "Finalizada");
+        // === FIN DE LA CORRECCIÓN ===
 
         isLoading = false;
     }
