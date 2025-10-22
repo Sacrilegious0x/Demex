@@ -91,6 +91,10 @@ else
                                 }
                             </ul>
                         }
+                        else
+                        {
+                            <p class="text-muted text-center">No hay productos en esta orden.</p>
+                        }
                     </div>
                 </div>
 
@@ -123,8 +127,21 @@ else
             </CardBody>
             <CardFooter>
                 <div class="d-flex justify-content-end gap-2">
+
                     <a href="/ordenes" class="btn btn-secondary">Cancelar</a>
-                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+
+                    <button type="button" class="btn btn-info" @onclick="GenerateSummary">
+                        <Icon Name="IconName.FileEarmarkText" /> Generar Resumen
+                    </button>
+
+                    <button type="submit" class="btn btn-primary">
+                        <Icon Name="IconName.Save" /> Guardar Cambios
+                    </button>
+
+                    <button type="button" class="btn btn-success" @onclick="ShowFinishConfirmationAsync">
+                        <Icon Name="IconName.CheckCircle" /> Finalizar Orden
+                    </button>
+
                 </div>
             </CardFooter>
         </Card>
@@ -153,6 +170,9 @@ else
     private string discountSuggestion = "";
     private ConfirmDialog dialog = default!;
 
+    // === OnInitializedAsync (Carga Inicial) ===
+    // Lee la orden y llena 'cartItems' (la lista de la UI) buscando detalles en 'allProducts'.
+    // Esto funciona bien porque la primera vez sí ves los productos.
     protected override async Task OnInitializedAsync()
     {
         allClients = (await clientService.GetAllClient()).ToList();
@@ -161,14 +181,18 @@ else
 
         if (orderToEdit != null)
         {
-            // Cargar los productos de la orden al carrito de compras local
-            cartItems = orderToEdit.ProductOrders.Select(po => new CartItem
+            cartItems = orderToEdit.ProductOrders.Select(po =>
             {
-                ProductId = po.IdProduct,
-                ProductName = po.IdProductNavigation?.Name ?? "Producto no encontrado",
-                Quantity = po.Quantity,
-                PriceBase = po.IdProductNavigation?.PriceBase ?? 0
+                var productDetails = allProducts?.FirstOrDefault(p => p.Id == po.IdProduct);
+                return new CartItem
+                {
+                    ProductId = po.IdProduct,
+                    Quantity = po.Quantity,
+                    ProductName = productDetails?.Name ?? "Producto no encontrado",
+                    PriceBase = productDetails?.PriceBase ?? 0
+                };
             }).ToList();
+
             UpdateDiscountSuggestion();
         }
     }
@@ -230,29 +254,99 @@ else
         else if (hasVolume) discountSuggestion = "Sugerencia: 5% (más de 5 artículos).";
     }
 
+    // === SyncProductList (Lógica Clave para Guardar) ===
+    // Compara 'orderToEdit.ProductOrders' (lo que EF rastrea) con 'cartItems' (lo que quieres guardar)
+    // y le dice a EF qué borrar, añadir o actualizar, sin romper los enlaces.
+    private void SyncProductList()
+    {
+        if (orderToEdit == null || allProducts == null) return; // Añadido chequeo de allProducts
+
+        // 1. Encontrar productos para ELIMINAR
+        var productsToRemove = orderToEdit.ProductOrders
+            .Where(dbProduct => !cartItems.Any(cartItem => cartItem.ProductId == dbProduct.IdProduct))
+            .ToList(); // Materializa la lista antes de iterar
+
+        // Elimínalos de la lista rastreada por EF
+        foreach (var product in productsToRemove)
+        {
+            orderToEdit.ProductOrders.Remove(product);
+        }
+
+        // 2. Encontrar productos para AÑADIR o ACTUALIZAR
+        foreach (var cartItem in cartItems)
+        {
+            var existingProduct = orderToEdit.ProductOrders
+                .FirstOrDefault(p => p.IdProduct == cartItem.ProductId);
+
+            if (existingProduct != null)
+            {
+                // 3. ACTUALIZAR: Solo cambia la cantidad
+                existingProduct.Quantity = cartItem.Quantity;
+            }
+            else
+            {
+                // 4. AÑADIR: Es nuevo, crea el objeto completo
+                var productDetails = allProducts.FirstOrDefault(p => p.Id == cartItem.ProductId);
+                if (productDetails != null) // Asegúrate que el producto aún existe
+                {
+                    orderToEdit.ProductOrders.Add(new ProductOrder
+                    {
+                        IdProduct = cartItem.ProductId,
+                        Quantity = cartItem.Quantity,
+                        IdOrderNavigation = orderToEdit,     // Enlace a la Orden
+                        IdProductNavigation = productDetails // Enlace al Producto
+                    });
+                }
+            }
+        }
+    }
+
+    // === UpdateOrder (Usa SyncProductList antes de guardar) ===
     private async Task UpdateOrder()
     {
         if (orderToEdit == null) return;
 
         try
         {
-            orderToEdit.ProductOrders = cartItems.Select(item => new ProductOrder
-            {
-                IdProduct = item.ProductId,
-                Quantity = item.Quantity
-            }).ToList();
+            SyncProductList(); // Sincroniza las listas
 
-            await orderService.Update(OrderId, orderToEdit);
+            await orderService.Update(OrderId, orderToEdit); // Guarda los cambios
 
             ToastService.Notify(new(ToastType.Success, "Orden Actualizada", "La orden ha sido guardada exitosamente."));
             NavigationManager.NavigateTo("/ordenes");
         }
         catch (Exception ex)
         {
+            // Loguear el error completo puede ayudar
+            Console.WriteLine($"Error al actualizar orden: {ex}");
             ToastService.Notify(new(ToastType.Danger, "Error", $"No se pudo guardar la orden: {ex.Message}"));
         }
     }
 
+    // === FinishOrder (Usa SyncProductList antes de guardar) ===
+    private async Task FinishOrder()
+    {
+        if (orderToEdit == null) return;
+
+        try
+        {
+            orderToEdit.State = "Finalizada";
+            SyncProductList(); // Sincroniza las listas
+
+            await orderService.Update(OrderId, orderToEdit); // Guarda los cambios
+
+            ToastService.Notify(new(ToastType.Success, "Orden Finalizada", "La orden ha sido completada exitosamente."));
+            NavigationManager.NavigateTo("/ordenes");
+        }
+        catch (Exception ex)
+        {
+            // Loguear el error completo puede ayudar
+            Console.WriteLine($"Error al finalizar orden: {ex}");
+            ToastService.Notify(new(ToastType.Danger, "Error", $"No se pudo finalizar la orden: {ex.Message}"));
+        }
+    }
+
+    // --- Métodos de confirmación y resumen (sin cambios) ---
     private async Task ShowConfirmationAsync()
     {
         var options = new ConfirmDialogOptions
@@ -272,4 +366,31 @@ else
             await UpdateOrder();
         }
     }
+
+    private void GenerateSummary()
+    {
+        Console.WriteLine("Botón 'Generar Resumen' presionado.");
+    }
+
+    private async Task ShowFinishConfirmationAsync()
+    {
+        var options = new ConfirmDialogOptions
+        {
+            YesButtonText = "Sí, finalizar orden",
+            YesButtonColor = ButtonColor.Success,
+            NoButtonText = "No, cancelar",
+            NoButtonColor = ButtonColor.Secondary
+        };
+        var confirmation = await dialog.ShowAsync(
+            title: "¿Confirmar Finalización?",
+            message1: $"¿Estás seguro de que deseas marcar la orden #{orderToEdit?.Id} como finalizada?",
+            message2: "Esta acción usualmente no se puede revertir.",
+            confirmDialogOptions: options);
+
+        if (confirmation)
+        {
+            await FinishOrder();
+        }
+    }
 }
+

@@ -100,14 +100,22 @@ else
                 <div class="row">
                     <div class="col-md-4">
                         <label class="form-label">Total Acordado (₡)</label>
-                        <InputNumber @bind-Value="newOrder.TotalAmount" class="form-control" />
+                        <InputNumber Value="@newOrder.TotalAmount"
+                                     ValueChanged="@((decimal v) => OnTotalAmountChanged(v))"
+                                     ValueExpression="@(() => newOrder.TotalAmount)"
+                                     class="form-control" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Descuento (%)</label>
-                        <InputNumber @bind-Value="newOrder.Discount" class="form-control" />
-                        @if (!string.IsNullOrEmpty(discountSuggestion))
+                        <InputNumber @bind-Value="newOrder.Discount" class="form-control" readonly />
+
+                        @if (!string.IsNullOrEmpty(discountSuggestion) && newOrder.Discount == 0)
                         {
                             <div class="form-text text-success">@discountSuggestion</div>
+                        }
+                        else if (newOrder.Discount > 0)
+                        {
+                            <div class="form-text text-primary">Descuento calculado.</div>
                         }
                     </div>
                     <div class="col-md-4">
@@ -119,13 +127,14 @@ else
                         }
                     </div>
                 </div>
-
             </CardBody>
             <CardFooter>
                 <div class="d-flex justify-content-end gap-2">
+
+                    <a href="/ordenes" class="btn btn-light border">Cancelar</a>
+
                     <Button Color="ButtonColor.Secondary" @onclick="() => SaveOrder(false)">Guardar como Cotización</Button>
 
-                    @* --- BOTÓN MODIFICADO --- *@
                     <Button Color="ButtonColor.Info" IsOutlined="true"
                             @onclick="GeneratePdfPreview"
                             disabled="@(!cartItems.Any() || newOrder.ClientId == null)">
@@ -198,12 +207,14 @@ else
         selectedProductId = 0;
         selectedProductQuantity = 1;
         UpdateDiscountSuggestion();
+        CalculateDiscount();
     }
 
     private void RemoveProductFromCart(int productId)
     {
         cartItems.RemoveAll(i => i.ProductId == productId);
         UpdateDiscountSuggestion();
+        CalculateDiscount();
     }
 
     private void UpdateDiscountSuggestion()
@@ -222,6 +233,38 @@ else
             discountSuggestion = "Sugerencia: 5% (más de 5 artículos).";
     }
 
+    /// <summary>
+    /// Se dispara cuando el valor de "Total Acordado" cambia.
+    /// </summary>
+    private void OnTotalAmountChanged(decimal newValue)
+    {
+        newOrder.TotalAmount = newValue;
+        CalculateDiscount();
+    }
+
+    /// <summary>
+    /// Calcula el descuento en porcentaje basado en el subtotal y el total acordado.
+    /// </summary>
+    private void CalculateDiscount()
+    {
+        decimal subtotal = cartItems.Sum(i => i.Quantity * i.PriceBase);
+        decimal totalAcordado = newOrder.TotalAmount;
+
+        if (subtotal > 0 && totalAcordado > 0 && totalAcordado < subtotal)
+        {
+            // (Subtotal - TotalAcordado) / Subtotal * 100
+            decimal discountAmount = subtotal - totalAcordado;
+            newOrder.Discount = Math.Round((discountAmount / subtotal) * 100, 2); // Redondea a 2 decimales
+        }
+        else
+        {
+            newOrder.Discount = 0;
+        }
+
+        StateHasChanged();
+    }
+
+    // === MÉTODO SAVEORDER (CORREGIDO) ===
     private async Task SaveOrder(bool beginOrder)
     {
         try
@@ -231,11 +274,16 @@ else
             newOrder.AdminId = 1; // Valor quemado como solicitaste
             newOrder.State = beginOrder ? "Diseño" : "Cotizando";
 
+            // === INICIO DE LA CORRECCIÓN ===
+            // Le decimos a EF que cada 'ProductOrder' en esta lista
+            // pertenece al objeto 'newOrder' que estamos creando.
             newOrder.ProductOrders = cartItems.Select(item => new ProductOrder
             {
                 IdProduct = item.ProductId,
-                Quantity = item.Quantity
+                Quantity = item.Quantity,
+                IdOrderNavigation = newOrder // <-- LA LÍNEA MÁGICA
             }).ToList();
+            // === FIN DE LA CORRECCIÓN ===
 
             await orderService.Create(newOrder);
 

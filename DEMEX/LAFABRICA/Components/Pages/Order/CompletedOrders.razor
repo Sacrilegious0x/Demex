@@ -1,4 +1,4 @@
-﻿@page "/ordenes"
+﻿@page "/ordenes/completadas"
 @using LAFABRICA.Data.DB
 @using LAFABRICA.Models.Interface
 @using LAFABRICA.Components.Pages.Product
@@ -7,11 +7,11 @@
 @inject ToastService ToastService
 @inject NavigationManager nav
 
-<PageTitle>Gestión de Órdenes</PageTitle>
+<PageTitle>Órdenes Completadas</PageTitle>
 
 <Toasts class="p-3" Autohide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 <ConfirmDialog @ref="dialog" />
-<OrderDetailsModal @ref="detailsModal" /> 
+<OrderDetailsModal @ref="detailsModal" />
 
 @if (orders == null)
 {
@@ -22,12 +22,12 @@
 else if (!orders.Any())
 {
     <div>
-        <Alert Color="AlertColor.Primary" class="d-flex justify-content-between align-items-center">
+        <Alert Color="AlertColor.Info" class="d-flex justify-content-between align-items-center">
             <div>
                 <Icon Name="IconName.InfoCircleFill" class="me-2" />
-                <strong>No hay órdenes registradas</strong>
+                <strong>No hay órdenes completadas registradas</strong>
             </div>
-            <a class="btn btn-outline-primary" href="/ordenes/crear"><Icon Name="IconName.PlusLg" /> Nueva Orden</a>
+            <a class="btn btn-outline-secondary" href="/ordenes"><Icon Name="IconName.ArrowLeft" /> Volver a Órdenes</a>
         </Alert>
     </div>
 }
@@ -37,31 +37,39 @@ else
         <div class="card">
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center mt-3">
-                    <h3><Icon Name="IconName.FileTextFill"></Icon> Gestión de Órdenes</h3>
-
-                    <div class="d-flex gap-2">
-                        <a class="btn btn-success" href="/ordenes/completadas">
-                            <Icon Name="IconName.CheckCircle" /> Órdenes Completadas
-                        </a>
-                        <a class="btn btn-primary" href="/ordenes/crear">
-                            <Icon Name="IconName.PlusLg"></Icon> Nueva Orden
-                        </a>
-                    </div>
+                    <h3><Icon Name="IconName.CheckCircleFill"></Icon> Órdenes Completadas</h3>
+                    <a class="btn btn-secondary" href="/ordenes">
+                        <Icon Name="IconName.ArrowLeft" /> Volver a Órdenes
+                    </a>
                 </div>
-                <div class="d-flex justify-content-sm-start align-items-center gap-3 mt-3">
+
+                <div class="d-flex flex-wrap justify-content-sm-start align-items-center gap-3 mt-3">
+
+                    <!-- Filtro de Texto -->
                     <div class="d-flex align-items-center border rounded px-2">
                         <Icon Name="IconName.Search" class="text-secondary me-2" />
                         <input type="text" class="form-control border-0" @bind="searchText" @bind:event="oninput" placeholder="Buscar por Cliente, ID..." style="box-shadow:none;" />
                     </div>
+
+                    <!-- Filtro de Provincia -->
                     <div class="d-flex align-items-center gap-2">
-                        <Icon Name="IconName.Funnel" class="text-secondary" />
-                        <InputSelect class="form-select" @bind-Value="selectedState">
-                            <option value="">Todos los estados</option>
-                            @foreach (var state in states)
+                        <Icon Name="IconName.Map" class="text-secondary" />
+                        <InputSelect class="form-select form-select-sm" @bind-Value="selectedLocation">
+                            <option value="">Todas las Provincias</option>
+                            @foreach (var location in locations)
                             {
-                                <option value="@state">@state</option>
+                                <option value="@location">@location</option>
                             }
                         </InputSelect>
+                    </div>
+
+                    <!-- Filtro de Fechas -->
+                    <div class="d-flex align-items-center gap-2">
+                        <Icon Name="IconName.Calendar" class="text-secondary" />
+                        <label class="form-label small mb-0">Desde:</label>
+                        <InputDate @bind-Value="filterStartDate" class="form-control form-control-sm" />
+                        <label class="form-label small mb-0 ms-2">Hasta:</label>
+                        <InputDate @bind-Value="filterEndDate" class="form-control form-control-sm" />
                     </div>
                 </div>
             </div>
@@ -73,6 +81,7 @@ else
                                 <tr>
                                     <th>#</th>
                                     <th>Cliente</th>
+                                    <th>Fecha Creación</th>
                                     <th>Ubicación</th>
                                     <th>Estado</th>
                                     <th>Prioridad</th>
@@ -93,6 +102,7 @@ else
                                                 <Badge Color="BadgeColor.Success" class="d-block mt-1">Cliente Frecuente</Badge>
                                             }
                                         </td>
+                                        <td>@ord.CreationDate.ToShortDateString()</td>
                                         <td>@ord.Client?.Location</td>
                                         <td><Badge Color="@GetStateBadgeColor(ord.State)">@ord.State</Badge></td>
                                         <td><Badge Color="@GetPriorityBadgeColor(ord.Priority)">@ord.Priority</Badge></td>
@@ -101,9 +111,6 @@ else
                                         <td>
                                             <button class="btn btn-show" @onclick="() => detailsModal.ShowAsync(ord.Id)" title="Ver Detalles">
                                                 <Icon Name="IconName.Eye" Color="IconColor.Primary" />
-                                            </button>
-                                            <button class="btn btn-edit" @onclick="() => EditOrder(ord)" title="Editar">
-                                                <Icon Name="IconName.PencilSquare" />
                                             </button>
                                             <button class="btn btn-delete" @onclick="() => DeleteOrder(ord)" title="Eliminar">
                                                 <Icon Name="IconName.Trash" Color="IconColor.Danger"></Icon>
@@ -117,7 +124,7 @@ else
                 </div>
             </div>
             <div class="card-footer">
-                <Icon Name="IconName.FileEarmarkText" /> Total de órdenes: @filteredOrders.Count()
+                <Icon Name="IconName.FileEarmarkText" /> Total de órdenes completadas: @filteredOrders.Count()
             </div>
         </div>
     </div>
@@ -127,20 +134,32 @@ else
     private List<Order>? orders;
     private ConfirmDialog dialog = default!;
     private OrderDetailsModal detailsModal = default!;
-    // Variables para los filtros
-    private string searchText = string.Empty;
-    private string selectedState = "";
-    private List<string> states = new();
 
-    // Propiedad computada para filtrar órdenes
+    // === VARIABLES DE FILTRO ===
+    private string searchText = string.Empty;
+    private string selectedLocation = "";
+    private DateTime? filterStartDate;
+    private DateTime? filterEndDate;
+    private List<string> locations = new();
+
+    // === PROPIEDAD COMPUTADA DE FILTROS (CORREGIDA) ===
     private IEnumerable<Order> filteredOrders =>
-       orders?
-           .Where(o => o.State != "Finalizada") 
-           .Where(o => string.IsNullOrEmpty(selectedState) || o.State == selectedState)
-           .Where(o => string.IsNullOrEmpty(searchText) ||
-                       (o.Client?.Name?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                       o.Id.ToString().Contains(searchText))
-       ?? Enumerable.Empty<Order>();
+        orders?
+            // 1. Filtro de Provincia (Ubicación)
+            .Where(o => string.IsNullOrEmpty(selectedLocation) || o.Client?.Location == selectedLocation)
+
+            // 2. Filtro de Fecha "Desde" (CORREGIDO)
+            // Compara DateOnly (o.CreationDate) con el DateOnly convertido desde el filtro DateTime?
+            .Where(o => !filterStartDate.HasValue || o.CreationDate >= DateOnly.FromDateTime(filterStartDate.Value))
+
+            // 3. Filtro de Fecha "Hasta" (CORREGIDO)
+            .Where(o => !filterEndDate.HasValue || o.CreationDate <= DateOnly.FromDateTime(filterEndDate.Value))
+
+            // 4. Filtro de Texto (Cliente o ID)
+            .Where(o => string.IsNullOrEmpty(searchText) ||
+                        (o.Client?.Name?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                        o.Id.ToString().Contains(searchText))
+        ?? Enumerable.Empty<Order>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -149,21 +168,21 @@ else
 
     private async Task LoadOrders()
     {
-        orders = (await orderService.GetAllOrders()).ToList();
-        if (orders != null)
+        var allOrders = (await orderService.GetAllOrders()).ToList();
+        if (allOrders != null)
         {
-            // Cargar los estados únicos para el filtro
-            states = orders.Where(o => o.State != "Finalizada")
-               .Select(o => o.State)
-               .Distinct()
-               .OrderBy(s => s)
-               .ToList();
-        }
-    }
+            orders = allOrders.Where(o => o.State == "Finalizada").ToList();
 
-    private void EditOrder(Order ord)
-    {
-        nav.NavigateTo($"/ordenes/editar/{ord.Id}");
+            if (orders != null)
+            {
+                locations = orders
+                    .Select(o => o.Client?.Location)
+                    .Where(l => !string.IsNullOrEmpty(l))
+                    .Distinct()
+                    .OrderBy(l => l)
+                    .ToList()!;
+            }
+        }
     }
 
     private async Task DeleteOrder(Order order)
@@ -206,6 +225,7 @@ else
             "entregable" => BadgeColor.Success,
             "corte" => BadgeColor.Dark,
             "acabados" => BadgeColor.Warning,
+            "finalizada" => BadgeColor.Secondary,
             _ => BadgeColor.Secondary
         };
     }
@@ -221,3 +241,4 @@ else
         };
     }
 }
+
