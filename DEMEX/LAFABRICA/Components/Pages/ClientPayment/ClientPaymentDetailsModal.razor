@@ -1,0 +1,122 @@
+﻿@using LAFABRICA.Data.DB
+@using LAFABRICA.Models.Interface
+@inject IClientPaymentService paymentService
+
+@* Modal con título dinámico y tamaño ExtraLarge para dar espacio a la imagen *@
+<Modal @ref="detailsModal" Title="@(paymentForDetails == null ? "Cargando Detalles..." : $"Detalles del Pago #{paymentForDetails.Id}")" Size="ModalSize.ExtraLarge">
+    <BodyTemplate>
+        @if (paymentForDetails == null && errorMessage == null)
+        {
+            <div class="text-center my-4">
+                <Spinner Color="SpinnerColor.Primary" />
+                <p class="mt-2">Cargando datos del pago...</p>
+            </div>
+        }
+        else if (errorMessage != null)
+        {
+            <Alert Color="AlertColor.Danger">
+                <Icon Name="IconName.ExclamationTriangleFill" /> @errorMessage
+            </Alert>
+        }
+        else if (paymentForDetails != null)
+        {
+            <div class="row">
+                @* --- COLUMNA 1: DETALLES DEL PAGO Y ORDEN --- *@
+                <div class="col-md-6">
+                    <h5><Icon Name="IconName.CreditCardFill" /> Detalles del Pago</h5>
+                    <p><strong>ID Pago:</strong> @paymentForDetails.Id</p>
+                    <p><strong>Fecha:</strong> @paymentForDetails.PaymentDate.ToString("d")</p>
+                    <p><strong>Monto Recibido (Este Pago):</strong> <span class="fw-bold text-success">@paymentForDetails.Amount.ToString("C", new System.Globalization.CultureInfo("es-CR"))</span></p>
+                    <p><strong>Método:</strong> @paymentForDetails.PaymentMethod</p>
+
+                    <hr class="my-3" />
+
+                    @if (paymentForDetails.Order != null)
+                    {
+                        <h5><Icon Name="IconName.FileTextFill" /> Orden Asociada</h5>
+                        <p><strong>Orden #:</strong> @paymentForDetails.Order.Id</p>
+                        <p><strong>Cliente:</strong> @paymentForDetails.Order.Client?.Name</p>
+                        <p><strong>Monto Total Orden:</strong> <span class="fw-bold">@paymentForDetails.Order.TotalAmount.ToString("C", new System.Globalization.CultureInfo("es-CR"))</span></p>
+                        <p><strong>Total Pagado (Adelantos):</strong> <span class="fw-bold text-success">@paymentForDetails.Order.Advancement.ToString("C", new System.Globalization.CultureInfo("es-CR"))</span></p>
+                        <p><strong>Saldo Restante Orden:</strong> <span class="fw-bold text-danger">@((paymentForDetails.Order.TotalAmount - paymentForDetails.Order.Advancement).ToString("C", new System.Globalization.CultureInfo("es-CR")))</span></p>
+                    }
+                    else
+                    {
+                        <Alert Color="AlertColor.Warning" class="small">No se pudo cargar la información detallada de la orden asociada.</Alert>
+                    }
+                </div>
+
+                @* --- COLUMNA 2: COMPROBANTE --- *@
+                <div class="col-md-6">
+                    <h5><Icon Name="IconName.Image" /> Comprobante Adjunto</h5>
+                    @if (!string.IsNullOrEmpty(paymentForDetails.PhotoVoucherUrl))
+                    {
+                        <div class="text-center border p-2 rounded" style="max-height: 500px; overflow-y: auto;">
+                            @* Contenedor con scroll si la imagen es muy alta *@
+                            <img src="@paymentForDetails.PhotoVoucherUrl" class="img-fluid rounded" alt="Comprobante de Pago" @onerror="() => imageLoadError = true" />
+                            @if (imageLoadError)
+                            {
+                                <p class="text-danger mt-2 small">Error al cargar la imagen del comprobante.</p>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No se adjuntó comprobante para este pago.</p>
+                    }
+                </div>
+            </div>
+        }
+    </BodyTemplate>
+    @* === INICIO Footer con Botón === *@
+    <FooterTemplate>
+        <Button Color="ButtonColor.Secondary" @onclick="() => detailsModal.HideAsync()">Cerrar</Button>
+        <Button Color="ButtonColor.Primary" @onclick="GenerateReportPlaceholder">
+            @* Llama a un método vacío por ahora *@
+            <Icon Name="IconName.Download" /> Generar Reporte
+        </Button>
+    </FooterTemplate>
+    @* === FIN Footer === *@
+</Modal>
+
+@code {
+    private Modal detailsModal = default!;
+    private ClientPayment? paymentForDetails;
+    private string? errorMessage;
+    private bool imageLoadError = false; // Bandera para error al cargar imagen
+
+    public async Task ShowAsync(int paymentId)
+    {
+        paymentForDetails = null;
+        errorMessage = null;
+        imageLoadError = false; // Resetea error de imagen
+        await detailsModal.ShowAsync();
+
+        try
+        {
+            // Asegúrate que GetPaymentById incluya Order y Order.Client
+            paymentForDetails = await paymentService.GetPaymentById(paymentId);
+
+            if (paymentForDetails == null)
+            {
+                errorMessage = $"El pago con ID #{paymentId} no fue encontrado.";
+            }
+            // No es necesario validar Order aquí, ya lo hacemos en la UI
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar detalles del pago: {ex}");
+            errorMessage = "Ocurrió un error al cargar los detalles del pago.";
+        }
+
+        StateHasChanged();
+    }
+
+    // Método placeholder para el botón "Generar Reporte"
+    private void GenerateReportPlaceholder()
+    {
+        // Por ahora, solo muestra un mensaje en consola o un Toast
+        Console.WriteLine("Botón 'Generar Reporte' presionado.");
+       
+    }
+}
