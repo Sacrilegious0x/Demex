@@ -1,5 +1,14 @@
 @using BlazorBootstrap
 @inherits LayoutComponentBase
+@using LAFABRICA.Services.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using System.Threading.Tasks
+@using LAFABRICA.Models
+@implements IDisposable
+
+@inject AuthenticationStateProvider AuthStateProvider
+@inject DemexAuthenticationStateProvider DemexAuth
 
 <div class="d-flex flex-column min-vh-100">
 
@@ -8,7 +17,7 @@
         <div class="container-fluid">
             <!-- Brand -->
             <a class="navbar-brand fw-bold d-flex align-items-center" href="/">
-                <img src="/Demex.ico" alt="Logo Demex" width="80" height="80" class="me-2" />                
+                <img src="/Demex.ico" alt="Logo Demex" width="80" height="80" class="me-2" />
             </a>
 
             <!-- Toggle button (móvil) -->
@@ -24,72 +33,123 @@
             <!-- Links -->
             <div class="collapse navbar-collapse" id="mainNav">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+                    <!-- Inicio -->
                     <li class="nav-item">
                         <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
-
                             <i class="bi bi-house-door-fill me-1"></i> Inicio
-
-                        </NavLink>
-                    </li>
-                    <li class="nav-item">
-                        <NavLink class="nav-link" href="/clientes">
-                            <i class="bi bi-people-fill me-1"></i> Clientes
-                        </NavLink>
-                    </li>
-                    <li class="nav-item">
-                        <NavLink class="nav-link" href="/productos">
-                            <i class="bi bi-box-seam-fill me-1"></i> Productos
-                        </NavLink>
-                    </li>
-                    
-                    <li class="nav-item">
-                        <NavLink class="nav-link " href="/ordenes">
-                            <i class="bi bi-cart-fill me-1"></i> Órdenes
-                        </NavLink>
-                    </li>
-                    <li class="nav-item">
-                        <NavLink class="nav-link " href="/proveedor">
-                            <i class="bi bi-truck me-1"></i> Proveedores
-                        </NavLink>
-                    </li>
-                    <li class="nav-item">
-                        <NavLink class="nav-link disabled" href="/inventory">
-                            <i class="bi bi-archive-fill me-1"></i> Inventario
                         </NavLink>
                     </li>
 
-                   
-                    
-                    <li class="nav-item">
-                        <NavLink class="nav-link disabled" href="/payments">
-                            <i class="bi bi-credit-card-fill me-1"></i> Pagos
-                        </NavLink>
-                    </li>
-                    <li class="nav-item">
-                        <NavLink class="nav-link disabled" href="/reports">
-                            <i class="bi bi-bar-chart-line-fill me-1"></i> Reportes
-                        </NavLink>
-                    </li>
-                    <li class="nav-item">
-                        <NavLink class="nav-link disabled" href="/tours">
-                            <i class="bi bi-signpost-split-fill me-1"></i> Giras
-                        </NavLink>
-                    </li>
-                    <li class="nav-item">
-                        <NavLink class="nav-link disabled" href="/users">
-                            <i class="bi bi-person-badge-fill me-1"></i> Usuarios
+                    <!-- Clientes -->
+                    @if (HasPermission("Clients", DemexClaims.View))
+                    {
+                        <li class="nav-item">
+                            <NavLink class="nav-link" href="/clientes">
+                                <i class="bi bi-people-fill me-1"></i> Clientes
+                            </NavLink>
+                        </li>
+                    }
 
-                        </NavLink>
-                    </li>
+                    <!-- Productos -->
+                    @if (HasPermission("Products", DemexClaims.View))
+                    {
+                        <li class="nav-item">
+                            <NavLink class="nav-link" href="/productos">
+                                <i class="bi bi-box-seam-fill me-1"></i> Productos
+                            </NavLink>
+                        </li>
+                    }
+
+                    <!-- Órdenes -->
+                    @if (HasPermission("Orders", DemexClaims.View))
+                    {
+                        <li class="nav-item">
+                            <NavLink class="nav-link" href="/ordenes">
+                                <i class="bi bi-cart-fill me-1"></i> Órdenes
+                            </NavLink>
+                        </li>
+                    }
+
+                    <!-- Proveedores -->
+                    @if (HasPermission("Suppliers", DemexClaims.View))
+                    {
+                        <li class="nav-item">
+                            <NavLink class="nav-link" href="/proveedor">
+                                <i class="bi bi-truck me-1"></i> Proveedores
+                            </NavLink>
+                        </li>
+                    }
+
+                    <!-- Inventario -->
+                    @if (HasPermission("Inventory", DemexClaims.View))
+                    {
+                        <li class="nav-item">
+                            <NavLink class="nav-link" href="/inventory">
+                                <i class="bi bi-archive-fill me-1"></i> Inventario
+                            </NavLink>
+                        </li>
+                    }
+
+                    <!-- Pagos -->
+                    @if (HasPermission("Payments", DemexClaims.View))
+                    {
+                        <li class="nav-item">
+                            <NavLink class="nav-link" href="/payments">
+                                <i class="bi bi-credit-card-fill me-1"></i> Pagos
+                            </NavLink>
+                        </li>
+                    }
+
+                    <!-- Reportes -->
+                    @if (HasPermission("Reports", DemexClaims.View))
+                    {
+                        <li class="nav-item">
+                            <NavLink class="nav-link" href="/reports">
+                                <i class="bi bi-bar-chart-line-fill me-1"></i> Reportes
+                            </NavLink>
+                        </li>
+                    }
+
+                    <!-- Giras -->
+                    @if (HasPermission("Tours", DemexClaims.View))
+                    {
+                        <li class="nav-item">
+                            <NavLink class="nav-link" href="/tours">
+                                <i class="bi bi-signpost-split-fill me-1"></i> Giras
+                            </NavLink>
+                        </li>
+                    }
+
+                    <!-- Usuarios -->
+                    @if (HasPermission("Users", DemexClaims.View))
+                    {
+                        <li class="nav-item">
+                            <NavLink class="nav-link" href="/users">
+                                <i class="bi bi-person-badge-fill me-1"></i> Usuarios
+                            </NavLink>
+                        </li>
+                    }
+
                 </ul>
 
                 <!-- Usuario -->
                 <div class="d-flex align-items-center">
-                    <span class="navbar-text me-3 text-dark">
-                        @* <i class="bi bi-person-circle"></i> Bienvenido *@
-                        <i class="bi bi-tux"></i> Bienvenido
-                    </span>
-
+                    @if (IsAuthenticated)
+                    {
+                        <span class="navbar-text me-3 text-dark">
+                            <i class="bi bi-person-circle me-1"></i> Bienvenido, @UserName
+                        </span>
+                        <button class="btn btn-outline-secondary btn-sm" @onclick="Logout">
+                            Cerrar sesión
+                        </button>
+                    }
+                    else
+                    {
+                        <NavLink class="btn btn-sm text-white" style="background-color: #0f54a1;" href="/login">
+                            Iniciar sesión
+                        </NavLink>
+                    }
                 </div>
             </div>
         </div>
@@ -103,12 +163,50 @@
     </main>
 
     <!-- Footer -->
-
     <footer class="bg-dark text-white text-center py-3 mt-auto">
         <div class="container">
             <small>&copy; 2025 DEMEX - Todos los derechos reservados</small><br />
             <small>&copy; 2025 InfoPapus - Todos los derechos reservados</small>
         </div>
-    </footer> 
-
+    </footer>
 </div>
+
+@code {
+    private ClaimsPrincipal? user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthStateProvider.AuthenticationStateChanged += OnAuthStateChanged;
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
+    }
+
+    private async void OnAuthStateChanged(Task<AuthenticationState> task)
+    {
+        var authState = await task;
+        user = authState.User;
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        AuthStateProvider.AuthenticationStateChanged -= OnAuthStateChanged;
+    }
+
+    private async Task Logout()
+    {
+        await DemexAuth.LogoutAsync(); 
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
+        StateHasChanged();
+    }
+
+    private bool IsAuthenticated => user?.Identity?.IsAuthenticated ?? false;
+    private string? UserName => user?.Identity?.Name;
+
+    
+    private bool HasPermission(string module, string action)
+    {
+        return user?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
+    }
+}

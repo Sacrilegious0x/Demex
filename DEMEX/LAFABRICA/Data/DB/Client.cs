@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations;
 namespace LAFABRICA.Data.DB;
 
 public partial class Client
-{ 
+{
     public int Id { get; set; }
     [Required(ErrorMessage = "El nombre es requerido.")]
     public string Name { get; set; } = null!;

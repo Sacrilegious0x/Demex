@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace LAFABRICA.Data.DB;
 
-public partial class Administrator
+public partial class User
 {
     public int Id { get; set; }
 
@@ -15,9 +15,13 @@ public partial class Administrator
 
     public string Password { get; set; } = null!;
 
-    public byte? Isactive { get; set; }
+    public string Speciality { get; set; } = null!;
+
+    public byte? IsActive { get; set; }
 
     public int? RolId { get; set; }
+
+    public string UserType { get; set; } = null!;
 
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 

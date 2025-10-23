@@ -1,4 +1,5 @@
 ﻿@page "/productos/editar/{ProductId:int}"
+@attribute [Authorize]
 @using LAFABRICA.Data.DB
 @using LAFABRICA.Models.Interface
 @inject IProductService productService

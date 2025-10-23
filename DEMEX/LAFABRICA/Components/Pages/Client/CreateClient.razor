@@ -1,5 +1,6 @@
 ﻿@page "/clientes/crear"
 @page "/clientes/editar/{clientId:int}"
+@attribute [Authorize]
 @using LAFABRICA.Data.DB;
 @using LAFABRICA.Models.Interface;
 @inject IClientService service;

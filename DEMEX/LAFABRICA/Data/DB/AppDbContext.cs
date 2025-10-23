@@ -15,21 +15,16 @@ public partial class AppDbContext : DbContext
     {
     }
 
-    public virtual DbSet<Administrator> Administrators { get; set; }
-
     public virtual DbSet<Client> Clients { get; set; }
 
     public virtual DbSet<ClientPayment> ClientPayments { get; set; }
-
-    public virtual DbSet<Employee> Employees { get; set; }
 
     public virtual DbSet<Inventory> Inventories { get; set; }
 
     public virtual DbSet<Material> Materials { get; set; }
 
-    public virtual DbSet<ProductMaterial> ProductMaterials { get; set; }
-
     public virtual DbSet<MaterialSupplier> MaterialSuppliers { get; set; }
+    public virtual DbSet<ProductMaterial> ProductMaterials { get; set; }
 
     public virtual DbSet<Order> Orders { get; set; }
 
@@ -43,47 +38,21 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Supplier> Suppliers { get; set; }
 
+    public virtual DbSet<User> Users { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Administrator>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK__ADMINIST__3214EC27261094B9");
-
-            entity.ToTable("ADMINISTRATOR");
-
-            entity.Property(e => e.Id).HasColumnName("ID");
-            entity.Property(e => e.Email)
-                .HasMaxLength(255)
-                .HasColumnName("EMAIL");
-            entity.Property(e => e.Identification)
-                .HasMaxLength(12)
-                .HasColumnName("IDENTIFICATION");
-            entity.Property(e => e.Isactive)
-                .HasDefaultValue((byte)1)
-                .HasColumnName("ISACTIVE");
-            entity.Property(e => e.Name)
-                .HasMaxLength(255)
-                .HasColumnName("NAME");
-            entity.Property(e => e.Password).HasColumnName("PASSWORD");
-            entity.Property(e => e.RolId).HasColumnName("ROL_ID");
-
-            entity.HasOne(d => d.Rol).WithMany(p => p.Administrators)
-                .HasForeignKey(d => d.RolId)
-                .HasConstraintName("FK__ADMINISTR__ROL_I__412EB0B6");
-            //PARA VALIDACIONES
-            entity.HasIndex(d => d.Email)
-                .IsUnique()
-                .HasDatabaseName("UQ_ADMIN_EMAIL");
-            entity.HasIndex(d => d.Identification)
-                .IsUnique()
-                .HasDatabaseName("UQ_ADMIN_IDENTIFICATION");
-        });
-
         modelBuilder.Entity<Client>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__CLIENT__3214EC2706FAB57E");
 
             entity.ToTable("CLIENT");
+
+            entity.HasIndex(e => e.Email, "UQ_CLIENT_EMAIL").IsUnique();
+
+            entity.HasIndex(e => e.ManagerPhoneNumber, "UQ_CLIENT_MANAGER_PHONE_NUMBER").IsUnique();
+
+            entity.HasIndex(e => e.PhoneNumber, "UQ_CLIENT_PHONE_NUMBER").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("ID");
             entity.Property(e => e.Email)
@@ -112,16 +81,6 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.SpecificLocation)
                 .HasMaxLength(100)
                 .HasColumnName("SPECIFIC_LOCATION");
-            //Para validaciones de unicidad
-            entity.HasIndex(e => e.Email)
-                .IsUnique()
-                .HasDatabaseName("UQ_CLIENT_EMAIL");
-            entity.HasIndex(e => e.PhoneNumber)
-               .IsUnique()
-               .HasDatabaseName("UQ_CLIENT_PHONE_NUMBER");
-            entity.HasIndex(e => e.ManagerPhoneNumber)
-               .IsUnique()
-               .HasDatabaseName("UQ_CLIENT_MANAGER_PHONE_NUMBER");
         });
 
         modelBuilder.Entity<ClientPayment>(entity =>
@@ -129,6 +88,8 @@ public partial class AppDbContext : DbContext
             entity.HasKey(e => e.Id).HasName("PK__CLIENT_P__3214EC2724D43DD9");
 
             entity.ToTable("CLIENT_PAYMENT");
+
+            entity.HasIndex(e => e.OrderId, "IX_CLIENT_PAYMENT_ORDER_ID");
 
             entity.Property(e => e.Id).HasColumnName("ID");
             entity.Property(e => e.Amount)
@@ -148,49 +109,13 @@ public partial class AppDbContext : DbContext
                 .HasConstraintName("FK__CLIENT_PA__ORDER__6C190EBB");
         });
 
-        modelBuilder.Entity<Employee>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK__EMPLOYEE__3214EC2784DED161");
-
-            entity.ToTable("EMPLOYEE");
-
-            entity.Property(e => e.Id).HasColumnName("ID");
-            entity.Property(e => e.Email)
-                .HasMaxLength(255)
-                .HasColumnName("EMAIL");
-            entity.Property(e => e.Identification)
-                .HasMaxLength(12)
-                .HasColumnName("IDENTIFICATION");
-            entity.Property(e => e.IsActive)
-                .HasDefaultValue((byte)1)
-                .HasColumnName("IS_ACTIVE");
-            entity.Property(e => e.Name)
-                .HasMaxLength(255)
-                .HasColumnName("NAME");
-            entity.Property(e => e.Password).HasColumnName("PASSWORD");
-            entity.Property(e => e.RolId).HasColumnName("ROL_ID");
-            entity.Property(e => e.Speciality)
-                .HasMaxLength(100)
-                .HasColumnName("SPECIALITY");
-
-            entity.HasOne(d => d.Rol).WithMany(p => p.Employees)
-                .HasForeignKey(d => d.RolId)
-                .HasConstraintName("FK__EMPLOYEE__ROL_ID__44FF419A");
-
-            //para validaciones
-            entity.HasIndex(d => d.Email)
-                .IsUnique()
-                .HasDatabaseName("UQ_EMPLOYEE_EMAIL");
-            entity.HasIndex(d => d.Identification)
-                .IsUnique()
-                .HasDatabaseName("UQ_EMPLOYEE_IDENTIFICATION");
-        });
-
         modelBuilder.Entity<Inventory>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__INVENTOR__3214EC2756497961");
 
             entity.ToTable("INVENTORY");
+
+            entity.HasIndex(e => e.MaterialId, "IX_INVENTORY_MATERIAL_ID");
 
             entity.Property(e => e.Id).HasColumnName("ID");
             entity.Property(e => e.MaterialId).HasColumnName("MATERIAL_ID");
@@ -203,7 +128,6 @@ public partial class AppDbContext : DbContext
             entity.HasOne(d => d.Material).WithMany(p => p.Inventories)
                 .HasForeignKey(d => d.MaterialId)
                 .HasConstraintName("FK__INVENTORY__MATER__68487DD7");
-
         });
 
         modelBuilder.Entity<Material>(entity =>
@@ -222,9 +146,6 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.PricePurchase)
                 .HasColumnType("decimal(18, 0)")
                 .HasColumnName("PRICE_PURCHASE");
-          
-
-            
         });
 
         modelBuilder.Entity<MaterialSupplier>(entity =>
@@ -232,6 +153,8 @@ public partial class AppDbContext : DbContext
             entity.HasKey(e => new { e.MaterialId, e.SupplierId });
 
             entity.ToTable("MATERIAL_SUPPLIER");
+
+            entity.HasIndex(e => e.SupplierId, "IX_MATERIAL_SUPPLIER_SUPPLIER_ID");
 
             entity.Property(e => e.MaterialId).HasColumnName("MATERIAL_ID");
             entity.Property(e => e.SupplierId).HasColumnName("SUPPLIER_ID");
@@ -246,12 +169,15 @@ public partial class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
-
         modelBuilder.Entity<Order>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__ORDERS__3214EC270D9964BC");
 
             entity.ToTable("ORDERS");
+
+            entity.HasIndex(e => e.AdminId, "IX_ORDERS_ADMIN_ID");
+
+            entity.HasIndex(e => e.ClientId, "IX_ORDERS_CLIENT_ID");
 
             entity.Property(e => e.Id).HasColumnName("ID");
             entity.Property(e => e.AdminId).HasColumnName("ADMIN_ID");
@@ -282,7 +208,7 @@ public partial class AppDbContext : DbContext
 
             entity.HasOne(d => d.Admin).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.AdminId)
-                .HasConstraintName("FK__ORDERS__ADMIN_ID__4D94879B");
+                .HasConstraintName("FK_ORDERS_USER_ID");
 
             entity.HasOne(d => d.Client).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.ClientId)
@@ -299,6 +225,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Category)
                 .HasMaxLength(255)
                 .HasColumnName("CATEGORY");
+            entity.Property(e => e.Complexity).HasMaxLength(50);
             entity.Property(e => e.Description)
                 .HasMaxLength(255)
                 .HasColumnName("DESCRIPTION");
@@ -317,27 +244,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.PriceBase)
                 .HasColumnType("decimal(18, 0)")
                 .HasColumnName("PRICE_BASE");
-        });
 
-        modelBuilder.Entity<ProductOrder>(entity =>
-        {
-            entity.HasKey(e => new { e.IdProduct, e.IdOrder }).HasName("PK__PRODUCT___2491A4768A57FE4F");
-
-            entity.ToTable("PRODUCT_ORDER");
-
-            entity.Property(e => e.IdProduct).HasColumnName("ID_PRODUCT");
-            entity.Property(e => e.IdOrder).HasColumnName("ID_ORDER");
-            entity.Property(e => e.Quantity).HasColumnName("QUANTITY");
-
-            entity.HasOne(d => d.IdOrderNavigation).WithMany(p => p.ProductOrders)
-                .HasForeignKey(d => d.IdOrder)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PRODUCT_O__ID_OR__5AEE82B9");
-
-            entity.HasOne(d => d.IdProductNavigation).WithMany(p => p.ProductOrders)
-                .HasForeignKey(d => d.IdProduct)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PRODUCT_O__ID_PR__59FA5E80");
         });
 
         modelBuilder.Entity<ProductMaterial>(entity =>
@@ -352,12 +259,36 @@ public partial class AppDbContext : DbContext
             entity.HasOne(d => d.Product).WithMany(p => p.ProductMaterials)
                 .HasForeignKey(d => d.ProductId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PRODUCT_MATERIAL__ProductId"); 
+                .HasConstraintName("FK__PRODUCT_MATERIAL__ProductId");
 
             entity.HasOne(d => d.Material).WithMany(p => p.ProductMaterials)
                 .HasForeignKey(d => d.MaterialId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PRODUCT_MATERIAL__MaterialId"); 
+                .HasConstraintName("FK__PRODUCT_MATERIAL__MaterialId");
+        });
+
+
+        modelBuilder.Entity<ProductOrder>(entity =>
+        {
+            entity.HasKey(e => new { e.IdProduct, e.IdOrder }).HasName("PK__PRODUCT___2491A4768A57FE4F");
+
+            entity.ToTable("PRODUCT_ORDER");
+
+            entity.HasIndex(e => e.IdOrder, "IX_PRODUCT_ORDER_ID_ORDER");
+
+            entity.Property(e => e.IdProduct).HasColumnName("ID_PRODUCT");
+            entity.Property(e => e.IdOrder).HasColumnName("ID_ORDER");
+            entity.Property(e => e.Quantity).HasColumnName("QUANTITY");
+
+            entity.HasOne(d => d.IdOrderNavigation).WithMany(p => p.ProductOrders)
+                .HasForeignKey(d => d.IdOrder)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__PRODUCT_O__ID_OR__5AEE82B9");
+
+            entity.HasOne(d => d.IdProductNavigation).WithMany(p => p.ProductOrders)
+                .HasForeignKey(d => d.IdProduct)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__PRODUCT_O__ID_PR__59FA5E80");
         });
 
         modelBuilder.Entity<Rol>(entity =>
@@ -399,6 +330,10 @@ public partial class AppDbContext : DbContext
 
             entity.ToTable("SUPPLIERS");
 
+            entity.HasIndex(e => e.Email, "UQ_SUPPLIER_EMAIL").IsUnique();
+
+            entity.HasIndex(e => e.Phone, "UQ_SUPPLIER_PHONE").IsUnique();
+
             entity.Property(e => e.Id).HasColumnName("ID");
             entity.Property(e => e.Address)
                 .HasMaxLength(255)
@@ -418,16 +353,49 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Phone)
                 .HasMaxLength(15)
                 .HasColumnName("PHONE");
-            //PARA VALIDACIONES
-            entity.HasIndex(e => e.Email)
-                .IsUnique()
-                .HasDatabaseName("UQ_SUPPLIER_EMAIL");
-            entity.HasIndex(e => e.Phone)
-                .IsUnique()
-                .HasDatabaseName("UQ_SUPPLIER_PHONE");
         });
 
-       
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__EMPLOYEE__3214EC2784DED161");
+
+            entity.ToTable("USER");
+
+            entity.HasIndex(e => e.RolId, "IX_EMPLOYEE_ROL_ID");
+
+            entity.HasIndex(e => e.Email, "UQ_EMPLOYEE_EMAIL").IsUnique();
+
+            entity.HasIndex(e => e.Identification, "UQ_EMPLOYEE_IDENTIFICATION").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.Email)
+                .HasMaxLength(255)
+                .HasColumnName("EMAIL");
+            entity.Property(e => e.Identification)
+                .HasMaxLength(12)
+                .HasColumnName("IDENTIFICATION");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue((byte)1)
+                .HasColumnName("IS_ACTIVE");
+            entity.Property(e => e.Name)
+                .HasMaxLength(255)
+                .HasColumnName("NAME");
+            entity.Property(e => e.Password).HasColumnName("PASSWORD");
+            entity.Property(e => e.RolId).HasColumnName("ROL_ID");
+            entity.Property(e => e.Speciality)
+                .HasMaxLength(100)
+                .HasColumnName("SPECIALITY");
+            entity.Property(e => e.UserType)
+                .HasMaxLength(20)
+                .HasDefaultValue("EMPLOYEE")
+                .HasColumnName("USER_TYPE");
+
+            entity.HasOne(d => d.Rol).WithMany(p => p.Users)
+                .HasForeignKey(d => d.RolId)
+                .HasConstraintName("FK__EMPLOYEE__ROL_ID__44FF419A");
+        });
+
+        OnModelCreatingPartial(modelBuilder);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

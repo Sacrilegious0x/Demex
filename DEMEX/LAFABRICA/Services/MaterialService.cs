@@ -2,20 +2,22 @@
 using LAFABRICA.Data.DB;
 using LAFABRICA.Models.Interface;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace LAFABRICA.Services
 {
     public class MaterialService : IMaterialService
     {
-        private readonly AppDbContext _context;
-        public MaterialService(AppDbContext context)
+        private readonly IDbContextFactory<AppDbContext> _contextFactory;
+        public MaterialService(IDbContextFactory<AppDbContext> context)
         {
-            _context = context;
+            _contextFactory = context;
         }
 
         public async Task<List<Material>> GetAllMaterials()
         {
-            return await _context.Materials.ToListAsync();
+            using var context = _contextFactory.CreateDbContext();
+            return await context.Materials.ToListAsync();
         }
     }
 }

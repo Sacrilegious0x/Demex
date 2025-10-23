@@ -1,0 +1,68 @@
+﻿@page "/login"
+@using LAFABRICA.Services.Auth
+@inject DemexAuthenticationStateProvider AuthProvider
+@inject NavigationManager NavigationManager
+
+<PageTitle>Iniciar Sesión</PageTitle>
+
+<div class="container mt-5" style="max-width: 400px;">
+    <h3 class="text-center mb-4">Iniciar Sesión</h3>
+
+    <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="email" class="form-label">Correo electrónico</label>
+            <InputText id="email" class="form-control" @bind-Value="loginModel.Email" />
+        </div>
+
+        <div class="mb-3">
+            <label for="password" class="form-label">Contraseña</label>
+            <InputText id="password" class="form-control" @bind-Value="loginModel.Password" type="password" />
+        </div>
+
+        <button type="submit" class="btn w-100 text-white" style="background-color: #0f54a1;">Ingresar</button>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger mt-3">@errorMessage</div>
+        }
+    </EditForm>
+    <div class="float-sm-end">
+        <a href="/">Cambiar contraseña</a>
+    </div>
+</div>
+
+@code {
+    private LoginModel loginModel = new();
+    private string? errorMessage;
+
+    private async Task HandleLogin()
+    {
+        try
+        {
+            var success = await AuthProvider.LoginAsync(loginModel.Email, loginModel.Password);
+
+            if (success)
+            {
+                NavigationManager.NavigateTo("/", forceLoad: true);
+            }
+            else
+            {
+                errorMessage = "Credenciales inválidas.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al iniciar sesión: {ex.Message}";
+        }
+    }
+
+
+    public class LoginModel
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+}

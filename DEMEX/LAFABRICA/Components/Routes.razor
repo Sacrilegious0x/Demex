@@ -3,16 +3,37 @@
 <CascadingAuthenticationState>
     <Router AppAssembly="@typeof(Program).Assembly">
         <Found Context="routeData">
-            <RouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)" />
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <NotAuthorized>
+                    <div class="text-center mt-5">
+                        <i class="bi bi-lock-fill text-secondary" style="font-size: 3rem;"></i>
+                        <h4 class="mt-3">Acceso restringido</h4>
+                        <p>Debes iniciar sesión para acceder a esta sección.</p>
+                        <a href="/login" class="btn" style="background-color: #0f54a1;">Ir al inicio de sesión</a>
+                    </div>
+                </NotAuthorized>
+
+                <Authorizing>
+                    <div class="text-center mt-5">
+                        <Spinner Type="SpinnerType.Grow" style="background-color: #0f54a1;"  />
+                        <Spinner Type="SpinnerType.Grow" style="background-color: #0f54a1;" />
+                        <Spinner Type="SpinnerType.Grow" style="background-color: #0f54a1;" />
+                        <Spinner Type="SpinnerType.Grow" style="background-color: #0f54a1;" />
+                        <p class="mt-3 text-black">Verificando sesión...</p>
+                    </div>
+                </Authorizing>
+            </AuthorizeRouteView>
+
             <FocusOnNavigate RouteData="@routeData" Selector="h1" />
         </Found>
+
         <NotFound>
-            <LayoutView Layout="@typeof(Layout.MainLayout)">
+            <LayoutView Layout="@typeof(MainLayout)">
                 <div class="container mt-5">
                     <div class="alert alert-warning text-center" role="alert">
-                        <h4 class="alert-heading"> Página no encontrada</h4>
+                        <h4 class="alert-heading">Página no encontrada</h4>
                         <p>Lo sentimos, la página que buscas no existe.</p>
-                        <hr>
+                        <hr />
                         <a href="/" class="btn btn-primary">Volver al inicio</a>
                     </div>
                 </div>

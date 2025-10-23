@@ -1,9 +1,11 @@
 using LAFABRICA.Components;
 using LAFABRICA.Data.DB;
+using LAFABRICA.Services.Auth;
 
 using LAFABRICA.Models.Interface;
 
 using LAFABRICA.Services;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Http;
 
@@ -13,12 +15,14 @@ QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 //Crea variable para la cadena de conexion
 var connectionString = builder.Configuration.GetConnectionString("DEMEX");
 //registra servicio  para la conexion
-builder.Services.AddDbContext<AppDbContext>(options =>
+
+builder.Services.AddDbContextFactory<AppDbContext>(options =>
 {
 options.UseSqlServer(connectionString)
 .LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information)
            .EnableSensitiveDataLogging();
     });
+
 
 
 // Add services to the container.
@@ -39,6 +43,26 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddBlazorBootstrap();
+
+
+//PARA SEGURIDAD
+
+builder.Services.AddScoped<DemexAuthService>();
+builder.Services.AddScoped<DemexAuthenticationStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<DemexAuthenticationStateProvider>());
+
+//DUMMY PARA LAS URLS
+builder.Services.AddAuthentication("Identity.Application")
+    .AddCookie("Identity.Application", options =>
+    {
+        options.LoginPath = "/login"; 
+    });
+
+
+
+
+builder.Services.AddAuthorizationCore();
+
 
 
 var app = builder.Build();
