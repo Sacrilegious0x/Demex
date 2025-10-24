@@ -43,6 +43,7 @@ builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRolService, RolService>();
+builder.Services.AddScoped<IRolePermissonService, RolePermissionService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddBlazorBootstrap();
 

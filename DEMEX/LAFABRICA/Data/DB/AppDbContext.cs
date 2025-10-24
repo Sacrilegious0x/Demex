@@ -304,6 +304,9 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Name)
                 .HasMaxLength(100)
                 .HasColumnName("NAME");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue((byte)1)
+                .HasColumnName("IS_ACTIVE");
         });
 
         modelBuilder.Entity<RolePermission>(entity =>
