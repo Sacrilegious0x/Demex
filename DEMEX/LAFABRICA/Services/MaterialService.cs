@@ -16,10 +16,18 @@ namespace LAFABRICA.Services
             _context = context;
         }
 
-        public async Task<Material> CreateMaterial(Material material)
+        public async Task<Material> CreateMaterial(Material material, int suppleirId, int? 
+            quantityToMaterialSupplier, 
+            int? minimumQuantity)
         {
-           _context.Materials.Add(material);
+            _context.Materials.Add(material);
             await _context.SaveChangesAsync();
+
+            await addInMaterial_Supplier(material.Id, suppleirId, quantityToMaterialSupplier);
+
+            await addInInventory(material.Id,minimumQuantity);
+            
+
             return material;
         }
 
@@ -29,13 +37,13 @@ namespace LAFABRICA.Services
             if (material == null)
             {
                 throw new KeyNotFoundException($"Material con id {id} no encontrado en create Material");
-                
+
             }
             material.IsActive = false;
             _context.Materials.Update(material);
 
             await _context.SaveChangesAsync();
-            
+
         }
 
         public async Task<IEnumerable<Material>> GetAllMaterials()
@@ -45,7 +53,7 @@ namespace LAFABRICA.Services
 
         public async Task<Material>? GetMaterialById(int id)
         {
-            var material  = await _context.Materials.FindAsync(id);
+            var material = await _context.Materials.FindAsync(id);
             return material;
         }
 
@@ -55,7 +63,7 @@ namespace LAFABRICA.Services
         {
             var oldMaterial = await _context.Materials.FindAsync(id);
 
-            if(oldMaterial == null)
+            if (oldMaterial == null)
             {
                 throw new KeyNotFoundException($"El material con el id {id} no encontrado en UpdateMaterial");
             }
@@ -67,32 +75,102 @@ namespace LAFABRICA.Services
 
         public async Task<IEnumerable<MaterialSupplierInventoryDto>> GetMaterialDetails()
         {
-            var queryMaterialsToInventory =
-        from m in _context.Materials
-        join ms in _context.MaterialSuppliers on m.Id equals ms.MaterialId
-        join s in _context.Suppliers on ms.SupplierId equals s.Id
-        join i in _context.Inventories on m.Id equals i.MaterialId
-        select new MaterialSupplierInventoryDto // <--- Aquí seleccionas el ViewModel
-        {
-            MaterialId = m.Id,
-            SupplierId = s.Id,
-            MaterialName = m.Name,
-            SupplierName = s.Name,
-            Quantity = ms.Quantity,
-            Unit = m.Unit,
-            MinimumQuantity = i.MinimunQuantity, // Asumiendo este nombre en el modelo Inventory
-            PricePurchase = m.PricePurchase,
-            photoUrl = m.PhotoUrl
-        };
+            var queryMaterialsToInventory = _context.Materials
+                // 1. Une MATERIAL con MATERIAL_SUPPLIER (N:M)
+                // Se usa SelectMany para aplanar la relación y generar filas por cada Material-Supplier
+                .Where(m => (bool)m.IsActive)
+                .SelectMany(m => m.MaterialSuppliers, (m, ms) => new { m, ms })
+                // Une el resultado con INVENTORY 
+                .Join(_context.Inventories,
+                      anon => anon.m.Id,         // Clave de Material
+                      i => i.MaterialId,         // Clave de Inventario
+                      (anon, i) => new { anon.m, anon.ms, i })
+
+                // se construye el DTO
+                .Select(dto => new MaterialSupplierInventoryDto
+                {
+                    MaterialId = dto.m.Id,
+                    SupplierId = dto.ms.SupplierId,
+                    MaterialName = dto.m.Name,
+                    SupplierName = dto.ms.Supplier.Name, // Navegación implícita a Supplier
+                    Quantity = dto.ms.Quantity, //Cantidad de la tabla material_Supplier
+                    Unit = dto.m.Unit,
+                    MinimumQuantity = dto.i.MinimunQuantity, // Cantidad minima del inventario
+                    PricePurchase = dto.m.PricePurchase,
+                    photoUrl = dto.m.PhotoUrl
+                });
 
             return await queryMaterialsToInventory.ToListAsync();
         }
 
+        private async Task<bool> addInMaterial_Supplier(int materialId, int supplierId, int? quantity)
+        {
 
+            try
+            {
+                // 1. Crear una nueva instancia de la entidad de enlace
+                var newMaterialSupplier = new MaterialSupplier
+                {
+                    // Las dos claves primarias/foráneas
+                    MaterialId = materialId,
+                    SupplierId = supplierId,
 
+                    // La cantidad (que representa la cantidad de suministro o pedido mínimo)
+                    Quantity = quantity
+                };
 
+                // 2. Agregar la nueva entidad al DbSet
+                _context.MaterialSuppliers.Add(newMaterialSupplier);
 
+                // 3. Guardar los cambios en la base de datos
+                await _context.SaveChangesAsync();
 
+                // 4. Devolver true si la operación fue exitosa
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // Opcional: Loguear el error (recomendado)
+                // Console.WriteLine($"Error al agregar MaterialSupplier: {ex.Message}");
+                Console.WriteLine(ex.ToString());
+                // Devolver false si la operación falló
+                return false;
+            }
+        }
 
+        private async Task<bool> addInInventory(int materialId, int? minimumQuantity)
+        {
+            try
+            {
+                // 1. Crear una nueva instancia de la entidad de enlace
+                var newMaterialInInventory = new Inventory
+                {
+                    // Las dos claves primarias/foráneas
+                    MaterialId = materialId,
+                    MinimunQuantity = minimumQuantity,
+                    State = "default",
+                    Quantity = 1
+
+                };
+
+                // 2. Agregar la nueva entidad al DbSet
+                _context.Inventories.Add(newMaterialInInventory);
+
+                // 3. Guardar los cambios en la base de datos
+                await _context.SaveChangesAsync();
+
+                // 4. Devolver true si la operación fue exitosa
+                return true;
+            }
+            catch (Exception ex)
+            {
+                {
+                    Console.WriteLine(ex.ToString());
+                    return false;
+                }
+
+            }
+
+        }
     }
 }

@@ -9,7 +9,7 @@ namespace LAFABRICA.Models.Interface
 
         Task<Material>? GetMaterialById(int id);
 
-        Task<Material> CreateMaterial(Material material);
+        Task<Material> CreateMaterial(Material material, int supplierId,int? quantity, int? minimumQuantity);
 
         Task<Material> UpdateMaterial(int id, Material material);   
 

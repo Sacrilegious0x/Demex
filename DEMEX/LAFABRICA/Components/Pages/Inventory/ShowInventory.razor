@@ -2,12 +2,36 @@
 @using LAFABRICA.Models.AuxiliarDTOS
 @using LAFABRICA.Models.Interface
 @using LAFABRICA.Services
-@inject NavigationManager nav;
+@inject NavigationManager NavigationManager;
 @inject IMaterialService materialService;
 
 <PageTitle>Clientes</PageTitle>
 <Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 <ConfirmDialog @ref="dialog" />
+
+<style>
+    .material-img-thumbnail {
+        width: 60px; /* Tamaño fijo para la miniatura */
+        height: 60px;
+        object-fit: cover; /* Asegura que la imagen cubra el espacio sin distorsionarse */
+        border-radius: 4px;
+        border: 1px solid #ddd;
+    }
+
+    .status-agotado {
+        color: #dc3545; /* Rojo de Bootstrap (Danger) */
+        font-weight: bold;
+    }
+
+    .status-poco {
+        color: #ffc107; /* Amarillo/Naranja de Bootstrap (Warning) */
+        font-weight: bold;
+    }
+
+    .status-aceptable {
+        color: #28a745; /* Verde de Bootstrap (Success) */
+    }
+</style>
 
 @if (materialDetails == null)
 {
@@ -37,7 +61,7 @@ else
            <div class="card-header">
                     <div class="d-flex justify-content-between align-items-center mt-3">
                             <h3> <Icon Name="IconName.Box"></Icon> Gestion de inventario</h3>
-                            <a class="btn text-white" href="/inventario/crear" style="background-color: #0f54a1;"> <Icon Name="IconName.PlusLg"></Icon> Nuevo Cliente</a>
+                            <a class="btn text-white" href="/inventario/crear" style="background-color: #0f54a1;"> <Icon Name="IconName.PlusLg"></Icon> Nuevo Material</a>
                     </div>
 
                 <div class="d-flex justify-content-sm-start align-items-center gap-3 mt-3">
@@ -58,9 +82,11 @@ else
                             <thead>
                                 <tr>
                                     <th>Material</th>
+                                    <th>Unidad</th>
                                     <th>Proveedor</th>
-                                    <th>Cant. Suministro</th>
+                                    <th>Stock Actual</th>
                                     <th>Stock Mínimo</th>
+                                    <th>Estado</th>
                                     <th>Precio Compra</th>
                                     <th>Foto</th>
                                     <th>Acciones</th>
@@ -69,16 +95,32 @@ else
                             <tbody>
                                 @foreach (var detail in materialDetails) // <--- Iterando sobre el VM
                                 {
+                                    var (statusText, statusClass) = GetStockStatus((int)detail.Quantity, (int)detail.MinimumQuantity);
                                     <tr>
-                                        <td>@detail.MaterialName (@detail.Unit)</td>
+                                        <td>@detail.MaterialName </td>
+                                        <td>@detail.Unit</td>
                                         <td>@detail.SupplierName</td>
                                         <td>@detail.Quantity</td>
                                         <td>@detail.MinimumQuantity</td>
+                                        <td>
+                                            <span class="@statusClass">
+                                                @statusText
+                                            </span>
+                                        </td>
                                         <td>@detail.PricePurchase</td>
-                                        <td>@detail.photoUrl</td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(detail.photoUrl))
+                                            {
+                                                <Image src="@detail.photoUrl"  alt="@detail.MaterialName" Class="material-img-thumbnail"  />
+                                            }
+                                            else
+                                            {
+                                                <Icon Name="IconName.ImageFill" Color="IconColor.Secondary" />
+                                            }
+                                        </td>
                                         <td>
                                             <button Class="btn btn-edit" @onclick="() => toEdit(detail.MaterialId)"> <Icon Class="icon-edit" Name="IconName.PencilSquare"></Icon> </button>
-                                            <button Class="btn btn-delete" @onclick="() => toDelete(detail.MaterialId)">
+                                            <button Class="btn btn-delete" @onclick="() => showDeleteConfirmationAsync(detail.MaterialId)">
                                                 <Icon Name="IconName.Trash" Color="IconColor.Danger"></Icon>
                                             </button>
                                         </td>
@@ -104,7 +146,7 @@ else
     private List<MaterialSupplierInventoryDto>? materialDetails;
     private ConfirmDialog dialog = default!;
 
-    
+    [Inject] public ToastService toastService { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -115,14 +157,69 @@ else
         materialDetails = (await materialService.GetMaterialDetails()).ToList();
     }
 
-    private void toEdit(int MaterialId)
+
+    /// <summary>
+    /// Calcula el estado del stock y devuelve el texto y la clase CSS apropiada.
+    /// </summary>
+
+    /// <returns>Una tupla con el texto del estado y la clase CSS a aplicar.</returns>
+    private (string statusText, string statusClass) GetStockStatus(int currentStock, int minStock)
     {
-        
+        // Regla 1: Agotado si el stock actual es igual o menor al mínimo
+        if (currentStock <= minStock)
+        {
+            return ("Agotado", "status-agotado");
+        }
+
+        // Regla 2: Queda poco si está cercano. Definiremos "cercano" como menos del 150% del stock mínimo.
+        // Por ejemplo, si el mínimo es 10, es "poco" si el stock está entre 11 y 15.
+        // Puedes ajustar el factor (1.5) según necesites.
+        if (currentStock <= (int)(minStock * 1.5))
+        {
+            return ("Queda poco", "status-poco");
+        }
+
+        // Regla 3: Aceptable (stock suficiente)
+        return ("Aceptable", "status-aceptable");
     }
 
-    private void toDelete(int MaterialId)
+    private void toEdit(int MaterialId)
     {
 
+
+
+
+
+    }
+
+    private async Task showDeleteConfirmationAsync(int MaterialId)
+    {
+        var options = new ConfirmDialogOptions
+        {
+            YesButtonText = "Eliminar",
+            YesButtonColor = ButtonColor.Danger,
+            NoButtonText = "Cancelar",
+            NoButtonColor = ButtonColor.Secondary
+        };
+        var confirmation = await dialog.ShowAsync(
+            title: "Seguro que desea eliminar este material?",
+            message1: "Esta accion es irreversible.",
+            confirmDialogOptions: options);
+
+        if (confirmation)
+        {
+            handleDelete(MaterialId);
+        }
+    }
+
+    private async void handleDelete(int materialId)
+    {
+
+        await materialService.DeleteMaterial(materialId);
+        toastService.Notify(new(ToastType.Success, "Se ha eliminado correctamente"));
+
+        await Task.Delay(1000);
+        NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
     }
 
 

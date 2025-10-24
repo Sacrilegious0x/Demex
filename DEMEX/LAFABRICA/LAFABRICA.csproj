@@ -21,6 +21,7 @@
   <ItemGroup>
     <Folder Include="Business\" />
     <Folder Include="Controllers\" />
+    <Folder Include="wwwroot\images\materials\" />
     <Folder Include="wwwroot\NewFolder\" />
   </ItemGroup>
 
