@@ -1,10 +1,9 @@
 using LAFABRICA.Components;
 using LAFABRICA.Data.DB;
-using LAFABRICA.Services.Auth;
-
 using LAFABRICA.Models.Interface;
-
 using LAFABRICA.Services;
+using LAFABRICA.Services.Auth;
+using LAFABRICA.Services.Email;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Http;
@@ -42,6 +41,9 @@ builder.Services.AddScoped<IClientService, ClientService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IRolService, RolService>();
+builder.Services.AddScoped<EmailService>();
 builder.Services.AddBlazorBootstrap();
 
 

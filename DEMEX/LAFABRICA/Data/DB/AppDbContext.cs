@@ -40,6 +40,9 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
+    public virtual DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Client>(entity =>
@@ -393,6 +396,25 @@ public partial class AppDbContext : DbContext
             entity.HasOne(d => d.Rol).WithMany(p => p.Users)
                 .HasForeignKey(d => d.RolId)
                 .HasConstraintName("FK__EMPLOYEE__ROL_ID__44FF419A");
+        });
+
+        modelBuilder.Entity<PasswordResetToken>(entity =>
+        {
+            entity.ToTable("PasswordResetTokens");
+
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Token)
+                .HasMaxLength(256)
+                .IsRequired();
+
+            entity.Property(e => e.Expiration)
+                .IsRequired();
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         OnModelCreatingPartial(modelBuilder);

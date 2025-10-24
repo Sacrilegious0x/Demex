@@ -131,18 +131,31 @@
                         </li>
                     }
 
+                    @if (HasPermission("Rols", DemexClaims.View))
+                    {
+                        <li class="nav-item">
+                            <NavLink class="nav-link" href="/users">
+                                <i class="bi bi-person-workspace me-1"></i> Roles
+                            </NavLink>
+                        </li>
+                    }
+
                 </ul>
 
                 <!-- Usuario -->
                 <div class="d-flex align-items-center">
                     @if (IsAuthenticated)
                     {
-                        <span class="navbar-text me-3 text-dark">
-                            <i class="bi bi-person-circle me-1"></i> Bienvenido, @UserName
-                        </span>
-                        <button class="btn btn-outline-secondary btn-sm" @onclick="Logout">
-                            Cerrar sesión
-                        </button>
+                        <div class="dropdown me-3">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-person-circle me-1"></i> @UserName
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="/change-pass">Cambiar contraseña</a></li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li><button class="dropdown-item text-danger" @onclick="Logout">Cerrar sesión</button></li>
+                            </ul>
+                        </div>
                     }
                     else
                     {
