@@ -17,10 +17,13 @@ namespace LAFABRICA.Services
             _contextFactory = context;
         }
 
+
         public async Task<Material> CreateMaterial(Material material, int suppleirId, int? 
             quantityToMaterialSupplier, 
             int? minimumQuantity)
         {
+            using var _context = _contextFactory.CreateDbContext();
+
             if (material.PhotoUrl == null)
             {
                 material.PhotoUrl = "default";
@@ -39,6 +42,9 @@ namespace LAFABRICA.Services
 
         public async Task DeleteMaterial(int id)
         {
+
+            using var _context = _contextFactory.CreateDbContext();
+
             var material = await _context.Materials.FindAsync(id);
             if (material == null)
             {
@@ -60,6 +66,8 @@ namespace LAFABRICA.Services
 
         public async Task<Material>? GetMaterialById(int id)
         {
+            using var _context = _contextFactory.CreateDbContext();
+
             var material = await _context.Materials.FindAsync(id);
             return material;
         }
@@ -68,6 +76,9 @@ namespace LAFABRICA.Services
 
         public async Task<Material> UpdateMaterial(int id, Material material)
         {
+
+            using var _context = _contextFactory.CreateDbContext();
+
             var oldMaterial = await _context.Materials.FindAsync(id);
 
             if (oldMaterial == null)
@@ -82,6 +93,9 @@ namespace LAFABRICA.Services
 
         public async Task<IEnumerable<MaterialSupplierInventoryDto>> GetMaterialDetails()
         {
+
+            using var _context = _contextFactory.CreateDbContext();
+
             var queryMaterialsToInventory = _context.Materials
                 // 1. Une MATERIAL con MATERIAL_SUPPLIER (N:M)
                 // Se usa SelectMany para aplanar la relación y generar filas por cada Material-Supplier
@@ -112,6 +126,8 @@ namespace LAFABRICA.Services
 
         private async Task<bool> addInMaterial_Supplier(int materialId, int supplierId, int? quantity)
         {
+
+            using var _context = _contextFactory.CreateDbContext();
 
             try
             {
@@ -147,6 +163,8 @@ namespace LAFABRICA.Services
 
         private async Task<bool> addInInventory(int materialId, int? minimumQuantity)
         {
+
+            using var _context = _contextFactory.CreateDbContext();
             try
             {
                 // 1. Crear una nueva instancia de la entidad de enlace
@@ -154,7 +172,7 @@ namespace LAFABRICA.Services
                 {
                     // Las dos claves primarias/foráneas
                     MaterialId = materialId,
-                    MinimunQuantity = minimumQuantity,
+                    MinimunQuantity = (int)minimumQuantity,
                     State = "default",
                     Quantity = 1
 
@@ -183,6 +201,8 @@ namespace LAFABRICA.Services
         // Este es un fragmento de la clase MaterialService
         public async Task<MaterialSupplierInventoryDto?> GetMaterialDetailByIds(int materialId, int supplierId)
         {
+            using var _context = _contextFactory.CreateDbContext();
+
             var query = _context.Materials
                 // Filtra por el MaterialId inmediatamente 
                 .Where(m => m.Id == materialId && (bool)m.IsActive)
@@ -221,6 +241,7 @@ namespace LAFABRICA.Services
         // Este es un fragmento de la clase MaterialService
         public async Task UpdateMaterial(MaterialSupplierInventoryDto dto)
         {
+            using var _context = _contextFactory.CreateDbContext();
             // Inicia una transacción si tu contexto lo permite (buena práctica para actualizar múltiples tablas)
             // using var transaction = await _context.Database.BeginTransactionAsync();
 
@@ -254,7 +275,7 @@ namespace LAFABRICA.Services
                 }
 
                 // Se actualiza el campo de Inventario
-                inventory.MinimunQuantity = dto.MinimumQuantity;
+                inventory.MinimunQuantity = (int)dto.MinimumQuantity;
 
 
                 // ACTUALIZAR ENTIDAD MATERIAL_SUPPLIER (el Stock Actual)
