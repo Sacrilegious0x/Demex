@@ -25,6 +25,8 @@ options.UseSqlServer(connectionString)
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+
+
 builder.Services.AddBlazorBootstrap();
 
 //Se agregan controladores
@@ -39,7 +41,7 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<IClientPaymentService, ClientPaymentService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
-builder.Services.AddBlazorBootstrap();
+
 
 
 var app = builder.Build();
