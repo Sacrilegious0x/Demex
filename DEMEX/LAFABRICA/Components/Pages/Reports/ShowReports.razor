@@ -8,6 +8,7 @@
 <PageTitle>Reportes y Análisis</PageTitle>
 
 <style>
+    /* --- Estilos Originales (Métricas y Gráficos) --- */
     .metric-card-icon-bg {
         width: 40px;
         height: 40px;
@@ -29,12 +30,43 @@
     .btn i.bi, .form-select i.bi {
         margin-right: 0.5rem;
     }
+
     /* Estilo para que el canvas se ajuste */
     .chart-container {
         position: relative;
         height: 300px;
         width: 100%;
     }
+
+    /* --- NUEVOS ESTILOS PARA LAS PESTAÑAS (Tabs) --- */
+
+    /* Contenedor principal de las pestañas */
+    #reportTabs.nav-tabs {
+        border-bottom: 1px solid #dee2e6; /* Mantenemos un borde inferior sutil */
+    }
+
+    /* Estilo para los botones de las pestañas (Estado Inactivo) */
+    #reportTabs .nav-link {
+        font-weight: 500;
+        color: #555; /* Color gris oscuro como el texto de tu header */
+        border: none; /* Quitamos los bordes feos de 'nav-tabs' */
+        border-top-left-radius: 0.375rem; /* Redondeamos esquinas superiores */
+        border-top-right-radius: 0.375rem;
+    }
+
+        /* Estilo para pestaña INACTIVA al pasar el mouse */
+        ##reportTabs .nav-link.active {
+        color: #ffffff; /* Texto blanco */
+        background-color: #893914; 
+        border-color: transparent; /* Sin bordes */
+    }
+
+        /* Estilo para la pestaña ACTIVA (el más importante) */
+        #reportTabs .nav-link.active {
+            color: #ffffff; /* Texto blanco */
+            background-color: #6a4028; /* Color MARRÓN de tu header */
+            border-color: transparent; /* Sin bordes */
+        }
 </style>
 
 <div class="container-fluid mt-3">
@@ -55,6 +87,7 @@
                     <h4 class="mb-0">
                         <i class="bi bi-bar-chart-line-fill me-2"></i> Reportes y Análisis
                     </h4>
+
                     <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
                         <select class="form-select form-select-sm w-auto" value="@selectedPeriod" @onchange="OnPeriodChangedViaEvent">
 
@@ -63,12 +96,6 @@
                                 <option value="@period">@period</option>
                             }
                         </select>
-                        <button class="btn btn-sm btn-outline-secondary" @onclick="ExportPlaceholder">
-                            <i class="bi bi-download me-2"></i> Exportar
-                        </button>
-                        <button class="btn btn-sm btn-primary" @onclick="GenerateReportPlaceholder" style="background-color: #0f54a1;">
-                            <i class="bi bi-file-earmark-text me-2"></i> Generar Reporte
-                        </button>
                     </div>
                 </div>
             </div>
@@ -155,16 +182,24 @@
 
                 <ul class="nav nav-tabs" id="reportTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link @(selectedTab == "sales" ? "active" : "")" id="sales-tab" data-bs-toggle="tab" data-bs-target="#sales-tab-pane" type="button" role="tab" @onclick='() => selectedTab = "sales"'>Ventas</button>
+                        <button class="nav-link @(selectedTab == "sales" ? "active" : "")" id="sales-tab" data-bs-toggle="tab" data-bs-target="#sales-tab-pane" type="button" role="tab" @onclick='() => selectedTab = "sales"'>
+                            <i class="bi bi-graph-up me-1"></i> Ventas
+                        </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link @(selectedTab == "products" ? "active" : "")" id="products-tab" data-bs-toggle="tab" data-bs-target="#products-tab-pane" type="button" role="tab" @onclick='() => selectedTab = "products"'>Productos</button>
+                        <button class="nav-link @(selectedTab == "products" ? "active" : "")" id="products-tab" data-bs-toggle="tab" data-bs-target="#products-tab-pane" type="button" role="tab" @onclick='() => selectedTab = "products"'>
+                            <i class="bi bi-box-seam-fill me-1"></i> Productos
+                        </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link @(selectedTab == "inventory" ? "active" : "")" id="inventory-tab" data-bs-toggle="tab" data-bs-target="#inventory-tab-pane" type="button" role="tab" @onclick='() => selectedTab = "inventory"'>Inventario</button>
+                        <button class="nav-link @(selectedTab == "inventory" ? "active" : "")" id="inventory-tab" data-bs-toggle="tab" data-bs-target="#inventory-tab-pane" type="button" role="tab" @onclick='() => selectedTab = "inventory"'>
+                            <i class="bi bi-archive-fill me-1"></i> Inventario
+                        </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link @(selectedTab == "clients" ? "active" : "")" id="clients-tab" data-bs-toggle="tab" data-bs-target="#clients-tab-pane" type="button" role="tab" @onclick='() => selectedTab = "clients"'>Clientes</button>
+                        <button class="nav-link @(selectedTab == "clients" ? "active" : "")" id="clients-tab" data-bs-toggle="tab" data-bs-target="#clients-tab-pane" type="button" role="tab" @onclick='() => selectedTab = "clients"'>
+                            <i class="bi bi-people-fill me-1"></i> Clientes
+                        </button>
                     </li>
                 </ul>
                 <div class="tab-content border border-top-0 p-3" id="reportTabsContent">
