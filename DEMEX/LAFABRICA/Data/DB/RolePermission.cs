@@ -9,13 +9,13 @@ public partial class RolePermission
 
     public string Module { get; set; } = null!;
 
-    public byte Canview { get; set; }
+    public bool Canview { get; set; }
 
-    public byte Cancreate { get; set; }
+    public bool Cancreate { get; set; }
 
-    public byte Candelete { get; set; }
+    public bool Candelete { get; set; }
 
-    public byte Canedit { get; set; }
+    public bool Canedit { get; set; }
 
     public virtual Rol Role { get; set; } = null!;
 }

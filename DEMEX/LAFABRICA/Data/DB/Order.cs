@@ -29,7 +29,7 @@ public partial class Order
 
     public int? AdminId { get; set; }
 
-    public virtual Administrator? Admin { get; set; }
+    public virtual User? Admin { get; set; }
 
     public virtual Client? Client { get; set; }
 

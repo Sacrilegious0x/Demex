@@ -7,7 +7,6 @@ namespace LAFABRICA.Data.DB;
 public partial class Product
 {
     public int Id { get; set; }
-
     [Required(ErrorMessage = "El nombre del producto es obligatorio.")]
     [StringLength(255)]
     public string Name { get; set; } = null!;
@@ -24,7 +23,7 @@ public partial class Product
 
     public byte IsCustom { get; set; }
 
- 
+
     [StringLength(50)]
     public string Complexity { get; set; } = null!;
 
@@ -35,8 +34,7 @@ public partial class Product
 
     public virtual ICollection<ProductOrder> ProductOrders { get; set; } = new List<ProductOrder>();
 
-    
+    public virtual ICollection<Material> Materials { get; set; } = new List<Material>();
+
     public virtual ICollection<ProductMaterial> ProductMaterials { get; set; } = new List<ProductMaterial>();
 }
-
-// Nota: ICollection es una interfaz de C# que representa una colección de objetos.
