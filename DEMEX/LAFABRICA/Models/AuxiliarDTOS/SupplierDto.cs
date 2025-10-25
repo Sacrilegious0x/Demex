@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace LAFABRICA.Models
+namespace LAFABRICA.Models.AuxiliarDTOS
 {
     public class SupplierDto
     {

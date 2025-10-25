@@ -7,7 +7,7 @@ public partial class Inventory
 {
     public int Id { get; set; }
 
-    public int MinimunQuantity { get; set; }
+    public int? MinimunQuantity { get; set; }
 
     public int Quantity { get; set; }
 
@@ -16,4 +16,5 @@ public partial class Inventory
     public int? MaterialId { get; set; }
 
     public virtual Material? Material { get; set; }
+
 }
