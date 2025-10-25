@@ -149,6 +149,13 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.PricePurchase)
                 .HasColumnType("decimal(18, 0)")
                 .HasColumnName("PRICE_PURCHASE");
+            entity.Property(e => e.Unit)
+                .HasMaxLength(50)
+                .HasColumnName("UNIT");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("IsActive");
+
         });
 
         modelBuilder.Entity<MaterialSupplier>(entity =>
@@ -162,6 +169,9 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.MaterialId).HasColumnName("MATERIAL_ID");
             entity.Property(e => e.SupplierId).HasColumnName("SUPPLIER_ID");
             entity.Property(e => e.Quantity).HasColumnName("QUANTITY");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("IsActive");
 
             entity.HasOne(d => d.Material).WithMany(p => p.MaterialSuppliers)
                 .HasForeignKey(d => d.MaterialId)

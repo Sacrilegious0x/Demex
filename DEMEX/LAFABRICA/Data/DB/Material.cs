@@ -12,6 +12,8 @@ public partial class Material
     public decimal? PricePurchase { get; set; }
 
     public string PhotoUrl { get; set; } = null!;
+    public string Unit { get; set; } = null!;
+    public bool? IsActive { get; set; }
 
     public virtual ICollection<Inventory> Inventories { get; set; } = new List<Inventory>();
 

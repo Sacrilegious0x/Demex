@@ -14,4 +14,8 @@ public partial class MaterialSupplier
     public virtual Material Material { get; set; } = null!;
 
     public virtual Supplier Supplier { get; set; } = null!;
+
+    public bool? IsActive { get; set; }
 }
+
+
