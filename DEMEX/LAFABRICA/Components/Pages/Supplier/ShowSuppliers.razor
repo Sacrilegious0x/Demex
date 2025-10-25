@@ -1,7 +1,11 @@
 ﻿@page "/proveedor"
 @using BlazorBootstrap
+@using LAFABRICA.Data.DB
 @using LAFABRICA.Models
+@using LAFABRICA.Models.AuxiliarDTOS
 @using LAFABRICA.Models.Interface
+@using LAFABRICA.Services
+
 @inject ISupplierService SupplierService
 @inject NavigationManager NavigationManager
 
@@ -120,8 +124,11 @@ else
 @code {
 
 
-    [Inject] public ToastService ToastService { get; set; } = default!;
+    [Inject] public ToastService toastService { get; set; } = default!;
     private List<SupplierDto>? suppliers;
+
+    private List<Supplier>? supps;
+
     private string searchTerm = string.Empty;
 
     // simular filtrado
@@ -154,7 +161,7 @@ else
     private async void handleDelete(int id)
     {
         var res = SupplierService.DeleteSupplierAsync(id);
-        ToastService.Notify(new(ToastType.Success, "Se ha eliminado correctamente"));
+        toastService.Notify(new(ToastType.Success, "Se ha eliminado correctamente"));
 
         await Task.Delay(1000);
         NavigationManager.NavigateTo(NavigationManager.Uri,forceLoad:true);
@@ -184,14 +191,9 @@ else
 
         if (confirmation)
         {
-
             handleDelete(id);
+        }
 
-        }
-        else
-        {
-            return;
-        }
         }
 
     }

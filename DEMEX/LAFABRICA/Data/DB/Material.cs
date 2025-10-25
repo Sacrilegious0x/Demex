@@ -15,6 +15,10 @@ public partial class Material
     public string Unit { get; set; } = null!;
     public bool? IsActive { get; set; }
 
+    public bool? IsActive { get; set; }
+
+    public string? Unit { get; set; }
+
     public virtual ICollection<Inventory> Inventories { get; set; } = new List<Inventory>();
 
     public virtual ICollection<MaterialSupplier> MaterialSuppliers { get; set; } = new List<MaterialSupplier>();
