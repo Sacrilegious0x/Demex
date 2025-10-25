@@ -90,6 +90,7 @@ namespace LAFABRICA.Services
             new() { Module = "USERS", Canview = true, Cancreate = true, Candelete = true, Canedit = true },
             new() { Module = "WORKERS_PAYMENTS", Canview = true, Cancreate = true, Candelete = true, Canedit = true },
             new() { Module = "TOURS", Canview = true, Cancreate = true, Candelete = true, Canedit = true }
+
         };
     
     }

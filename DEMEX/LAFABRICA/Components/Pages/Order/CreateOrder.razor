@@ -2,6 +2,7 @@
 @attribute [Authorize]
 @using LAFABRICA.Data.DB
 @using LAFABRICA.Models.Interface
+@using System.ComponentModel.DataAnnotations // Necesario para ValidationResult
 @inject IOrderService orderService
 @inject IClientService clientService
 @inject IProductService productService
@@ -9,6 +10,8 @@
 @inject ToastService ToastService
 @inject IJSRuntime JSRuntime
 @inject IWebHostEnvironment WebHostEnvironment
+@* Ya no necesitamos IDisposable si no nos suscribimos a OnFieldChanged *@
+
 <PageTitle>Crear Nueva Orden</PageTitle>
 
 @if (allClients == null || allProducts == null)
@@ -20,14 +23,22 @@
 }
 else
 {
-    <EditForm Model="@newOrder" OnValidSubmit="() => SaveOrder(true)">
+    @* Usamos EditForm para manejar el contexto de validación *@
+    <EditForm EditContext="@editContext" OnValidSubmit="HandleValidSubmit">
         <DataAnnotationsValidator />
         <Card>
             <CardHeader>
                 <CardTitle Size="HeadingSize.H5">Crear Nueva Orden / Cotización</CardTitle>
             </CardHeader>
             <CardBody>
+                @* ValidationSummary muestra errores generales y los de DataAnnotations *@
                 <ValidationSummary class="alert alert-danger mb-3" />
+
+                @* Mostramos el error específico del carrito si existe *@
+                @if (!string.IsNullOrEmpty(cartErrorMessage))
+                {
+                    <div class="alert alert-warning">@cartErrorMessage</div>
+                }
 
                 <div class="row">
                     <div class="col-md-4">
@@ -41,6 +52,8 @@ else
                                     <option value="@client.Id">@client.Name</option>
                                 }
                             </InputSelect>
+                            @* Muestra el error específico para ClientId *@
+                            <ValidationMessage For="@(() => newOrder.ClientId)" />
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Prioridad de la Orden</label>
@@ -49,11 +62,12 @@ else
                                 <option value="Media">Media</option>
                                 <option value="Alta">Alta</option>
                             </InputSelect>
+                            @* No se necesita ValidationMessage si no es obligatorio *@
                         </div>
                     </div>
 
                     <div class="col-md-8">
-                        <h5>2. Productos de la Orden</h5>
+                        <h5>2. Productos de la Orden *</h5> @* Indicador visual de requerido *@
                         <div class="input-group mb-3">
                             <select @bind="selectedProductId" class="form-select" style="max-width: 60%;">
                                 <option value="0">-- Seleccione un producto para añadir --</option>
@@ -100,15 +114,24 @@ else
                 <h5>3. Resumen y Pago</h5>
                 <div class="row">
                     <div class="col-md-4">
-                        <label class="form-label">Total Acordado (₡)</label>
-                        <InputNumber @bind-Value="newOrder.TotalAmount" class="form-control" />
+                        <label class="form-label">Total Acordado (₡) *</label>
+                        <InputNumber Value="@newOrder.TotalAmount"
+                                     ValueChanged="@((decimal v) => OnTotalAmountChanged(v))"
+                                     ValueExpression="@(() => newOrder.TotalAmount)"
+                                     class="form-control" />
+                        @* Muestra el error específico para TotalAmount *@
+                        <ValidationMessage For="@(() => newOrder.TotalAmount)" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Descuento (%)</label>
-                        <InputNumber @bind-Value="newOrder.Discount" class="form-control" />
-                        @if (!string.IsNullOrEmpty(discountSuggestion))
+                        <InputNumber @bind-Value="newOrder.Discount" class="form-control" readonly />
+                        @if (!string.IsNullOrEmpty(discountSuggestion) && newOrder.Discount == 0)
                         {
                             <div class="form-text text-success">@discountSuggestion</div>
+                        }
+                        else if (newOrder.Discount > 0)
+                        {
+                            <div class="form-text text-primary">Descuento calculado.</div>
                         }
                     </div>
                     <div class="col-md-4">
@@ -120,19 +143,21 @@ else
                         }
                     </div>
                 </div>
-
             </CardBody>
             <CardFooter>
                 <div class="d-flex justify-content-end gap-2">
+                    <a href="/ordenes" class="btn btn-light border">Cancelar</a>
+
+                    @* Botón SIN 'disabled' *@
                     <Button Color="ButtonColor.Secondary" @onclick="() => SaveOrder(false)">Guardar como Cotización</Button>
 
-                    @* --- BOTÓN MODIFICADO --- *@
                     <Button Color="ButtonColor.Info" IsOutlined="true"
                             @onclick="GeneratePdfPreview"
                             disabled="@(!cartItems.Any() || newOrder.ClientId == null)">
                         <Icon Name="IconName.FileEarmarkPdf" /> Generar Resumen
                     </Button>
 
+                    @* Botón SIN 'disabled' *@
                     <button type="submit" class="btn btn-primary">Comenzar Orden</button>
                 </div>
             </CardFooter>
@@ -157,13 +182,25 @@ else
 
     private int selectedProductId;
     private int selectedProductQuantity = 1;
-
     private string discountSuggestion = "";
+
+    private EditContext editContext = default!;
+    private string? cartErrorMessage;
 
     protected override async Task OnInitializedAsync()
     {
+        editContext = new EditContext(newOrder);
+        // No necesitamos suscribirnos a OnFieldChanged si no actualizamos 'isFormValid' dinámicamente
         allClients = (await clientService.GetAllClient()).ToList();
         allProducts = (await productService.GetAllProducts()).ToList();
+    }
+
+    private void ClearCartError()
+    {
+        if (cartItems.Any())
+        {
+            cartErrorMessage = null;
+        }
     }
 
     private void ClientSelectionChanged(ChangeEventArgs e)
@@ -171,6 +208,8 @@ else
         var clientId = int.Parse(e.Value?.ToString() ?? "0");
         newOrder.ClientId = clientId > 0 ? clientId : null;
         UpdateDiscountSuggestion();
+        // Notificamos al EditContext para validación
+        editContext?.NotifyFieldChanged(FieldIdentifier.Create(() => newOrder.ClientId));
     }
 
     private void AddProductToCart()
@@ -195,16 +234,18 @@ else
             });
         }
 
-        // Reseteamos los selectores
         selectedProductId = 0;
         selectedProductQuantity = 1;
+        ClearCartError();
         UpdateDiscountSuggestion();
+        CalculateDiscount();
     }
 
     private void RemoveProductFromCart(int productId)
     {
         cartItems.RemoveAll(i => i.ProductId == productId);
         UpdateDiscountSuggestion();
+        CalculateDiscount();
     }
 
     private void UpdateDiscountSuggestion()
@@ -223,19 +264,73 @@ else
             discountSuggestion = "Sugerencia: 5% (más de 5 artículos).";
     }
 
+    private void OnTotalAmountChanged(decimal newValue)
+    {
+        newOrder.TotalAmount = newValue;
+        CalculateDiscount();
+        // Notificamos al EditContext para validación
+        editContext?.NotifyFieldChanged(FieldIdentifier.Create(() => newOrder.TotalAmount));
+    }
+
+    private void CalculateDiscount()
+    {
+        decimal subtotal = cartItems.Sum(i => i.Quantity * i.PriceBase);
+        decimal totalAcordado = newOrder.TotalAmount;
+
+        if (subtotal > 0 && totalAcordado > 0 && totalAcordado < subtotal)
+        {
+            decimal discountAmount = subtotal - totalAcordado;
+            newOrder.Discount = Math.Round((discountAmount / subtotal) * 100, 2);
+        }
+        else
+        {
+            newOrder.Discount = 0;
+        }
+        // Llamamos a StateHasChanged aquí para asegurar que el descuento (readonly) se actualice en la UI
+        StateHasChanged();
+    }
+
+    // El método SaveOrder sigue igual, con las validaciones internas
     private async Task SaveOrder(bool beginOrder)
     {
+        cartErrorMessage = null;
+
+        // 1. Validar DataAnnotations (Cliente, Total Acordado) usando EditContext
+        bool isValidDataAnnotations = editContext.Validate(); // Llama a Validate() para que muestre errores si los hay
+
+        // 2. Validar que haya productos en el carrito
+        bool hasProducts = cartItems.Any();
+        if (!hasProducts)
+        {
+            cartErrorMessage = "Debe añadir al menos un producto a la orden.";
+        }
+
+        // 3. Si alguna validación falla, mostrar mensajes y detener
+        if (!isValidDataAnnotations || !hasProducts)
+        {
+            if (!isValidDataAnnotations)
+                ToastService.Notify(new(ToastType.Warning, "Datos incompletos", "Revise los campos marcados en rojo."));
+            if (!hasProducts)
+                ToastService.Notify(new(ToastType.Warning, "Faltan Productos", cartErrorMessage));
+
+            // Importante: Actualizar la UI para mostrar cartErrorMessage si es necesario
+            StateHasChanged();
+            return; // Detener ejecución
+        }
+
+        // Si todo es válido, proceder a guardar
         try
         {
             newOrder.CreationDate = DateOnly.FromDateTime(DateTime.Now);
-            newOrder.DaliveryDate = DateOnly.FromDateTime(DateTime.Now.AddDays(15)); // Fecha de entrega por defecto (ej. 15 días)
-            newOrder.AdminId = 1; // Valor quemado como solicitaste
+            newOrder.DaliveryDate = DateOnly.FromDateTime(DateTime.Now.AddDays(15));
+            newOrder.AdminId = 1;
             newOrder.State = beginOrder ? "Diseño" : "Cotizando";
 
             newOrder.ProductOrders = cartItems.Select(item => new ProductOrder
             {
                 IdProduct = item.ProductId,
-                Quantity = item.Quantity
+                Quantity = item.Quantity,
+                IdOrderNavigation = newOrder
             }).ToList();
 
             await orderService.Create(newOrder);
@@ -249,9 +344,10 @@ else
         }
     }
 
-    // Este método se activa con el botón principal "Comenzar Orden"
+    // HandleValidSubmit solo se llama si DataAnnotations son válidas, pero aún necesita llamar a SaveOrder
     private async Task HandleValidSubmit()
     {
+        // SaveOrder contiene ahora TODA la lógica de validación (DataAnnotations + Carrito)
         await SaveOrder(true);
     }
 
@@ -264,14 +360,34 @@ else
         }
 
         // Poblamos el objeto de la orden con los datos actuales del formulario
-        newOrder.ProductOrders = cartItems.Select(item => new ProductOrder
+        // Asegúrate que allProducts no sea null aquí
+        if (allProducts == null)
         {
-            IdProductNavigation = allProducts.First(p => p.Id == item.ProductId),
-            Quantity = item.Quantity,
-            IdProduct = item.ProductId
+            ToastService.Notify(new(ToastType.Danger, "Error interno", "La lista de productos no está cargada."));
+            return;
+        }
+
+        newOrder.ProductOrders = cartItems.Select(item =>
+        {
+            // Buscamos el producto correspondiente en la lista completa
+            var product = allProducts.FirstOrDefault(p => p.Id == item.ProductId);
+            return new ProductOrder
+            {
+                // Asignamos IdProductNavigation si encontramos el producto
+                IdProductNavigation = product,
+                Quantity = item.Quantity,
+                IdProduct = item.ProductId
+            };
         }).ToList();
 
-        var client = allClients.FirstOrDefault(c => c.Id == newOrder.ClientId);
+        var client = allClients?.FirstOrDefault(c => c.Id == newOrder.ClientId);
+        // Manejar el caso donde el cliente no se encuentra (aunque la validación debería prevenirlo)
+        if (client == null)
+        {
+            ToastService.Notify(new(ToastType.Warning, "Cliente no encontrado", "No se pudo encontrar el cliente seleccionado."));
+            return;
+        }
+
 
         // Creamos el modelo de datos para el PDF
         var pdfModel = new OrderPdfModel
@@ -285,8 +401,12 @@ else
         var pdfBytes = generator.GenerateDocument();
 
         // Usamos JS Interop para descargar el archivo
-        var fileName = $"Cotizacion_{client.Name.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd}.pdf";
+        var fileName = $"Cotizacion_{client.Name?.Replace(" ", "_") ?? "Cliente"}_{DateTime.Now:yyyyMMdd}.pdf";
         var base64 = Convert.ToBase64String(pdfBytes);
         await JSRuntime.InvokeVoidAsync("saveAsFile", fileName, base64);
     }
+
+    // Ya no necesitamos IDisposable si no nos suscribimos a OnFieldChanged
+    // public void Dispose() { ... }
 }
+

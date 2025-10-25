@@ -29,6 +29,8 @@ options.UseSqlServer(connectionString)
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+
+
 builder.Services.AddBlazorBootstrap();
 
 //Se agregan controladores
@@ -41,6 +43,7 @@ builder.Services.AddScoped<ISupplierService,SupplierService>();
 builder.Services.AddScoped<IClientService, ClientService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IMaterialService, MaterialService>();
+builder.Services.AddScoped<IClientPaymentService, ClientPaymentService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRolService, RolService>();

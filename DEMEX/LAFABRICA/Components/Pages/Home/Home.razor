@@ -1,15 +1,19 @@
 ﻿@page "/"
 @using LAFABRICA.Data.DB
 @using LAFABRICA.Models.Interface
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.Authorization
 @inject IProductService productService
 @inject IClientService clientService
 @inject IOrderService orderService
-@using Microsoft.AspNetCore.Components.Authorization
+@inject IClientPaymentService paymentService
+@inject AppDbContext _context
 
-    <style>
-        .dashboard-card-link {
-            text-decoration: none;
-        }
+
+<style>
+    .dashboard-card-link {
+        text-decoration: none;
+    }
 
             .dashboard-card-link .card:hover {
                 transform: translateY(-5px);
@@ -17,10 +21,10 @@
                 transition: all 0.2s ease-in-out;
             }
 
-        .disabled-card {
-            opacity: 0.65;
-            pointer-events: none;
-        }
+    .disabled-card {
+        opacity: 0.65;
+        pointer-events: none;
+    }
 
             .disabled-card .fw-bold,
             .disabled-card .h5,
@@ -152,12 +156,30 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var allProducts = await productService.GetAllProducts();
-        var allOrders = await orderService.GetAllOrders();
+        try
+        {
+            // === INICIO CORRECCIÓN: Carga secuencial ===
+            var allProducts = await productService.GetAllProducts();
+            var allOrders = await orderService.GetAllOrders();
+            var allPayments = await paymentService.GetAllPayments();
+            // 2. AÑADIR CONSULTA DE INVENTARIO
+            inventoryAlertCount = await _context.Inventories.CountAsync(i => i.State == "Bajo");
+            // === FIN CORRECCIÓN ===
 
-        activeProductsCount = allProducts.Count();
-        activeOrdersCount = allOrders.Count();
-
-        isLoading = false;
+            // Contar después de cargar todo
+            activeProductsCount = allProducts.Count();
+            activeOrdersCount = allOrders.Count(o => o.State != "Finalizada");
+            totalPaymentsCount = allPayments.Count();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error cargando datos del dashboard: {ex}");
+            // Considera mostrar un mensaje de error en la UI también
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
+
 }
