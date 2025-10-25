@@ -39,7 +39,7 @@ public partial class Order
 
     public int? AdminId { get; set; }
 
-    public virtual Administrator? Admin { get; set; }
+    public virtual User? Admin { get; set; }
 
     // === ATRIBUTO ForeignKey AÑADIDO ===
     [ForeignKey("ClientId")] // Asegura que EF sepa que 'Client' se relaciona con 'ClientId'

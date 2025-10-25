@@ -7,83 +7,87 @@ namespace LAFABRICA.Services
 {
     public class ClientService: IClientService
     {
-        private readonly AppDbContext _contex;
+        private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
-        public ClientService(AppDbContext contex)
+        public ClientService(IDbContextFactory<AppDbContext> contex)
         {
-            _contex = contex;
+            _contextFactory = contex;
         }
 
         public async Task<Client> Create(Client client)
         {
 
-
-            bool existEmail = await _contex.Clients.AnyAsync(c => c.Email == client.Email);
+            using var context = _contextFactory.CreateDbContext();
+            bool existEmail = await context.Clients.AnyAsync(c => c.Email == client.Email);
             if (existEmail)
             {
                 throw new InvalidOperationException("El correo ya esta registrado");
             }
-            bool existPhone = await _contex.Clients.AnyAsync(c => c.PhoneNumber == client.PhoneNumber);
+            bool existPhone = await context.Clients.AnyAsync(c => c.PhoneNumber == client.PhoneNumber);
             if (existPhone)
             {
                 throw new InvalidOperationException("El contacto de la empresa ya esta registrado");
             }
-            bool existManagerPhone = await _contex.Clients.AnyAsync(c => c.ManagerPhoneNumber == client.ManagerPhoneNumber);
+            bool existManagerPhone = await context.Clients.AnyAsync(c => c.ManagerPhoneNumber == client.ManagerPhoneNumber);
             if (existManagerPhone)
             {
                 throw new InvalidOperationException("El contacto del encargado ya esta registrado");
             }
 
-            _contex.Clients.Add(client);
-            await _contex.SaveChangesAsync();
+            context.Clients.Add(client);
+            await context.SaveChangesAsync();
             return client;
         }
 
         public async Task Delete(int id)
         {
-            var client = await _contex.Clients.FindAsync(id);
+            using var context = _contextFactory.CreateDbContext();
+            var client = await context.Clients.FindAsync(id);
             if (client == null)
                 throw new KeyNotFoundException($"Cliente con id {id} no encontrado");
             client.IsActive = 0;
-            _contex.Clients.Update(client);
+            context.Clients.Update(client);
             //_contex.Clients.Remove(client);
             
-            await _contex.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
 
         public async Task<IEnumerable<Client>> GetAllClient()
         {
-            return await _contex.Clients.ToListAsync();
+            using var context = _contextFactory.CreateDbContext();
+            return await context.Clients.ToListAsync();
         }
 
         public async Task<Client?> GetById(int id)
         {
-            var client = await _contex.Clients.FindAsync(id);
+            using var context = _contextFactory.CreateDbContext();
+            var client = await context.Clients.FindAsync(id);
             return client;
         }
 
         public async Task<Client> Update(int id, Client client)
         {
-            var oldClient = await _contex.Clients.FindAsync(id);
+            using var context = _contextFactory.CreateDbContext();
+            var oldClient = await context.Clients.FindAsync(id);
             if (oldClient == null)
                 throw new KeyNotFoundException($"El cliente con el id {id} no encontrado");
-            bool existEmail = await _contex.Clients.AnyAsync(c => c.Id != id && c.Email == client.Email);
+            bool existEmail = await context.Clients.AnyAsync(c => c.Id != id && c.Email == client.Email);
             if (existEmail)
             {
                 throw new InvalidOperationException("El correo ya esta registrado");
             }
-            bool existPhone = await _contex.Clients.AnyAsync(c => c.Id != id && c.PhoneNumber == client.PhoneNumber);
+            bool existPhone = await context.Clients.AnyAsync(c => c.Id != id && c.PhoneNumber == client.PhoneNumber);
             if (existPhone)
             {
                 throw new InvalidOperationException("El contacto de la empresa ya esta registrado");
             }
-            bool existManagerPhone = await _contex.Clients.AnyAsync(c => c.Id != id && c.ManagerPhoneNumber == client.ManagerPhoneNumber);
+            bool existManagerPhone = await context.Clients.AnyAsync(c => c.Id != id && c.ManagerPhoneNumber == client.ManagerPhoneNumber);
             if (existManagerPhone)
             {
                 throw new InvalidOperationException("El contacto del encargado ya esta registrado");
             }
-            _contex.Entry(oldClient).CurrentValues.SetValues(client);
-            await _contex.SaveChangesAsync();
+            context.Entry(oldClient).CurrentValues.SetValues(client);
+            await context.SaveChangesAsync();
             return client;
         }
     }

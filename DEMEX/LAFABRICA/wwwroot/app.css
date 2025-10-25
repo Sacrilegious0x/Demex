@@ -84,10 +84,6 @@ body {
 }
 
 
-.icon-edit {
-    color: #893914;
-}
-
 .btn-show:hover {
     background-color: rgba(161, 161, 161, 0.3);
 }
@@ -101,5 +97,12 @@ body {
 
 }
 
+.material-img-thumbnail {
+    width: 50px; /* Tamaño fijo para la miniatura */
+    height: 50px;
+    object-fit: cover; /* Asegura que la imagen cubra el espacio sin distorsionarse */
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
 
 

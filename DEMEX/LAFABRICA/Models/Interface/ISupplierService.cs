@@ -1,4 +1,4 @@
-﻿using LAFABRICA.Models;
+﻿using LAFABRICA.Models.AuxiliarDTOS;
 
 namespace LAFABRICA.Models.Interface
 {

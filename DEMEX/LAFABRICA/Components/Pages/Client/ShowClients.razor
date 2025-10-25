@@ -1,4 +1,5 @@
 ﻿@page "/clientes"
+@attribute [Authorize]
 @using LAFABRICA.Data.DB
 @using LAFABRICA.Models.Interface;
 @inject IClientService service;
@@ -23,9 +24,9 @@
 		<Alert Color="AlertColor.Primary" class="d-flex justify-content-between align-items-center">
 			<div>
 				<Icon Name="IconName.InfoCircleFill" class="me-2" />
-				<strong>No hay clientes registrados </strong>
+				<strong>No hay materiales registrados </strong>
 			</div>
-			<a class="btn btn-outline-primary" href="/clientes/crear"><Icon Name="IconName.PlusLg" /> Nuevo Cliente</a>
+			<a class="btn btn-outline-primary" href="/inventario/crear"><Icon Name="IconName.PlusLg" /> Nuevo Material</a>
 		</Alert>
 		</div>
 	}

@@ -1,0 +1,195 @@
+﻿@page "/usuarios/crear"
+@page "/usuarios/editar/{userId:int}"
+@attribute [Authorize]
+@using LAFABRICA.Data.DB
+@using LAFABRICA.Models.Interface
+@inject IUserService userService
+@inject IRolService rolService
+@inject NavigationManager nav
+@inject ToastService ToastService
+
+<PageTitle>Usuarios</PageTitle>
+
+<Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+<ConfirmDialog @ref="dialog" />
+
+<div class="container mt-3">
+    <div class="card shadow">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <h2>
+                    @if (userId.HasValue)
+                    {
+                        <Icon Name="IconName.PersonFillGear" Class="me-2" />
+                        <text>Editar usuario</text>
+                    }
+                    else
+                    {
+                        <Icon Name="IconName.PersonPlusFill" Class="me-2" />
+                        <text>Nuevo usuario</text>
+                    }
+                </h2>
+                <a class="btn btn-outline-secondary" href="/usuarios">
+                    <Icon Name="IconName.ArrowLeft" />
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            @if (user != null && editContext != null)
+            {
+                <EditForm EditContext="@editContext" OnValidSubmit="HandleOnValidSubmit">
+                    <DataAnnotationsValidator />
+                    @* <ValidationSummary /> *@
+
+                    <div class="row">
+                        <!-- Columna izquierda -->
+                        <div class="col-md-6">
+                            <h5>Información Personal</h5>
+
+                            <div class="mb-3">
+                                <label class="form-label">Nombre completo <span class="text-danger">*</span></label>
+                                <InputText class="form-control" @bind-Value="user.Name" placeholder="Ejemplo: Juan Pérez" />
+                                <ValidationMessage For="@(() => user.Name)" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Identificación <span class="text-danger">*</span></label>
+                                <InputText class="form-control" @bind-Value="user.Identification" placeholder="Ejemplo: 305120999" />
+                                <ValidationMessage For="@(() => user.Identification)" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Correo electrónico <span class="text-danger">*</span></label>
+                                <InputText class="form-control" @bind-Value="user.Email" placeholder="usuario@dominio.com" />
+                                <ValidationMessage For="@(() => user.Email)" />
+                            </div>
+                        </div>
+
+                        <!-- Columna derecha -->
+                        <div class="col-md-6">
+                            <h5>Detalles del Rol</h5>
+
+                            <div class="mb-3">
+                                <label class="form-label">Especialidad <span class="text-danger">*</span></label>
+                                <InputText class="form-control" @bind-Value="user.Speciality" placeholder="Ejemplo: Producción, Ventas..." />
+                                <ValidationMessage For="@(() => user.Speciality)" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Rol Asignado <span class="text-danger">*</span></label>
+                                <InputSelect class="form-select" @bind-Value="user.RolId">
+                                    <option value="">Seleccione un rol</option>
+                                    @foreach (var rol in roles)
+                                    {
+                                        <option value="@rol.Id">@rol.Name</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => user.RolId)" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <Alert Color="AlertColor.Info" class="mt-2 mb-4">
+                        <Icon Name="IconName.InfoCircleFill" class="me-2" />
+                        <strong>Importante:</strong> asegúrese de registrar un
+                        <strong>correo electrónico válido y existente.</strong><br />
+                        Se generará una <strong>contraseña temporal</strong> para el usuario,
+                        quien deberá restablecerla (Olvide mi contraseña) al iniciar sesión.
+                </Alert>
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <a class="btn btn-outline-secondary me-2" href="/usuarios">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
+                </EditForm>
+
+            }
+            else
+            {
+                <div class="d-flex justify-content-center">
+                    <Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int? userId { get; set; }
+    private User? user;
+    private EditContext? editContext;
+    private List<Rol> roles = new();
+    private ConfirmDialog dialog = default!;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        user = new User();
+        editContext = new EditContext(user);
+        roles = (await rolService.GetAllRols()).ToList();
+
+        if (userId.HasValue)
+        {
+            var loaded = await userService.GetById(userId.Value);
+            if (loaded == null)
+            {
+                nav.NavigateTo("/usuarios");
+                return;
+            }
+
+            user = loaded;
+            editContext = new EditContext(user);
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleOnValidSubmit()
+    {
+        if (editContext != null && editContext.Validate())
+        {
+            try
+            {
+                if (userId.HasValue)
+                {
+                    var options = new ConfirmDialogOptions
+                    {
+                        YesButtonText = "Confirmar",
+                        YesButtonColor = ButtonColor.Success,
+                        NoButtonText = "Cancelar",
+                        NoButtonColor = ButtonColor.Danger
+                    };
+
+                    var confirm = await dialog.ShowAsync(
+                        title: "Editar usuario",
+                        message1: $"¿Deseas actualizar los datos de {user!.Name}?",
+                        confirmDialogOptions: options
+                    );
+
+                    if (confirm)
+                    {
+                        await userService.Update(userId.Value, user!);
+                        ToastService.Notify(new(ToastType.Success, $"Se actualizaron los datos del usuario {user!.Name}."));
+                    }
+                }
+                else
+                {
+                    await userService.Create(user!);
+                    ToastService.Notify(new(ToastType.Success, $"Se registró correctamente al usuario {user?.Name}."));
+                    ToastService.Notify(new(ToastType.Info, $"Se generó una contraseña temporal para el usuario."));
+                }
+
+                await Task.Delay(1000);
+                nav.NavigateTo("/usuarios");
+            }
+            catch (InvalidOperationException ex)
+            {
+                ToastService.Notify(new(ToastType.Warning, ex.Message));
+            }
+            catch (Exception ex)
+            {
+                ToastService.Notify(new(ToastType.Danger, $"Ocurrió un error inesperado: {ex.Message}"));
+            }
+        }
+    }
+}

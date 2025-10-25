@@ -1,0 +1,284 @@
+﻿@page "/inventario"
+@using LAFABRICA.Models.AuxiliarDTOS
+@using LAFABRICA.Models.Interface
+@using LAFABRICA.Services
+@using BlazorBootstrap
+@inject NavigationManager NavigationManager;
+@inject IMaterialService materialService;
+
+<PageTitle>Inventario</PageTitle>
+<Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+<ConfirmDialog @ref="dialog" />
+
+<style>
+        .material-img-thumbnail {
+                width: 60px; /* Tamaño fijo para la miniatura */
+                height: 60px;
+                object-fit: cover; /* la imagen cubra el espacio sin distorsionarse */
+                border-radius: 4px;
+                border: 1px solid #ddd;
+
+    }
+
+        .status-sold_out {
+                color: #dc3545; /* Rojo de Bootstrap (Danger) */
+                font-weight: bold;
+
+    }
+
+        .status-little {
+                color: #ffc107; /* Amarillo/Naranja de Bootstrap (Warning) */
+                font-weight: bold;
+
+    }
+
+        .status-aceptable {
+                color: #28a745; /* Verde de Bootstrap (Success) */
+
+    }
+</style>
+
+@if (materialDetails == null)
+{
+    <div class="d-flex justify-content-center">
+        <Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
+    </div>
+
+}
+else if (!materialDetails.Any())
+{
+
+    <div>
+        <Alert Color="AlertColor.Primary" class="d-flex justify-content-between align-items-center">
+            <div>
+                <Icon Name="IconName.InfoCircleFill" class="me-2" />
+                <strong>No hay materiales registrados en el inventario. </strong>
+            </div>
+            <a class="btn btn-outline-primary" href="/inventario/crear"><Icon Name="IconName.PlusLg" /> Nuevo Material</a>
+        </Alert>
+    </div>
+
+}
+else
+{
+    <div class="container mt-2">
+
+        <div class="card">
+
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <h3> <Icon Name="IconName.Box"></Icon> Gestión de Inventario</h3>
+                    <a class="btn text-white" href="/inventario/crear" style="background-color: #0f54a1;"> <Icon Name="IconName.PlusLg"></Icon> Nuevo Material</a>
+                </div>
+
+                <div class="d-flex flex-wrap align-items-center gap-3 mt-3">
+
+                    @* --- Campo de Búsqueda por Nombre --- *@
+                    <div class="d-flex align-items-center border rounded px-2" style="flex-grow: 1; max-width: 400px;">
+                        <Icon Name="IconName.Search" class="text-secondary me-2" />
+                        <input type="text" class="form-control border-0" placeholder="Buscar por Nombre de Material o Proveedor..."
+                               @bind-value="searchTerm" @bind-value:event="oninput" style="box-shadow:none;" />
+                    </div>
+
+                    @* --- InputSelect para Filtrar por Estado --- *@
+                    <div class="d-flex align-items-center">
+                        <label for="status-filter" class="me-2 text-secondary">Filtrar por Estado:</label>
+                        <InputSelect id="status-filter" class="form-select" @bind-Value="statusFilter">
+                            <option value="">Todos los estados</option>
+                            <option value="Agotado">Agotado</option>
+                            <option value="Queda poco">Queda poco</option>
+                            <option value="Aceptable">Aceptable</option>
+                        </InputSelect>
+                    </div>
+
+                </div>
+            </div>
+
+
+            <div class="card-body text-center">
+                @if (!FilteredMaterials.Any())
+                {
+                    <Alert Color="AlertColor.Warning">
+                        <Icon Name="IconName.ExclamationTriangleFill" class="me-2" />
+                        No se encontraron materiales que coincidan con los filtros aplicados.
+                    </Alert>
+                }
+                else
+                {
+                    <div class="row">
+                        <div class="col-12 table-responsive" style=" max-height: 370px; overflow-y: auto;">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Material</th>
+                                        <th>Unidad</th>
+                                        <th>Proveedor</th>
+                                        <th>Stock Actual</th>
+                                        <th>Stock Mínimo</th>
+                                        <th>Estado</th>
+                                        <th>Precio Compra</th>
+                                        <th>Foto</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var detail in FilteredMaterials) 
+                                    {
+                                        var (statusText, statusClass) = GetStockStatus((int)detail.Quantity, (int)detail.MinimumQuantity);
+                                        <tr>
+                                            <td>@detail.MaterialName </td>
+                                            <td>@detail.Unit</td>
+                                            <td>@detail.SupplierName</td>
+                                            <td>@detail.Quantity</td>
+                                            <td>@detail.MinimumQuantity</td>
+                                            <td>
+                                                <span class="@statusClass">
+                                                    @statusText
+                                                </span>
+                                            </td>
+                                            <td>@detail.PricePurchase</td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(detail.photoUrl))
+                                                {
+                                                    <Image src="@detail.photoUrl"  alt="@detail.MaterialName" Class="material-img-thumbnail"   />
+                                                }
+                                                else
+                                                {
+                                                    <Icon Name="IconName.ImageFill" Color="IconColor.Secondary" />
+                                                }
+                                            </td>
+                                            <td>
+                                                <button Class="btn btn-edit" @onclick="() => showEditConfirmationAsync(detail.MaterialId, detail.SupplierId)"> <Icon Class="icon-edit" Name="IconName.PencilSquare"></Icon> </button>
+                                                <button Class="btn btn-delete" @onclick="() => showDeleteConfirmationAsync(detail.MaterialId)">
+                                                    <Icon Name="IconName.Trash" Color="IconColor.Danger"></Icon>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+
+}
+
+
+@code {
+    private List<MaterialSupplierInventoryDto>? materialDetails;
+    private ConfirmDialog dialog = default!;
+
+    // --- Variables de Estado para el Filtrado ---
+    private string searchTerm = string.Empty;
+    private string statusFilter = string.Empty; // Vacío por defecto = "Todos"
+    // ------------------------------------------
+
+    [Inject] public ToastService toastService { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMaterials();
+    }
+    private async Task LoadMaterials()
+    {
+        // lista sea mutable para el filtrado en memoria
+        materialDetails = (await materialService.GetMaterialDetails()).ToList();
+    }
+
+    // --- Propiedad Calculada para Aplicar Filtros ---
+    private IEnumerable<MaterialSupplierInventoryDto> FilteredMaterials
+    {
+        get
+        {
+            if (materialDetails == null)
+            {
+                return Enumerable.Empty<MaterialSupplierInventoryDto>();
+            }
+
+            var filtered = materialDetails.AsEnumerable();
+
+            // 1. Aplicar Filtro de Búsqueda (por Nombre de Material o Proveedor)
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var lowerSearch = searchTerm.Trim().ToLowerInvariant();
+                filtered = filtered.Where(d =>
+                    d.MaterialName.ToLowerInvariant().Contains(lowerSearch) ||
+                    d.SupplierName.ToLowerInvariant().Contains(lowerSearch));
+            }
+
+            // 2. Aplicar Filtro por Estado (Agotado, Queda poco, Aceptable)
+            if (!string.IsNullOrWhiteSpace(statusFilter))
+            {
+                filtered = filtered.Where(d =>
+                {
+                    var (statusText, _) = GetStockStatus((int)d.Quantity, (int)d.MinimumQuantity);
+                    return statusText == statusFilter;
+                });
+            }
+
+            return filtered;
+        }
+    }
+
+
+
+    private (string statusText, string statusClass) GetStockStatus(int currentStock, int minStock)
+    {
+        //  Agotado si el stock actual es igual o menor al mínimo
+        if (currentStock <= minStock)
+        {
+            return ("Agotado", "status-sold_out");
+        }
+        //  Queda poco si está cercano. se toma  "cercano" como menos del 150% del stock mínimo.
+        // Osea, si el mínimo es 10, es "poco" si el stock está entre 11 y 15.
+        if (currentStock <= (int)(minStock * 1.5))
+        {
+            return ("Queda poco", "status-little");
+        }
+        //  Aceptable (stock suficiente) si no se cumplen las anteriores
+        return ("Aceptable", "status-aceptable");
+    }
+
+    private void showEditConfirmationAsync(int MaterialId, int SupplierId)
+    {
+        NavigationManager.NavigateTo($"/inventario/editar/{MaterialId}/{SupplierId}");
+    }
+
+    private async Task showDeleteConfirmationAsync(int MaterialId)
+    {
+        var options = new ConfirmDialogOptions
+        {
+            YesButtonText = "Eliminar",
+            YesButtonColor = ButtonColor.Danger,
+            NoButtonText = "Cancelar",
+            NoButtonColor = ButtonColor.Secondary
+        };
+        var confirmation = await dialog.ShowAsync(
+          title: "Seguro que desea eliminar este material?",
+          message1: "Esta accion es irreversible.",
+          confirmDialogOptions: options);
+
+        if (confirmation)
+        {
+            handleDelete(MaterialId);
+        }
+    }
+
+    private async void handleDelete(int materialId)
+    {
+
+        await materialService.DeleteMaterial(materialId);
+        toastService.Notify(new(ToastType.Success, "Se ha eliminado correctamente"));
+
+        await Task.Delay(1000);
+        NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+    }
+}

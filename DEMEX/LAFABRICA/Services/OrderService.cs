@@ -6,45 +6,52 @@ namespace LAFABRICA.Services
 {
     public class OrderService : IOrderService
     {
-        private readonly AppDbContext _context;
+        private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
-        public OrderService(AppDbContext context)
+        public OrderService(IDbContextFactory<AppDbContext> context)
         {
-            _context = context;
+            _contextFactory = context;
         }
 
         public async Task<Order> Create(Order order)
         {
-            // Esta lógica es correcta, EF maneja las relaciones si IdOrderNavigation está asignado
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
+            // Añadimos la orden completa. EF Core se encargará de crear el registro principal
+            // y luego las relaciones en la tabla ProductOrder.
+            
+            using var context = _contextFactory.CreateDbContext();
+            context.Orders.Add(order);
+            await context.SaveChangesAsync();
             return order;
         }
 
         public async Task<bool> Delete(int id)
         {
-            var order = await _context.Orders.FindAsync(id);
+            using var context = _contextFactory.CreateDbContext();
+            var order = await context.Orders.FindAsync(id);
             if (order == null)
                 return false;
 
             order.IsActive = 0; // Borrado lógico
-            _context.Orders.Update(order);
-            await _context.SaveChangesAsync();
+            context.Orders.Update(order);
+            await   context.SaveChangesAsync();
             return true;
         }
 
         public async Task<IEnumerable<Order>> GetAllOrders()
         {
-            return await _context.Orders
-                                .Where(o => o.IsActive == 1)
-                                .Include(o => o.Client)
-                                .ToListAsync();
+            // Añadido filtro para IsActive y cargamos datos del cliente para la tabla.
+            using var context = _contextFactory.CreateDbContext();
+            return await context.Orders
+                                 .Where(o => o.IsActive == 1)
+                                 .Include(o => o.Client)
+                                 .ToListAsync();
         }
 
         public async Task<Order?> GetById(int id)
         {
-            // Esta lógica es correcta, carga todo lo necesario
-            return await _context.Orders
+            // Usamos FirstOrDefaultAsync con Include para traer los productos de la orden
+            using var context = _contextFactory.CreateDbContext();
+            return await context.Orders
                 .Include(o => o.Client)
                 .Include(o => o.ProductOrders)
                     .ThenInclude(po => po.IdProductNavigation) // Carga detalles del producto
@@ -54,8 +61,9 @@ namespace LAFABRICA.Services
         // === MÉTODO UPDATE CORREGIDO ===
         public async Task<Order> Update(int id, Order order)
         {
-            var existingOrder = await _context.Orders
-                .Include(o => o.ProductOrders) // Cargar las relaciones existentes es crucial
+            using var context = _contextFactory.CreateDbContext();
+            var existingOrder = await context.Orders
+                .Include(o => o.ProductOrders) // Cargar las relaciones existentes
                 .FirstOrDefaultAsync(o => o.Id == id);
 
             if (existingOrder == null)
@@ -63,9 +71,8 @@ namespace LAFABRICA.Services
                 throw new KeyNotFoundException($"La orden con el id {id} no fue encontrada.");
             }
 
-            // 1. Actualizar propiedades simples de la orden (como ClienteId, Estado, Total, etc.)
-            //    SetValues es eficiente para esto.
-            _context.Entry(existingOrder).CurrentValues.SetValues(order);
+            // 1. Actualizar propiedades simples de la orden
+            context.Entry(existingOrder).CurrentValues.SetValues(order);
 
             // === INICIO DE LA CORRECCIÓN: Sincronizar ProductOrders ===
 
@@ -83,7 +90,7 @@ namespace LAFABRICA.Services
             foreach (var productToRemove in productsToRemove)
             {
                 // Removemos del contexto para que EF genere el DELETE
-                _context.ProductOrders.Remove(productToRemove);
+                context.ProductOrders.Remove(productToRemove);
             }
 
             // 2. Identificar y AÑADIR o ACTUALIZAR productos
@@ -120,12 +127,10 @@ namespace LAFABRICA.Services
             // === FIN DE LA CORRECCIÓN ===
 
 
-            // 5. Guardar todos los cambios (Updates de Order, Deletes e Inserts/Updates de ProductOrder)
-            await _context.SaveChangesAsync();
-
-            // Devolvemos la entidad actualizada (aunque 'order' podría no tener todas las navegaciones)
-            // Es mejor devolver 'existingOrder' si se necesita la entidad completa post-guardado.
-            return existingOrder;
+            // 3. Guardar todo. EF Core se encargará de comparar las listas,
+            // borrar los registros viejos en PRODUCT_ORDER y añadir los nuevos.
+            await context.SaveChangesAsync();
+            return order;
         }
     }
 }

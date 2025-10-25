@@ -1,9 +1,11 @@
 ﻿@page "/proveedor/editar/{Id:int}"
 @using BlazorBootstrap
 @using LAFABRICA.Models
+@using LAFABRICA.Models.AuxiliarDTOS
 @using LAFABRICA.Models.Interface
-@inject ISupplierService SupplierService
+@using LAFABRICA.Services
 @inject NavigationManager NavigationManager
+@inject ISupplierService SupplierService
 
 
 @*
@@ -212,9 +214,6 @@ else
                 Console.WriteLine($"Error al actualizar proveedor desde el metodo en el razor: {ex.Message}");
             }
         }
-        else
-        {
-            // Nada! xd
-        }
+
     }
 }

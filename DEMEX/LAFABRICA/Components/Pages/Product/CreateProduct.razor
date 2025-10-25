@@ -1,4 +1,5 @@
 ﻿@page "/productos/crear"
+@attribute [Authorize]
 @using LAFABRICA.Data.DB
 @using LAFABRICA.Models.Interface
 @inject IProductService productService
@@ -126,7 +127,8 @@
     private Product newProduct = new();
     private bool isCustomizable = true;
 
-    private List<Material>? allMaterials;
+   
+    private IEnumerable<Material> allMaterials=null!;
     private HashSet<int> selectedMaterialIds = new();
 
     private IBrowserFile? selectedFile;
@@ -159,7 +161,7 @@
         }
     }
 
-  
+
     private void HandleFileSelected(InputFileChangeEventArgs e)
     {
         selectedFile = e.File;
@@ -211,6 +213,7 @@
             Console.WriteLine($"ERROR DETALLADO AL CREAR PRODUCTO: {ex.ToString()}");
             ToastService.Notify(new(ToastType.Danger, $"Error al crear el producto: {ex.Message}"));
         }
-    
 
-	}       }
+
+    }       
+}

@@ -13,13 +13,15 @@ public partial class Material
 
     public string PhotoUrl { get; set; } = null!;
 
+    public bool? IsActive { get; set; }
 
-    // --- Propiedades de Navegación Correctas ---
+    public string? Unit { get; set; }
 
     public virtual ICollection<Inventory> Inventories { get; set; } = new List<Inventory>();
 
     public virtual ICollection<MaterialSupplier> MaterialSuppliers { get; set; } = new List<MaterialSupplier>();
 
-    // Esta es la propiedad clave y la ÚNICA que lo relaciona con Product
+    public virtual ICollection<Product> Products { get; set; } = new List<Product>();
+
     public virtual ICollection<ProductMaterial> ProductMaterials { get; set; } = new List<ProductMaterial>();
 }
