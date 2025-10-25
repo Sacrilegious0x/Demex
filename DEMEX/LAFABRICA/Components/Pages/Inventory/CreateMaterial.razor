@@ -27,9 +27,9 @@
 		</div>
 
 		<div class="card-body">
-			@if (model != null && suppliers != null)
+			@if (Material_Supp_Inv_Dto != null && suppliers != null)
 			{
-				<EditForm Model="@model" OnValidSubmit="@HandleValidSubmit" FormName="CreateMaterialForm" enctype="multipart/form-data">
+				<EditForm Model="@Material_Supp_Inv_Dto" OnValidSubmit="@HandleValidSubmit" FormName="CreateMaterialForm" enctype="multipart/form-data">
 					<DataAnnotationsValidator />
 
 					<div class="d-flex justify-content-between">
@@ -80,35 +80,32 @@
 							<div class="form-group row mb-3">
 								<label class="col-md-5 col-form-label">Proveedor Inicial: <span class="text-danger">*</span></label>
 								<div class="col-md-8">
-									<InputSelect class="form-select border-1" @bind-Value="model.SupplierId">
+									<InputSelect class="form-select border-1" @bind-Value="Material_Supp_Inv_Dto.SupplierId">
 										<option value="0" disabled>Seleccione un proveedor</option>
 										@foreach (var s in suppliers)
 										{
 											<option value="@s.Id">@s.Name</option>
 										}
 									</InputSelect>
-									<ValidationMessage For="@(() => model.SupplierId)" />
+									<ValidationMessage For="@(() => Material_Supp_Inv_Dto.SupplierId)" />
 								</div>
 							</div>
 
 							<div class="form-group row mb-3">
 								<label class="col-md-5 col-form-label">Stock entrante: <span class="text-danger">*</span></label>
 								<div class="col-md-8">
-									<NumberInput class="border-1" @bind-Value="model.Quantity" type="number" placeholder="Ej: 100" required />
+									<NumberInput class="border-1" @bind-Value="Material_Supp_Inv_Dto.Quantity" type="number" placeholder="Ej: 100" required />
 									
 								</div>
 								<div>
-									<p class="text-black-50">Cantidad que este proveedor suele vender o pedido mínimo.</p>
+									<p class="text-black-50">Cantidad que suele pedir.</p>
 								</div>
 							</div>
-							<hr class="mt-4 mb-4" />
-
-
 							<div class="form-group row mb-3">
 								<label class="col-md-5 col-form-label">Stock Mínimo: <span class="text-danger">*</span></label>
 								<div class="col-md-8">
-									<NumberInput class="border-1" @bind-Value="model.MinimumQuantity" placeholder="Ej: 50" required />
-									<ValidationMessage For="@(() => model.MinimumQuantity)" />
+									<NumberInput class="border-1" @bind-Value="Material_Supp_Inv_Dto.MinimumQuantity" placeholder="Ej: 50" required />
+									<ValidationMessage For="@(() => Material_Supp_Inv_Dto.MinimumQuantity)" />
 								</div>
 							</div>
 						</div>
@@ -119,7 +116,7 @@
 							<i class="bi bi-info-circle-fill me-2" style="font-size: 1.2rem;"></i>
 							<div>
 								<strong>Nota:</strong>
-								Se crearán el Material, su relación con el proveedor y el registro de Inventario inicial.
+								El proveedor no puede ser modificado
 							</div>
 						</div>
 					</div>
@@ -139,7 +136,7 @@
 							Cancelar
 						</button>
 						<button type="submit" class="btn btn-primary">
-							Guardar Material
+							Guardar 
 						</button>
 					</div>
 				</EditForm>
@@ -162,7 +159,7 @@
 	[Inject] protected ToastService ToastService { get; set; } = default!;
 
 	// Instancia del DTO que contendrá los datos del formulario
-	private MaterialSupplierInventoryDto model = new MaterialSupplierInventoryDto();
+	private MaterialSupplierInventoryDto Material_Supp_Inv_Dto = new MaterialSupplierInventoryDto();
 
 	private Material newMaterial = new Material();
 
@@ -177,7 +174,7 @@
 		// Cargar la lista de proveedores para el dropdown
 		suppliers = (await SupplierService.GetSuppliersAsync());
 		// Inicializar SupplierId con 0 para forzar la validación de selección
-		model.SupplierId = 0;
+		Material_Supp_Inv_Dto.SupplierId = 0;
 	}
 
 	// Método que se ejecuta al enviar el formulario
@@ -200,10 +197,14 @@
 			newMaterial.IsActive = true;
 
 
-			// La lógica del servicio se encargará de crear los 3 registros
-			await MaterialService.CreateMaterial(newMaterial,model.SupplierId,model.Quantity,model.MinimumQuantity);
 
-			ToastService.Notify(new(ToastType.Success, $"Se agregó correctamente el material: {model.MaterialName}"));
+
+			// La lógica del servicio se encargará de crear los 3 registros
+			await MaterialService.CreateMaterial(newMaterial,Material_Supp_Inv_Dto.SupplierId,
+				Material_Supp_Inv_Dto.Quantity,
+				Material_Supp_Inv_Dto.MinimumQuantity);
+
+			ToastService.Notify(new(ToastType.Success, $"Se agregó correctamente el material: {Material_Supp_Inv_Dto.MaterialName}"));
 
 			await Task.Delay(1000);
 

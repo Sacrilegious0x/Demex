@@ -8,8 +8,8 @@
         public string? Unit { get; set; }
         public int? MinimumQuantity { get; set; } // De Inventory
         public decimal? PricePurchase { get; set; }
-        public string? photoUrl { get; set; }
-        // Puedes agregar IDs si necesitas acciones (Editar/Eliminar)
+        public string photoUrl { get; set; }
+  
         public int MaterialId { get; set; }
         public int SupplierId { get; set; }
     }
