@@ -5,6 +5,7 @@ using LAFABRICA.Services;
 using LAFABRICA.Services.Auth;
 using LAFABRICA.Services.Email;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Http;
 
@@ -49,7 +50,7 @@ builder.Services.AddBlazorBootstrap();
 
 
 //PARA SEGURIDAD
-
+builder.Services.AddScoped<ProtectedSessionStorage>();
 builder.Services.AddScoped<DemexAuthService>();
 builder.Services.AddScoped<DemexAuthenticationStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<DemexAuthenticationStateProvider>());

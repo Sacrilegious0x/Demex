@@ -30,7 +30,7 @@
                 @foreach (var perm in Rol.RolePermissions)
                 {
                     <tr>
-                        <td>@perm.Module</td>
+                        <td>@TranslateRoleName(perm.Module)</td>
                         <td>
                             <input type="checkbox" checked="@perm.Canview" @onchange='() => TogglePermission(perm, "view")' />
                         </td>
@@ -78,7 +78,7 @@
 
             await permService.Update(permission.RoleId, permission);
 
-            message = $"Permiso actualizado correctamente para {permission.Module}.";
+            message = $"Permiso actualizado correctamente para {TranslateRoleName( permission.Module)}.";
             alertClass = "alert-success";
         }
         catch (Exception ex)
@@ -86,5 +86,25 @@
             message = ex.Message;
             alertClass = "alert-danger";
         }
+    }
+
+    private string TranslateRoleName(string name)
+    {
+        return name.ToUpper() switch
+        {
+            "CLIENTS" => "Clientes",
+            "CLIENTS_PAYMENTS" => "Pagos de Clientes",
+            "INVENTORY" => "Inventario",
+            "MATERIAL" => "Materiales",
+            "ORDERS" => "Órdenes",
+            "PRODUCTS" => "Productos",
+            "REPORTS" => "Reportes",
+            "ROLS" => "Roles",
+            "SUPPLIERS" => "Proveedores",
+            "USERS" => "Usuarios",
+            "WORKERS_PAYMENTS" => "Pagos de Empleados",
+            "ADMIN" => "Administrador",
+            _ => name
+        };
     }
 }

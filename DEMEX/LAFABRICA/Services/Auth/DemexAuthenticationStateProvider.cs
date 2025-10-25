@@ -20,11 +20,22 @@ namespace LAFABRICA.Services.Auth
         {
             try
             {
-              
 
+                await Task.Delay(200);
                 var userActive = await _sessionStorage.GetAsync<string>("userEmail");
+                var loginTime = await _sessionStorage.GetAsync<string>("loginTime");
                 if (userActive.Success && !string.IsNullOrEmpty(userActive.Value))
                 {
+                    if (loginTime.Success && DateTime.TryParse(loginTime.Value, out var savedTime))
+                    {
+                        var elapsed = DateTime.UtcNow - savedTime;
+                        if (elapsed.TotalMinutes > 60)
+                        {
+                            await LogoutAsync();
+                            return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+                        }
+                    }
+
                     var user = await _service.GetUserByEmail(userActive.Value);
                     if (user != null && user.Rol != null)
                     {
@@ -37,6 +48,7 @@ namespace LAFABRICA.Services.Auth
             {
                 throw new Exception($"Ha ocurrio un problema al " +
                     $"intentar iniciar sesion con el usuario: {ex.Message}");
+                
             }
 
             _principal = new ClaimsPrincipal(new ClaimsIdentity());
@@ -47,16 +59,23 @@ namespace LAFABRICA.Services.Auth
         {
 
             var user = await _service.Login(email, password);
+
             if (user != null && user.Rol != null)
             {
                 _principal = CreateClaimsPrincipal(user);
+
                 await _sessionStorage.SetAsync("userEmail", user.Email);
+                await _sessionStorage.SetAsync("loginTime", DateTime.UtcNow.ToString("o"));
+
+
+                await Task.Delay(300);
 
                 NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_principal)));
                 return true;
             }
 
             await _sessionStorage.DeleteAsync("userEmail");
+            await _sessionStorage.DeleteAsync("loginTime");
             _principal = new ClaimsPrincipal(new ClaimsIdentity());
             NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_principal)));
 
@@ -67,6 +86,7 @@ namespace LAFABRICA.Services.Auth
         public async Task LogoutAsync()
         {
             await _sessionStorage.DeleteAsync("userEmail");
+            await _sessionStorage.DeleteAsync("loginTime");
             _principal = new ClaimsPrincipal(new ClaimsIdentity());
             NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_principal)));
         }

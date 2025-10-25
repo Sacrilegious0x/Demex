@@ -38,6 +38,17 @@
     private LoginModel loginModel = new();
     private string? errorMessage;
 
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            NavigationManager.NavigateTo("/", forceLoad: true);
+        }
+    }
+
     private async Task HandleLogin()
     {
         try
@@ -46,7 +57,7 @@
 
             if (success)
             {
-                NavigationManager.NavigateTo("/", forceLoad: true);
+                NavigationManager.NavigateTo("/");
             }
             else
             {
