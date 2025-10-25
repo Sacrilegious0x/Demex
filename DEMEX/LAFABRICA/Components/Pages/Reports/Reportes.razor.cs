@@ -170,9 +170,10 @@ namespace LAFABRICA.Pages
                     .ToList();
 
                 // CÁLCULO: Pestaña 'Productos Más Vendidos'
-                // Expande todas las órdenes en sus líneas de detalle (ProductOrders),
-                // agrupa por producto, suma las cantidades vendidas y se queda con el Top 5.
+                // Filtra solo órdenes 'Finalizada', LUEGO expande en líneas de detalle,
+                // agrupa por producto, suma cantidades y se queda con el Top 5.
                 topProductsPlaceholder = ordersInPeriod
+                    .Where(o => o.State == "Finalizada") // <-- ¡FILTRO AÑADIDO AQUÍ!
                     .SelectMany(o => o.ProductOrders)
                     .Where(po => po.IdProductNavigation != null)
                     .GroupBy(po => po.IdProductNavigation)
@@ -182,9 +183,10 @@ namespace LAFABRICA.Pages
                     .ToList();
 
                 // CÁLCULO: Gráfico 'Ventas por Categoría'
-                // Similar al anterior, pero agrupa por la 'Categoría' del producto
-                // y suma el valor total (Cantidad * Precio) de esos productos.
+                // Filtra solo órdenes 'Finalizada', LUEGO expande,
+                // agrupa por 'Categoría' y suma el valor total (Cantidad * Precio).
                 categoryData = ordersInPeriod
+                    .Where(o => o.State == "Finalizada") // <-- ¡FILTRO AÑADIDO AQUÍ!
                     .SelectMany(o => o.ProductOrders)
                     .Where(po => po.IdProductNavigation != null && !string.IsNullOrEmpty(po.IdProductNavigation.Category))
                     .GroupBy(po => po.IdProductNavigation.Category)
@@ -195,8 +197,18 @@ namespace LAFABRICA.Pages
                     ))
                     .ToList();
 
-                // NOTA: La lógica para cargar 'inventoryAlertsPlaceholder' no está aquí.
-                // Deberás agregar la consulta a tu DbContext para llenarla si es necesario.
+                // CÁLCULO: Pestaña 'Alertas de Inventario'
+                // Consulta la tabla de inventario y filtra solo los que están 'Bajo'.
+                inventoryAlertsPlaceholder = await _context.Inventories // <-- 1. Tu tabla
+                    .Where(i => i.State == "Bajo") // Filtramos solo los que están 'Bajo'
+                    .Include(i => i.Material)     // <-- 2. El "puente" de navegación
+                    .Select(i => new InventoryAlertPlaceholder(
+                        i.Material.Name, // <-- 3. El nombre del material (usando el puente)
+                        i.Quantity,
+                        i.MinimunQuantity,
+                        i.State
+                    ))
+                    .ToListAsync();
             }
             catch (Exception ex)
             {

@@ -1,10 +1,12 @@
 ﻿@page "/"
 @using LAFABRICA.Data.DB
 @using LAFABRICA.Models.Interface
+@using Microsoft.EntityFrameworkCore  
 @inject IProductService productService
 @inject IClientService clientService
 @inject IOrderService orderService
 @inject IClientPaymentService paymentService
+@inject AppDbContext _context         
 
 <style>
     .dashboard-card-link {
@@ -27,6 +29,7 @@
             <p class="text-muted">Resumen general de la actividad del negocio.</p>
         </div>
     </div>
+</div>
 
     @if (isLoading)
     {
@@ -96,31 +99,34 @@
                 </a>
             </div>
 
-            @* Tarjeta Alertas Inventario (Sigue deshabilitada) *@
-            <div class="col-xl-3 col-md-6 mb-4">
-                <div class="card shadow h-100 py-2 disabled-card" style="border-left: 5px solid #ebcf4f;">
+           @* Tarjeta Alertas Inventario (Ahora es un link a /reportes) *@
+        <div class="col-xl-3 col-md-6 mb-4">
+            <a href="/reportes" class="dashboard-card-link"> @* <-- 1. ENVUELTO EN <a> *@
+                <div class="card shadow h-100 py-2" style="border-left: 5px solid #ebcf4f;"> @* <-- 2. QUITADA CLASE 'disabled-card' *@
                     <div class="card-body">
                         <div class="row no-gutters align-items-center">
                             <div class="col mr-2">
-                                <div class="text-xs fw-bold text-uppercase mb-1">Alertas de Inventario</div>
-                                <div class="h5 mb-0 fw-bold text-gray-800">0</div>
+                                <div class="text-xs fw-bold text-uppercase mb-1" style="color: #ebcf4f;">Alertas de Inventario</div> @* <-- 3. (Opcional) Color añadido *@
+                                <div class="h5 mb-0 fw-bold text-gray-800">@inventoryAlertCount</div> @* <-- 4. CAMBIADO A VARIABLE *@
                             </div>
                             <div class="col-auto">
-                                <i class="bi bi-exclamation-triangle-fill fs-2"></i>
+                                <i class="bi bi-exclamation-triangle-fill fs-2 text-warning opacity-75"></i> @* <-- 5. (Opcional) Ícono coloreado *@
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
     }
 </div>
+
 
 @code {
     private bool isLoading = true;
     private int activeOrdersCount = 0;
     private int activeProductsCount = 0;
     private int totalPaymentsCount = 0;
+    private int inventoryAlertCount = 0; 
 
     protected override async Task OnInitializedAsync()
     {
@@ -129,13 +135,15 @@
             // === INICIO CORRECCIÓN: Carga secuencial ===
             var allProducts = await productService.GetAllProducts();
             var allOrders = await orderService.GetAllOrders();
-            var allPayments = await paymentService.GetAllPayments(); 
+            var allPayments = await paymentService.GetAllPayments();
+            // 2. AÑADIR CONSULTA DE INVENTARIO
+            inventoryAlertCount = await _context.Inventories.CountAsync(i => i.State == "Bajo");
             // === FIN CORRECCIÓN ===
 
             // Contar después de cargar todo
             activeProductsCount = allProducts.Count();
             activeOrdersCount = allOrders.Count(o => o.State != "Finalizada");
-            totalPaymentsCount = allPayments.Count(); 
+            totalPaymentsCount = allPayments.Count();
         }
         catch (Exception ex)
         {
@@ -147,4 +155,5 @@
              isLoading = false;
         }
     }
+}
 }
