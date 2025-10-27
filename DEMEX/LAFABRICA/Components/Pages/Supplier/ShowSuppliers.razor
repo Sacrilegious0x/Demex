@@ -1,22 +1,43 @@
 ﻿@page "/proveedor"
+@attribute [Authorize]
 @using BlazorBootstrap
 @using LAFABRICA.Data.DB
 @using LAFABRICA.Models
 @using LAFABRICA.Models.AuxiliarDTOS
 @using LAFABRICA.Models.Interface
-@using LAFABRICA.Services
+@using LAFABRICA.Services.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 
 @inject ISupplierService SupplierService
 @inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ToastService toastService
 
 <Toasts Class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight"></Toasts>
 <ConfirmDialog @ref="dialog" />
-@if(suppliers == null)
+
+@if (user == null)
 {
     <div class="d-flex justify-content-center">
         <Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
     </div>
-}else if (!suppliers.Any())
+}
+else if (!HasPermission("Suppliers", DemexClaims.View))
+{
+    <div class="text-center mt-5">
+        <i class="bi bi-shield-lock fs-1 text-warning"></i>
+        <h4 class="mt-3">Acceso denegado</h4>
+        <p>No tienes permiso para ver proveedores.</p>
+    </div>
+}
+else if (suppliers == null)
+{
+    <div class="d-flex justify-content-center">
+        <Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
+    </div>
+}
+else if (!suppliers.Any())
 {
     <div>
         <Alert Color="AlertColor.Primary" class="d-flex justify-content-between align-items-center">
@@ -25,30 +46,30 @@
                 <strong>No hay proveedores registrados</strong>
             </div>
 
-            <a class="btn btn-outline-primary" href="/proveedor/crear"><Icon Name="IconName.PlusLg" /> Nuevo Proveedor</a>
+            @if (HasPermission("Suppliers", DemexClaims.Create))
+            {
+                <a class="btn btn-outline-primary" href="/proveedor/crear">
+                    <Icon Name="IconName.PlusLg" /> Nuevo Proveedor
+                </a>
+            }
         </Alert>
     </div>
 }
 else
 {
-    @* --- Estructura HTML (Razor) --- *@
     <div class="card shadow-sm h-100 d-flex flex-column">
         <div class="card-header p-4 border-bottom">
-
-            @* Título y Botón de agregado *@
             <div class="d-flex align-items-center justify-content-between mb-3">
                 <h1 class="h4 card-title text-gray-900">Gestión de Proveedores</h1>
-                <div class="d-flex space-x-2">
-                    <button class="btn text-white"
-                            style="background-color: #0f54a1;"
-                            @onclick="NavigateToCreate">
-                        <i class="bi bi-plus-lg me-2"></i>
-                        Nuevo Proveedor
+
+                @if (HasPermission("Suppliers", DemexClaims.Create))
+                {
+                    <button class="btn text-white" style="background-color: #0f54a1;" @onclick="NavigateToCreate">
+                        <i class="bi bi-plus-lg me-2"></i> Nuevo Proveedor
                     </button>
-                </div>
+                }
             </div>
 
-            @* Barra de Búsqueda *@
             <div class="d-flex align-items-center">
                 <div class="input-group" style="max-width:480px;">
                     <span class="input-group-text bg-white border-end-0">
@@ -56,58 +77,59 @@ else
                     </span>
                     <input type="text"
                            class="form-control border-start-0"
-                           placeholder="Buscar proveedores por nombre, contacto, ID o dirección..."
+                           placeholder="Buscar proveedores..."
                            value="@searchTerm"
                            @oninput="HandleSearch" />
                 </div>
             </div>
         </div>
 
-        @* Área de la Tabla *@
-        <div class="  table-responsive flex-grow-1 overflow-auto" style="max-height: 370px; overflow-y: auto;">
-            <table class="table table-hover text-center" >
-                <thead class="table-light">
+        <div class="table-responsive flex-grow-1 overflow-auto" style="max-height: 370px;">
+            <table class="table table-hover text-center">
+                <thead >
                     <tr>
-                        <th class="font-weight-bold text-gray-900">#</th>
-                        <th class="font-weight-bold text-gray-900">Nombre</th>
-                        <th class="font-weight-bold text-gray-900">Teléfono</th>
-                        <th class="font-weight-bold text-gray-900">Correo</th>
-                        <th class="font-weight-bold text-gray-900">Última Compra</th>
-                        <th class="font-weight-bold text-gray-900">Notas adicionales</th>
-                        <th class="font-weight-bold text-gray-900">Dirección</th>
-                        <th class="font-weight-bold text-gray-900">Acciones</th>
+                        <th>#</th>
+                        <th>Nombre</th>
+                        <th>Teléfono</th>
+                        <th>Correo</th>
+                        <th>Notas</th>
+                        <th>Dirección</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
-
                 <tbody>
-
-
                     @foreach (var supplier in FilteredSuppliers.Select((c, index) => new { c, index }))
-                        {
-                            <tr class="hover:bg-gray-50 m-1">
-                                <td>@(supplier.index+1)</td>
-                                <td class="font-weight-bold ">@supplier.c.Name</td>
-                                <td>@supplier.c.Phone</td>
-                                <td>@supplier.c.Email</td>
-                                <td>@(supplier.c.DateLastPurchase.HasValue? supplier.c.DateLastPurchase.Value.ToShortDateString() : "N/A")</td>
-                                <td class="max-w-xs text-truncate">@supplier.c.Notes</td> @* Usamos text-truncate de Bootstrap para el overflow *@
-                                <td>@supplier.c.Address</td>
+                    {
+                        <tr>
+                            <td>@(supplier.index + 1)</td>
+                            <td>@supplier.c.Name</td>
+                            <td>@supplier.c.Phone</td>
+                            <td>@supplier.c.Email</td>
+                            <td class="max-w-xs text-truncate">@supplier.c.Notes</td>
+                            <td>@supplier.c.Address</td>
+                            <td>
+                                <div class="d-flex justify-content-center space-x-2">
 
-                                <td class="">
-                                    <div class="d-flex justify-content-center space-x-2">
+                                    @if (HasPermission("Suppliers", DemexClaims.Edit))
+                                    {
                                         <button class="btn btn-edit text-primary"
                                                 @onclick="() => HandleEdit(supplier.c)">
                                             <Icon Class="icon-edit" Name="IconName.PencilSquare"></Icon>
                                         </button>
-                                        <button class="btn btn-delete  text-danger"
+                                    }
+
+                                    @if (HasPermission("Suppliers", DemexClaims.Delete))
+                                    {
+                                        <button class="btn btn-delete text-danger"
                                                 @onclick="() => ShowDeleteConfirmationAsync(supplier.c.Id)">
                                             <Icon Name="IconName.Trash" Color="IconColor.Danger"></Icon>
                                         </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                 
+                                    }
+
+                                </div>
+                            </td>
+                        </tr>
+                    }
                 </tbody>
             </table>
 
@@ -119,84 +141,76 @@ else
     </div>
 }
 
-
-
 @code {
 
+    [CascadingParameter] private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
+    private ClaimsPrincipal? user;
 
-    [Inject] public ToastService toastService { get; set; } = default!;
     private List<SupplierDto>? suppliers;
-
-    private List<Supplier>? supps;
-
     private string searchTerm = string.Empty;
 
-    // simular filtrado
-    private List<SupplierDto> FilteredSuppliers => 
-        suppliers?.Where(s => 
+    private List<SupplierDto> FilteredSuppliers =>
+        suppliers?.Where(s =>
             s.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
             s.Phone.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
             s.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
             s.Address.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
-        ).ToList() ?? new List<SupplierDto>();
+        ).ToList() ?? new();
 
     protected override async Task OnInitializedAsync()
     {
-        
-        suppliers = await SupplierService.GetSuppliersAsync();
+        var auth = await AuthenticationStateTask;
+        user = auth.User;
+
+        if (HasPermission("Suppliers", DemexClaims.View))
+            suppliers = await SupplierService.GetSuppliersAsync();
     }
+
+    private bool HasPermission(string module, string action)
+        => user?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
 
     private void NavigateToCreate()
     {
-        
+        if (!HasPermission("Suppliers", DemexClaims.Create)) return;
         NavigationManager.NavigateTo("/proveedor/crear");
     }
 
     private void HandleEdit(SupplierDto supplier)
     {
-        
+        if (!HasPermission("Suppliers", DemexClaims.Edit)) return;
         NavigationManager.NavigateTo($"/proveedor/editar/{supplier.Id}");
     }
 
-    private async void handleDelete(int id)
-    {
-        var res = SupplierService.DeleteSupplierAsync(id);
-        toastService.Notify(new(ToastType.Success, "Se ha eliminado correctamente"));
-
-        await Task.Delay(1000);
-        NavigationManager.NavigateTo(NavigationManager.Uri,forceLoad:true);
-    }
-
     private void HandleSearch(ChangeEventArgs e)
-    {
-        
-        searchTerm = e.Value?.ToString() ?? string.Empty;
-    }
+        => searchTerm = e.Value?.ToString() ?? "";
 
     private ConfirmDialog dialog = default!;
 
     private async Task ShowDeleteConfirmationAsync(int id)
     {
-        var options = new ConfirmDialogOptions
+        if (!HasPermission("Suppliers", DemexClaims.Delete))
         {
-            YesButtonText = "Eliminar",
-            YesButtonColor = ButtonColor.Danger,
-            NoButtonText = "Cancelar",
-            NoButtonColor = ButtonColor.Secondary
-        };
-        var confirmation = await dialog.ShowAsync(
-            title: "Seguro que desea eliminar este proveedor?",
-            message1: "Esta accion es irreversible.",
-            confirmDialogOptions: options);
-
-        if (confirmation)
-        {
-            handleDelete(id);
+            toastService.Notify(new(ToastType.Warning, "No tienes permiso para eliminar proveedores."));
+            return;
         }
 
-        }
+        var confirm = await dialog.ShowAsync(
+            title: "Eliminar proveedor",
+            message1: "¿Seguro que deseas eliminar este proveedor?",
+            message2: "Esta acción es irreversible.",
+            confirmDialogOptions: new ConfirmDialogOptions
+            {
+                YesButtonText = "Eliminar",
+                YesButtonColor = ButtonColor.Danger,
+                NoButtonText = "Cancelar",
+                NoButtonColor = ButtonColor.Secondary
+            });
 
+        if (confirm)
+        {
+            await SupplierService.DeleteSupplierAsync(id);
+            toastService.Notify(new(ToastType.Success, "Proveedor eliminado correctamente."));
+            NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+        }
     }
-
-
-
+}

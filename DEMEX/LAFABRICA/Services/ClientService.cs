@@ -18,17 +18,18 @@ namespace LAFABRICA.Services
         {
 
             using var context = _contextFactory.CreateDbContext();
-            bool existEmail = await context.Clients.AnyAsync(c => c.Email == client.Email);
+            bool existEmail = await context.Clients.AnyAsync(c => c.Email == client.Email && c.IsActive == 1);
+
             if (existEmail)
             {
                 throw new InvalidOperationException("El correo ya esta registrado");
             }
-            bool existPhone = await context.Clients.AnyAsync(c => c.PhoneNumber == client.PhoneNumber);
+            bool existPhone = await context.Clients.AnyAsync(c => c.PhoneNumber == client.PhoneNumber && c.IsActive == 1);
             if (existPhone)
             {
                 throw new InvalidOperationException("El contacto de la empresa ya esta registrado");
             }
-            bool existManagerPhone = await context.Clients.AnyAsync(c => c.ManagerPhoneNumber == client.ManagerPhoneNumber);
+            bool existManagerPhone = await context.Clients.AnyAsync(c => c.ManagerPhoneNumber == client.ManagerPhoneNumber && c.IsActive == 1);
             if (existManagerPhone)
             {
                 throw new InvalidOperationException("El contacto del encargado ya esta registrado");
@@ -55,7 +56,9 @@ namespace LAFABRICA.Services
         public async Task<IEnumerable<Client>> GetAllClient()
         {
             using var context = _contextFactory.CreateDbContext();
-            return await context.Clients.ToListAsync();
+            return await context.Clients
+                .Where(c => c.IsActive == 1)
+                .ToListAsync();
         }
 
         public async Task<Client?> GetById(int id)
@@ -71,17 +74,17 @@ namespace LAFABRICA.Services
             var oldClient = await context.Clients.FindAsync(id);
             if (oldClient == null)
                 throw new KeyNotFoundException($"El cliente con el id {id} no encontrado");
-            bool existEmail = await context.Clients.AnyAsync(c => c.Id != id && c.Email == client.Email);
+            bool existEmail = await context.Clients.AnyAsync(c => c.Id != id && c.Email == client.Email && c.IsActive == 1);
             if (existEmail)
             {
                 throw new InvalidOperationException("El correo ya esta registrado");
             }
-            bool existPhone = await context.Clients.AnyAsync(c => c.Id != id && c.PhoneNumber == client.PhoneNumber);
+            bool existPhone = await context.Clients.AnyAsync(c => c.Id != id && c.PhoneNumber == client.PhoneNumber && c.IsActive == 1);
             if (existPhone)
             {
                 throw new InvalidOperationException("El contacto de la empresa ya esta registrado");
             }
-            bool existManagerPhone = await context.Clients.AnyAsync(c => c.Id != id && c.ManagerPhoneNumber == client.ManagerPhoneNumber);
+            bool existManagerPhone = await context.Clients.AnyAsync(c => c.Id != id && c.ManagerPhoneNumber == client.ManagerPhoneNumber && c.IsActive == 1);
             if (existManagerPhone)
             {
                 throw new InvalidOperationException("El contacto del encargado ya esta registrado");

@@ -1,7 +1,12 @@
 ﻿@page "/pagos"
+@attribute [Authorize]
 @using LAFABRICA.Data.DB
+@using LAFABRICA.Models
 @using LAFABRICA.Models.Interface
-@using LAFABRICA.Components.Pages.ClientPayment @* <-- Asegúrate que el namespace sea correcto *@
+@using LAFABRICA.Services.Auth
+@using LAFABRICA.Components.Pages.ClientPayment
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 @inject IClientPaymentService paymentService
 @inject IOrderService orderService
 @inject ToastService ToastService
@@ -11,9 +16,22 @@
 
 <Toasts class="p-3" Autohide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 <ConfirmDialog @ref="dialog" />
-<ClientPaymentDetailsModal @ref="detailsModal" /> @* Modal de detalles *@
+<ClientPaymentDetailsModal @ref="detailsModal" />
 
-@if (payments == null)
+@if (user == null)
+{
+    <div class="text-center p-5">
+        <Spinner Color="SpinnerColor.Primary" />
+        <p>Cargando autenticación...</p>
+    </div>
+}
+else if (!HasPermission("Clients_Payments", DemexClaims.View))
+{
+    <Alert Color="AlertColor.Warning" class="mt-4">
+        <strong>No tienes permiso</strong> para ver la gestión de pagos.
+    </Alert>
+}
+else if (payments == null)
 {
     <div class="d-flex justify-content-center">
         <Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
@@ -23,14 +41,17 @@
 else if (!InitialLoadComplete || !filteredPayments.Any())
 {
     <div>
-        <Alert Color="AlertColor.Info" class="d-flex justify-content-between align-items-center">
+        <Alert Color="AlertColor.Primary" class="d-flex justify-content-between align-items-center">
             <div>
                 <Icon Name="IconName.InfoCircleFill" class="me-2" />
                 <strong>No hay pagos registrados @(string.IsNullOrEmpty(searchText) && !filterStartDate.HasValue && !filterEndDate.HasValue ? "" : "que coincidan con los filtros")</strong>
             </div>
-            <a class="btn btn-primary" href="/pagos/registrar">
-                <Icon Name="IconName.PlusLg" /> Registrar Pago
-            </a>
+            @if (HasPermission("Clients_Payments", DemexClaims.Create))
+            {
+                <a class="btn btn-outline-primary" href="/pagos/registrar">
+                    <Icon Name="IconName.PlusLg" /> Registrar Pago
+                </a>
+            }
         </Alert>
     </div>
 }
@@ -41,15 +62,21 @@ else
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <h3><Icon Name="IconName.CashCoin"></Icon> Gestión de Pagos</h3>
-                    <a class="btn btn-primary" href="/pagos/registrar">
-                        <Icon Name="IconName.PlusLg"></Icon> Registrar Pago
-                    </a>
+                    @if (HasPermission("Clients_Payments", DemexClaims.Create))
+                    {
+                        <a class="btn btn-primary" href="/pagos/registrar">
+                            <Icon Name="IconName.PlusLg"></Icon> Registrar Pago
+                        </a>
+                    }
                 </div>
+
                 <div class="d-flex flex-wrap justify-content-sm-start align-items-center gap-3 mt-3">
                     <div class="d-flex align-items-center border rounded px-2">
                         <Icon Name="IconName.Search" class="text-secondary me-2" />
-                        <input type="text" class="form-control border-0" @bind="searchText" @bind:event="oninput" placeholder="Buscar por #Orden, #Pago, Método..." style="box-shadow:none;" />
+                        <input type="text" class="form-control border-0" @bind="searchText" @bind:event="oninput"
+                               placeholder="Buscar por #Orden, #Pago, Método..." style="box-shadow:none;" />
                     </div>
+
                     <div class="d-flex align-items-center gap-2">
                         <Icon Name="IconName.Calendar" class="text-secondary" />
                         <label class="form-label small mb-0">Desde:</label>
@@ -65,9 +92,10 @@ else
                     </div>
                 </div>
             </div>
+
             <div class="card-body text-center">
                 <div class="row">
-                    <div class="col-12 table-responsive" style=" max-height: 450px; overflow-y: auto;">
+                    <div class="col-12 table-responsive" style="max-height: 450px; overflow-y: auto;">
                         <table class="table table-hover">
                             <thead>
                                 <tr>
@@ -77,8 +105,6 @@ else
                                     <th>Fecha Pago</th>
                                     <th>Monto</th>
                                     <th>Método</th>
-                                    @* === COLUMNA COMPROBANTE ELIMINADA === *@
-                                    @* <th>Comprobante</th> *@
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
@@ -92,27 +118,20 @@ else
                                         <td>@payment.PaymentDate.ToString("d")</td>
                                         <td class="text-end">@payment.Amount.ToString("C", new System.Globalization.CultureInfo("es-CR"))</td>
                                         <td>@payment.PaymentMethod</td>
-                                        @* === CELDA COMPROBANTE ELIMINADA === *@
-                                        @* <td> *@
-                                        @* @if (!string.IsNullOrEmpty(payment.PhotoVoucherUrl)) *@
-                                        @* { *@
-                                        @* <a href="@payment.PhotoVoucherUrl" target="_blank" class="btn btn-sm btn-outline-info" title="Ver Comprobante"> *@
-                                        @* <Icon Name="IconName.Image"/> Ver *@
-                                        @* </a> *@
-                                        @* } *@
-                                        @* else *@
-                                        @* { *@
-                                        @* <span class="text-muted small">N/A</span> *@
-                                        @* } *@
-                                        @* </td> *@
                                         <td>
-                                            <button class="btn btn-outline-primary" @onclick="() => detailsModal.ShowAsync(payment.Id)" title="Ver Detalles">
-                                                <Icon Name="IconName.Eye" />
-                                            </button>
-                                            @* <button class="btn btn-outline-secondary" @onclick="() => EditPayment(payment.Id)" title="Editar"><Icon Name="IconName.PencilSquare" /></button> *@
-                                            <button class="btn btn-outline-danger" @onclick="() => DeletePaymentConfirmation(payment)" title="Eliminar">
-                                                <Icon Name="IconName.Trash"></Icon>
-                                            </button>
+                                            @if (HasPermission("Clients_Payments", DemexClaims.View))
+                                            {
+                                                <button class="btn btn-show" @onclick="() => detailsModal.ShowAsync(payment.Id)" title="Ver Detalles">
+                                                    <Icon Name="IconName.Eye" Class="icon-show" />
+                                                </button>
+                                            }
+
+                                            @if (HasPermission("Clients_Payments", DemexClaims.Delete))
+                                            {
+                                                <button class="btn btn-delete" @onclick="() => DeletePaymentConfirmation(payment)" title="Eliminar">
+                                                    <Icon Name="IconName.Trash" Color="IconColor.Danger"></Icon>
+                                                </button>
+                                            }
                                         </td>
                                     </tr>
                                 }
@@ -121,6 +140,7 @@ else
                     </div>
                 </div>
             </div>
+
             <div class="card-footer">
                 <Icon Name="IconName.CashStack" /> Total de pagos mostrados: @filteredPayments.Count()
             </div>
@@ -129,10 +149,17 @@ else
 }
 
 @code {
+    // === Autenticación y permisos ===
+    [CascadingParameter] private Task<AuthenticationState>? authenticationStateTask { get; set; }
+    private ClaimsPrincipal? user;
+
+    private bool HasPermission(string module, string action)
+        => user?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
+
     private List<ClientPayment>? payments;
     private bool InitialLoadComplete = false;
     private ConfirmDialog dialog = default!;
-    private ClientPaymentDetailsModal detailsModal = default!; // Referencia al modal
+    private ClientPaymentDetailsModal detailsModal = default!;
 
     private string searchText = string.Empty;
     private DateTime? filterStartDate;
@@ -143,16 +170,19 @@ else
             .Where(p => !filterStartDate.HasValue || p.PaymentDate >= DateOnly.FromDateTime(filterStartDate.Value))
             .Where(p => !filterEndDate.HasValue || p.PaymentDate <= DateOnly.FromDateTime(filterEndDate.Value))
             .Where(p => string.IsNullOrEmpty(searchText) ||
-                        (p.Id.ToString().Contains(searchText)) ||
-                        (p.OrderId.ToString()?.Contains(searchText) ?? false) ||
+                        p.Id.ToString().Contains(searchText) ||
+                        p.OrderId.ToString().Contains(searchText) ||
                         (p.PaymentMethod?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                        (p.Order?.Client?.Name?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false)
-                  )
-            .OrderByDescending(p => p.PaymentDate).ThenByDescending(p => p.Id)
+                        (p.Order?.Client?.Name?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false))
+            .OrderByDescending(p => p.PaymentDate)
+            .ThenByDescending(p => p.Id)
         ?? Enumerable.Empty<ClientPayment>();
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await authenticationStateTask!;
+        user = authState.User;
+
         await LoadPayments();
         InitialLoadComplete = true;
     }
@@ -161,7 +191,6 @@ else
     {
         try
         {
-            // Asegúrate que GetAllPayments incluya Order y Client
             payments = (await paymentService.GetAllPayments()).ToList();
         }
         catch (Exception ex)
@@ -180,6 +209,12 @@ else
 
     private async Task DeletePaymentConfirmation(ClientPayment payment)
     {
+        if (!HasPermission("Payments", DemexClaims.Delete))
+        {
+            ToastService.Notify(new(ToastType.Warning, "Sin permiso", "No tienes permiso para eliminar pagos."));
+            return;
+        }
+
         var options = new ConfirmDialogOptions
         {
             YesButtonText = "Eliminar",
@@ -195,9 +230,7 @@ else
             confirmDialogOptions: options);
 
         if (confirmation)
-        {
             await DeletePayment(payment.Id);
-        }
     }
 
     private async Task DeletePayment(int paymentId)

@@ -1,0 +1,127 @@
+﻿@using LAFABRICA.Models
+@using LAFABRICA.Models.Interface
+@using LAFABRICA.Data.DB
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject IEmployeePaymentService PaymentService
+@inject ToastService ToastService
+
+@if (payments == null)
+{
+    <div class="d-flex justify-content-center p-4">
+        <Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
+    </div>
+}
+else if (!payments.Any())
+{
+    <div>
+        <Alert Color="AlertColor.Primary" class="d-flex justify-content-between align-items-center">
+            <div>
+                <Icon Name="IconName.InfoCircleFill" class="me-2" />
+                <strong>No hay pagos registrados para este usuario.</strong>
+            </div>
+
+            @if (HasPermission("Workers_Payments", DemexClaims.Create))
+            {
+                <a class="btn btn-outline-primary" href="/pagos/empleados/crear">
+                    <Icon Name="IconName.PlusLg" /> Registrar Pago
+                </a>
+            }
+        </Alert>
+           
+  
+    </div>
+
+   
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Fecha</th>
+                    <th>Descripción</th>
+                    <th>Estado</th>
+                    <th>Monto total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in payments)
+                {
+                    <tr>
+                        <td>@p.Date.ToString("dd/MM/yyyy")</td>
+                        <td>@p.Description</td>
+                        <td>
+                            <Badge Color="@GetBadgeColor(p.State)">
+                                @GetStateIcon(p.State) @p.State
+                            </Badge>
+                        </td>
+                        <td class="fw-bold">₡ @p.TotalAmount?.ToString("N2")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (HasPermission("Workers_Payments", DemexClaims.Create))
+    {
+        <div class="float-end">
+            <a class="btn btn-outline-primary" href="/pagos/empleados/crear">
+                <Icon Name="IconName.PlusLg" /> Registrar Pago
+            </a>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public int UserId { get; set; }
+
+    [CascadingParameter] private Task<AuthenticationState>? authenticationStateTask { get; set; }
+    private ClaimsPrincipal? user;
+    private List<EmployeePayment>? payments;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationStateTask!;
+        user = authState.User;
+
+        try
+        {
+            payments = (await PaymentService.GetPaymentsByEmployeeIdAsync(UserId)).ToList();
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new(ToastType.Danger, $"Error al cargar pagos: {ex.Message}"));
+        }
+    }
+
+    private bool HasPermission(string module, string action)
+        => user?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
+
+    private BadgeColor GetBadgeColor(string? state)
+        => state?.ToLower() switch
+        {
+            "pagado" => BadgeColor.Success,
+            "pendiente" => BadgeColor.Warning,
+            "anulado" => BadgeColor.Danger,
+            _ => BadgeColor.Secondary
+        };
+
+    private RenderFragment GetStateIcon(string? state) => builder =>
+    {
+        var icon = state?.ToLower() switch
+        {
+            "pagado" => "check-circle-fill",
+            "pendiente" => "hourglass-split",
+            "anulado" => "x-circle-fill",
+            _ => "question-circle-fill"
+        };
+
+        builder.OpenElement(0, "i");
+        builder.AddAttribute(1, "class", $"bi bi-{icon} me-1");
+        builder.CloseElement();
+    };
+}
+
+
