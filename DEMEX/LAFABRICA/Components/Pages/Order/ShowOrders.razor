@@ -138,14 +138,14 @@ else
                                         <td>@ord.Advancement.ToString("C", new System.Globalization.CultureInfo("es-CR"))</td>
                                         <td>
                                             @* Restauramos tamaño original de botones quitando btn-sm *@
-                                            <button class="btn btn-outline-primary" @onclick="() => detailsModal.ShowAsync(ord.Id)" title="Ver Detalles">
-                                                <Icon Name="IconName.Eye" />
+                                            <button class="btn btn-show" @onclick="() => detailsModal.ShowAsync(ord.Id)" title="Ver Detalles">
+                                                <Icon Class="icon-show" Name="IconName.Eye" />
                                             </button>
-                                            <button class="btn btn-outline-secondary" @onclick="() => EditOrder(ord)" title="Editar">
-                                                <Icon Name="IconName.PencilSquare" />
+                                            <button class="btn btn-edit" @onclick="() => EditOrder(ord)" title="Editar">
+                                                <Icon Class="icon-edit" Name="IconName.PencilSquare" />
                                             </button>
-                                            <button class="btn btn-outline-danger" @onclick="() => DeleteOrder(ord)" title="Eliminar">
-                                                <Icon Name="IconName.Trash"></Icon>
+                                            <button class="btn btn-delete" @onclick="() => DeleteOrder(ord)" title="Eliminar">
+                                                <Icon Color="IconColor.Danger" Name="IconName.Trash"></Icon>
                                             </button>
                                         </td>
                                     </tr>
