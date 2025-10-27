@@ -357,11 +357,11 @@ public partial class AppDbContext : DbContext
 
             entity.ToTable("SUPPLIERS");
 
-            entity.HasIndex(e => e.Email, "UQ_SUPPLIER_EMAIL")
+            entity.HasIndex(e => e.Email, "UQ_SUPPLIER_EMAIL_ACTIVE")
                   .IsUnique()
                   .HasFilter("[IsActive] = 1");
 
-            entity.HasIndex(e => e.Phone, "UQ_SUPPLIER_PHONE")
+            entity.HasIndex(e => e.Phone, "UQ_SUPPLIER_PHONE_ACTIVE")
                   .IsUnique()
                   .HasFilter("[IsActive] = 1");
 
@@ -397,11 +397,11 @@ public partial class AppDbContext : DbContext
 
             entity.HasIndex(e => e.RolId, "IX_EMPLOYEE_ROL_ID");
 
-            entity.HasIndex(e => e.Email, "UQ_EMPLOYEE_EMAIL")
+            entity.HasIndex(e => e.Email, "UQ_EMPLOYEE_EMAIL_ACTIVE")
                   .IsUnique()
                   .HasFilter("[IS_ACTIVE] = 1");
 
-            entity.HasIndex(e => e.Identification, "UQ_EMPLOYEE_IDENTIFICATION")
+            entity.HasIndex(e => e.Identification, "UQ_EMPLOYEE_IDENTIFICATION_ACTIVE")
                   .IsUnique()
                   .HasFilter("[IS_ACTIVE] = 1");
 

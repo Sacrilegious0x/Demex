@@ -72,7 +72,8 @@ namespace LAFABRICA.Services
                 Email = newSupplierDto.Email,
                 DateLastPurchase = newSupplierDto.DateLastPurchase,
                 Notes = newSupplierDto.Notes,
-                IsActive = newSupplierDto.IsActive
+                IsActive = true
+
 
             };
 

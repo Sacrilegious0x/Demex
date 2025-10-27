@@ -12,13 +12,19 @@
 @inject NavigationManager NavigationManager
 @inject ISupplierService SupplierService
 @inject ToastService ToastService
-@inject AuthenticationStateProvider AuthStateProvider
+
 
 <PageTitle>Editar Proveedor</PageTitle>
 <Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 <ConfirmDialog @ref="dialog" />
-
-@if (!HasPermission("Suppliers", DemexClaims.Edit))
+@if (user == null)
+{
+    <div class="text-center p-5">
+        <Spinner Color="SpinnerColor.Primary" />
+        <p class="mt-2">Cargando autenticación...</p>
+    </div>
+}
+else if (!HasPermission("Suppliers", DemexClaims.Edit))
 {
     <div class="text-center mt-5">
         <i class="bi bi-shield-lock fs-1 text-warning"></i>
@@ -43,7 +49,7 @@ else if (supplier == null)
 }
 else
 {
-    <!-- TU HTML ORIGINAL COMPLETO SIN CAMBIOS -->
+   
     <div class="container mt-2">
         <div class="card">
             <div class="card-header">
@@ -130,11 +136,13 @@ else
     private SupplierDto? supplier;
     private bool isBusy = true;
     private ConfirmDialog dialog = default!;
+    [CascadingParameter] 
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
     private ClaimsPrincipal? user;
 
     protected override async Task OnInitializedAsync()
     {
-        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var auth = await AuthenticationStateTask!;
         user = auth.User;
 
         supplier = await SupplierService.GetSupplierByIdAsync(Id);
