@@ -60,13 +60,14 @@ else
 							<div class="container-sm">
 								<h3>Información del Material</h3>
 
-								<div class="form-group row mb-3">
-									<label class="col-md-5 col-form-label">Nombre del Material:</label>
-									<div class="col-md-8">
-										<TextInput class="border-1" @bind-Value="editModel.MaterialName" required />
-										<ValidationMessage For="@(() => editModel.MaterialName)" />
-									</div>
+							@* Material Name - Habilitao *@
+							<div class="form-group row mb-3">
+								<label class="col-md-5 col-form-label">Nombre del Material: <span class="text-danger">*</span></label>
+								<div class="col-md-8">
+									<TextInput class="border-1" @bind-Value="editModel.MaterialName"  placeholder="Ej: Tubo PVC 1/2 pulgada" required />
+									<ValidationMessage For="@(() => editModel.MaterialName)" />
 								</div>
+							</div>
 
 								<div class="form-group row mb-3">
 									<label class="col-md-5 col-form-label">Unidad:</label>
@@ -114,12 +115,17 @@ else
 									</div>
 								</div>
 
-								<div class="form-group row mb-3">
-									<label class="col-md-5 col-form-label">Stock Actual:</label>
-									<div class="col-md-8">
-										<NumberInput class="border-1" @bind-Value="editModel.Quantity" type="number" required />
-									</div>
+							@* Stock Actual - Se edita en la tabla Material_Supplier.Quantity *@
+							<div class="form-group row mb-3">
+								<label class="col-md-5 col-form-label">Stock Actual: <span class="text-danger">*</span></label>
+								<div class="col-md-8">
+									<NumberInput class="border-1" @bind-Value="editModel.Quantity" type="number" placeholder="Ej: 100" required />
+									<ValidationMessage For="@(() => editModel.Quantity)" />
 								</div>
+								<div>
+									<p class="text-black-50">Cantidad física actual en el inventario.</p>
+								</div>
+							</div>
 
 								<div class="form-group row mb-3">
 									<label class="col-md-5 col-form-label">Stock Mínimo:</label>
@@ -298,14 +304,27 @@ else
 		alertMessage = "";
 		selectedImage = null; // Reset
 
-		if (e.File.Size > maxFileSize)
+		var file = e.File;
+		var fileExtension = Path.GetExtension(file.Name).ToLowerInvariant();
+
+		// 1. Validación de Extensión
+		var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+		if (!allowedExtensions.Contains(fileExtension))
+		{
+			showAlert = true;
+			alertMessage = "Formato de archivo no permitido. Solo se aceptan archivos .jpg, .jpeg y .png.";
+			return;
+		}
+
+		// 2. Validación de Tamaño
+		if (file.Size > maxFileSize)
 		{
 			showAlert = true;
 			alertMessage = $"El archivo es demasiado grande. El límite es {maxFileSize / 1024 / 1024} MB.";
 			return;
 		}
 
-		selectedImage = e.File;
+		selectedImage = file;
 	}
 
 	// Método para subir el archivo al servidor (mismo que en Crear)
@@ -318,32 +337,32 @@ else
 
 		try
 		{
-			// 1. Definir la carpeta de destino relativa a wwwroot
+			// Definir la carpeta de destino relativa a wwwroot
 			string relativeFolderPath = Path.Combine("images", "materials");
 			// Obtener la ruta absoluta del servidor
 			string absoluteFolderPath = Path.Combine(WebHostEnvironment.WebRootPath, relativeFolderPath);
 
-			// 2. Asegurarse de que el directorio exista
+
 			if (!Directory.Exists(absoluteFolderPath))
 			{
 				Directory.CreateDirectory(absoluteFolderPath);
 			}
 
-			// 3. Crear un nombre de archivo único para evitar colisiones
+			// Crear un nombre de archivo único para evitar colisiones
 			string fileExtension = Path.GetExtension(selectedImage.Name);
 			string uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
 			string absoluteFilePath = Path.Combine(absoluteFolderPath, uniqueFileName);
 
-			// 4. Guardar el archivo en el servidor
+			// Guardar el archivo en el servidor
 			await using (var fileStream = new FileStream(absoluteFilePath, FileMode.Create))
 			{
 				await selectedImage.OpenReadStream(maxFileSize).CopyToAsync(fileStream);
 			}
 
-			// 5. Devolver la RUTA RELATIVA que se guardará en la BD
+			// Devolver la RUTA RELATIVA que se guardará en la BD
 			string relativePath = Path.Combine(relativeFolderPath, uniqueFileName).Replace("\\", "/");
 
-			return $"/{relativePath}"; // Ej: /images/materials/archivo-unico.jpg
+			return $"/{relativePath}"; 
 		}
 		catch (Exception ex)
 		{

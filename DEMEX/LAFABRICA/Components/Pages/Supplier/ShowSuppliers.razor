@@ -86,13 +86,12 @@ else
 
         <div class="table-responsive flex-grow-1 overflow-auto" style="max-height: 370px;">
             <table class="table table-hover text-center">
-                <thead class="table-light">
+                <thead >
                     <tr>
                         <th>#</th>
                         <th>Nombre</th>
                         <th>Teléfono</th>
                         <th>Correo</th>
-                        <th>Última Compra</th>
                         <th>Notas</th>
                         <th>Dirección</th>
                         <th>Acciones</th>
@@ -106,7 +105,6 @@ else
                             <td>@supplier.c.Name</td>
                             <td>@supplier.c.Phone</td>
                             <td>@supplier.c.Email</td>
-                            <td>@(supplier.c.DateLastPurchase?.ToShortDateString() ?? "N/A")</td>
                             <td class="max-w-xs text-truncate">@supplier.c.Notes</td>
                             <td>@supplier.c.Address</td>
                             <td>
@@ -134,6 +132,11 @@ else
                     }
                 </tbody>
             </table>
+
+
+            <div class="card-footer">
+                <Icon Name="IconName.Truck" /> Total de proveedores activos: @FilteredSuppliers.Count()
+            </div>
         </div>
     </div>
 }

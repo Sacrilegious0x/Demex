@@ -137,6 +137,7 @@ else
 
 	private SupplierDto supplier = new SupplierDto();
 
+
 	private bool HasPermission(string module, string action)
 		=> user?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
 
@@ -154,10 +155,11 @@ else
 			return;
 		}
 
-		supplier.IsActive = true;
+		
 
 		try
 		{
+			supplier.IsActive = true;
 			var newSupplier = await SupplierService.AddSupplierAsync(supplier);
 			ToastService.Notify(new(ToastType.Success, $"Proveedor '{supplier.Name}' creado correctamente."));
 

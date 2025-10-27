@@ -144,14 +144,14 @@ namespace LAFABRICA.Services
             if (supplier == null) return false;
 
             bool existEmail = await context.Suppliers
-                            .AnyAsync(s => s.Email == supplier.Email && s.IsActive == true);
+                            .AnyAsync(s=> s.Id != updatedSupplierDto.Id &&  s.Email == supplier.Email && s.IsActive == true);
             if (existEmail)
             {
                 throw new InvalidOperationException("El correo ya está registrado por un proveedor activo");
             }
 
             bool existPhone = await context.Suppliers
-                            .AnyAsync(s => s.Phone == supplier.Phone && s.IsActive == true);
+                            .AnyAsync(s => s.Id != updatedSupplierDto.Id && s.Phone == supplier.Phone && s.IsActive == true);
             if (existPhone)
             {
                 throw new InvalidOperationException("El contacto del proveedor ya está registrado por un proveedor activo");
