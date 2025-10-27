@@ -92,14 +92,34 @@
                     }
 
                     <!-- Pagos -->
-                    @if (HasPermission("Payments", DemexClaims.View))
+                    @if (HasPermission("Clients_Payments", DemexClaims.View) || HasPermission("Workers_Payments", DemexClaims.View))
                     {
-                        <li class="nav-item">
-                            <NavLink class="nav-link" href="/payments">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="pagosDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-credit-card-fill me-1"></i> Pagos
-                            </NavLink>
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="pagosDropdown">
+                                @if (HasPermission("Clients_Payments", DemexClaims.View)){
+                                    <li>
+                                        <NavLink class="nav-link" href="/pagos">
+                                            <i class="bi bi-person-badge me-1"></i> Pagos Clientes
+                                        </NavLink>
+                                    </li>
+                                }
+                                @if (HasPermission("Workers_Payments", DemexClaims.View))
+                                {
+                                    <li>
+                                        <NavLink class="nav-link" href="/pagos/empleados">
+                                            <i class="bi bi-people-fill me-1"></i> Pagos Empleados
+                                        </NavLink>
+                                    </li>
+                                }
+
+                                
+                            </ul>
                         </li>
                     }
+
 
                     <!-- Reportes -->
                     @if (HasPermission("Reports", DemexClaims.View))

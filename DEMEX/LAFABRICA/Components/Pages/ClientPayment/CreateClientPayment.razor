@@ -1,21 +1,40 @@
 ﻿@page "/pagos/registrar"
+@attribute [Authorize]
 @using LAFABRICA.Data.DB
+@using LAFABRICA.Models
 @using LAFABRICA.Models.Interface
-@using System.ComponentModel.DataAnnotations // Necesario para ValidationMessage
-@using System.IO // Necesario para manejo de archivos
-@using Microsoft.AspNetCore.Hosting // Necesario para IWebHostEnvironment
+@using LAFABRICA.Services.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using System.ComponentModel.DataAnnotations
+@using System.IO
+@using Microsoft.AspNetCore.Hosting
 
 @inject IClientPaymentService paymentService
-@inject IOrderService orderService // Para obtener la lista de órdenes
+@inject IOrderService orderService
 @inject NavigationManager NavigationManager
 @inject ToastService ToastService
-@inject IWebHostEnvironment Environment // Para obtener wwwroot
+@inject IWebHostEnvironment Environment
 
 <PageTitle>Registrar Nuevo Pago</PageTitle>
 
 <Toasts class="p-3" Autohide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 
-@if (activeOrders == null)
+@if (user == null)
+{
+    <div class="text-center p-5">
+        <Spinner Color="SpinnerColor.Primary" />
+        <p>Cargando autenticación...</p>
+    </div>
+}
+else if (!HasPermission("Clients_Payments", DemexClaims.Create))
+{
+    <Alert Color="AlertColor.Warning" class="mt-4">
+        <Icon Name="IconName.ExclamationTriangleFill" class="me-2" />
+        <strong>No tienes permiso</strong> para registrar nuevos pagos.
+    </Alert>
+}
+else if (activeOrders == null)
 {
     <div class="text-center p-4">
         <Spinner Color="SpinnerColor.Primary" />
@@ -27,9 +46,13 @@ else
     <EditForm EditContext="@editContext" OnValidSubmit="HandleValidSubmit">
         <DataAnnotationsValidator />
         <Card>
-            <CardHeader>
-                <CardTitle Size="HeadingSize.H5"><Icon Name="IconName.CashCoin" /> Registrar Nuevo Pago</CardTitle>
+            <CardHeader class="d-flex justify-content-between align-items-center mt-3">
+                <CardTitle Size="HeadingSize.H2"><Icon Name="IconName.CashCoin" /> Registrar Nuevo Pago</CardTitle>
+                <a class="btn btn-outline-secondary" href="/pagos">
+                    <Icon Name="IconName.ArrowLeft" />
+                </a>
             </CardHeader>
+
             <CardBody>
                 <ValidationSummary class="alert alert-danger mb-3" />
 
@@ -87,11 +110,12 @@ else
                 </div>
 
             </CardBody>
+
             <CardFooter>
                 <div class="d-flex justify-content-end gap-2">
-                    <a href="/pagos" class="btn btn-light border">Cancelar</a>
+                    <a href="/pagos" class="btn btn-outline-secondary border">Cancelar</a>
                     <button type="submit" class="btn btn-primary">
-                        <Icon Name="IconName.Save" /> Guardar Pago
+                        Guardar
                     </button>
                 </div>
             </CardFooter>
@@ -100,64 +124,65 @@ else
 }
 
 @code {
+    // === Autenticación y permisos ===
+    [CascadingParameter] private Task<AuthenticationState>? authenticationStateTask { get; set; }
+    private ClaimsPrincipal? user;
+
+    private bool HasPermission(string module, string action)
+        => user?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
+
     private ClientPayment newPayment = new();
     private EditContext editContext = default!;
-    private List<Order>? activeOrders; // Lista para el desplegable de órdenes
+    private List<Order>? activeOrders;
 
-    // --- Variables para subida de archivo ---
+    // --- Subida de archivo ---
     private IBrowserFile? selectedFile;
     private string? fileUploadMessage;
-    private long maxFileSize = 1024 * 1024 * 5; // Límite de 5 MB
+    private long maxFileSize = 1024 * 1024 * 5; // 5 MB
     private string[] permittedImageTypes = { "image/jpeg", "image/png", "image/gif", "image/bmp" };
-    // ----------------------------------------
 
     protected override async Task OnInitializedAsync()
     {
-        // Inicializar fecha a hoy por defecto
+        var authState = await authenticationStateTask!;
+        user = authState.User;
+
         newPayment.PaymentDate = DateOnly.FromDateTime(DateTime.Today);
-        // Inicializar EditContext
         editContext = new EditContext(newPayment);
 
-        // Cargar órdenes activas para el desplegable
         try
         {
             var allOrders = await orderService.GetAllOrders();
-            // Filtramos las que no estén finalizadas
-            activeOrders = allOrders.Where(o => o.State != "Finalizada")
-                                    .OrderByDescending(o => o.Id) // Mostrar más nuevas primero
-                                    .ToList();
+            activeOrders = allOrders
+                .Where(o => o.State != "Finalizada")
+                .OrderByDescending(o => o.Id)
+                .ToList();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error cargando órdenes activas: {ex.Message}");
-            ToastService.Notify(new(ToastType.Danger, "Error", "No se pudieron cargar las órdenes para asociar el pago."));
-            activeOrders = new List<Order>(); // Evitar error null
+            ToastService.Notify(new(ToastType.Danger, "Error", "No se pudieron cargar las órdenes."));
+            activeOrders = new List<Order>();
         }
     }
 
-    /// <summary>
-    /// Maneja la selección de un archivo desde el InputFile
-    /// </summary>
     private void LoadFile(InputFileChangeEventArgs e)
     {
-        selectedFile = null; // Reiniciar
+        selectedFile = null;
         fileUploadMessage = null;
 
         var file = e.File;
         if (file == null)
             return;
 
-        // Validar tamaño
         if (file.Size > maxFileSize)
         {
             fileUploadMessage = $"Error: El archivo excede el límite de {maxFileSize / 1024 / 1024} MB.";
             return;
         }
 
-        // Validar tipo de contenido (MIME type)
         if (!permittedImageTypes.Contains(file.ContentType))
         {
-            fileUploadMessage = "Error: Por favor, seleccione un archivo de imagen válido (JPG, PNG, GIF, BMP).";
+            fileUploadMessage = "Error: Seleccione una imagen válida (JPG, PNG, GIF, BMP).";
             return;
         }
 
@@ -165,60 +190,52 @@ else
         fileUploadMessage = $"Archivo seleccionado: {selectedFile.Name} ({selectedFile.Size / 1024} KB)";
     }
 
-
-    /// <summary>
-    /// Maneja el envío del formulario válido
-    /// </summary>
     private async Task HandleValidSubmit()
     {
-        // 1. Manejar la subida del archivo si se seleccionó uno
+        if (!HasPermission("Clients_Payments", DemexClaims.Create))
+        {
+            ToastService.Notify(new(ToastType.Warning, "Sin permiso", "No tienes permiso para registrar pagos."));
+            return;
+        }
+
         if (selectedFile != null)
         {
             try
             {
-                // Ruta de destino: wwwroot/images/payments
                 var webRootPath = Environment.WebRootPath;
                 var relativePath = Path.Combine("images", "payments");
                 var absolutePath = Path.Combine(webRootPath, relativePath);
 
-                // Asegurarse que el directorio exista
                 Directory.CreateDirectory(absolutePath);
 
-                // Crear un nombre de archivo único para evitar colisiones
-                var fileExtension = Path.GetExtension(selectedFile.Name);
-                var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
-                var fullFilePath = Path.Combine(absolutePath, uniqueFileName);
+                var extension = Path.GetExtension(selectedFile.Name);
+                var uniqueFileName = $"{Guid.NewGuid()}{extension}";
+                var fullPath = Path.Combine(absolutePath, uniqueFileName);
 
-                // Guardar el archivo en el servidor (stream)
-                await using var fs = new FileStream(fullFilePath, FileMode.Create);
+                await using var fs = new FileStream(fullPath, FileMode.Create);
                 await selectedFile.OpenReadStream(maxFileSize).CopyToAsync(fs);
 
-                // Guardar la *ruta relativa* en el modelo para la BD
-                // Usar / para compatibilidad web
                 newPayment.PhotoVoucherUrl = Path.Combine(relativePath, uniqueFileName).Replace("\\", "/");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error al guardar archivo: {ex}");
                 ToastService.Notify(new(ToastType.Danger, "Error de Archivo", $"No se pudo guardar el comprobante: {ex.Message}"));
-                return; // Detener el proceso si el archivo no se pudo guardar
+                return;
             }
         }
 
-        // 2. Continuar con el guardado del pago (lógica original)
         try
         {
             await paymentService.CreatePayment(newPayment);
-            ToastService.Notify(new(ToastType.Success, "Pago Registrado", $"El pago de {newPayment.Amount:C} ha sido guardado exitosamente."));
-            NavigationManager.NavigateTo("/pagos"); // Redirigir a la lista de pagos
+            ToastService.Notify(new(ToastType.Success, "Pago Registrado", $"El pago de {newPayment.Amount:C} se guardó correctamente."));
+            NavigationManager.NavigateTo("/pagos");
         }
-        catch (KeyNotFoundException knfex) // Error específico si la orden no existe
+        catch (KeyNotFoundException knfex)
         {
             ToastService.Notify(new(ToastType.Danger, "Error de Orden", knfex.Message));
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error al guardar pago: {ex}"); // Log del error completo
             ToastService.Notify(new(ToastType.Danger, "Error", $"No se pudo guardar el pago: {ex.Message}"));
         }
     }

@@ -1,89 +1,131 @@
 ﻿@page "/clientes/crear"
 @page "/clientes/editar/{clientId:int}"
 @attribute [Authorize]
-@using LAFABRICA.Data.DB;
-@using LAFABRICA.Models.Interface;
-@inject IClientService service;
-@inject NavigationManager nav;
+@using LAFABRICA.Data.DB
+@using LAFABRICA.Models
+@using LAFABRICA.Models.Interface
+@using LAFABRICA.Services.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject IClientService service
+@inject NavigationManager nav
+@inject ToastService ToastService
 
-<PageTitle>Nuevo Cliente</PageTitle>
+<PageTitle>@(clientId.HasValue ? "Editar Cliente" : "Nuevo Cliente")</PageTitle>
+
 <Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 <ConfirmDialog @ref="dialog" />
-<div class="container mt2">	
-	<div class="card">
-		<div class="card-header">
-			<div class="d-flex justify-content-between align-items-center mt-3">
-				<h2>
-					@if (clientId.HasValue)
-					{
-						<Icon Name="IconName.PersonFillGear"Class="me-2" />
-						<text>Editar cliente</text>
-					}
-					else
-					{
-						<Icon Name="IconName.PersonFillAdd" Class="me-2"/>
-						<text>Nuevo cliente</text>
-					}
-				</h2>
-				<a class="btn btn-outline-secondary" href="/clientes"><Icon Name="IconName.ArrowLeft"></Icon></a>
-			</div>	
-		</div>
-		<div class="card-body">
-			@if (client  != null && editContext != null)
-			{
-				<EditForm EditContext="@editContext" OnValidSubmit="HandleOnValidSubmit">
-					<DataAnnotationsValidator />
-					<div class=" d-flex justify-content-between">
-						<div class="container-sm">
-							<h3>Informacion de la Empresa</h3>
-							<div class="form-group row mb-3">
-								<label class="col-md-5 col-form-label">Nombre de la Empresa: <span class="text-danger">*</span></label>
-								<div class="col-md-8">
-									<TextInput Class="border-1" @bind-Value="@client.Name" Placeholder="Ingrese el nombre de la Empresa" />
-									<ValidationMessage For="@(() => client.Name)" />
-								</div>
-							</div>
-							<div class="form-group row mb-3">
-								<label class="col-md-5 col-form-label">Contacto <span class="text-danger">*</span></label>
-								<div class="col-md-8">
-									<TextInput Class="border-1" @bind-Value="@client.PhoneNumber" Placeholder="Ingrese el contacto de la empresa" />
-									<ValidationMessage For="@(() => client.PhoneNumber)" />
-								</div>
-								<div>
-									<p class="text-black-50">Formato admitido: 8888-8888</p>
-								</div>
-							</div>
-							<div class="form-group row mb-3">
-								<label class="col-md-5 col-form-label">Correo <span class="text-danger">*</span></label>
-								<div class="col-md-8">
-									<TextInput Class="border-1" @bind-Value="@client.Email" Placeholder="Ingrese el correo electronico" />
-									<ValidationMessage For="@(() => client.Email)" />
-								</div>
-							</div>
-						</div>
-						<div class="container-sm">
-							<h3>Informacion del encargado</h3>
-							<div class="form-group row mb-3">
-								<label class="col-md-5 col-form-label">Nombre del Encargado: <span class="text-danger">*</span></label>
-								<div class="col-md-8">
-									<TextInput Class="border-1" @bind-Value="@client.Manager" Placeholder="Ingrese el nombre del Encargado" />
-									<ValidationMessage For="@(() => client.Manager)" />
-								</div>
-							</div>
-							<div class="form-group row mb-3">
-								<label class="col-md-5 col-form-label">Contacto <span class="text-danger">*</span></label>
-								<div class="col-md-8">
-									<TextInput Class="border-1" @bind-Value="@client.ManagerPhoneNumber" Placeholder="Ingrese el contacto del Encargado" />
-									<ValidationMessage For="@(() => client.ManagerPhoneNumber)" />
-								</div>
-								<div>
-									<p class="text-black-50">Formato admitido: xxxx-xxxx</p>
-								</div>
-							</div>
+
+@if (user == null)
+{
+	<div class="text-center p-5">
+		<Spinner Color="SpinnerColor.Primary" />
+		<p>Cargando autenticación...</p>
+	</div>
+}
+else if (!HasPermission("Clients", DemexClaims.View))
+{
+	<Alert Color="AlertColor.Warning" class="mt-4">
+		<strong>No tienes permiso</strong> para acceder a esta sección.
+	</Alert>
+}
+else if (clientId == null && !HasPermission("Clients", DemexClaims.Create))
+{
+	<Alert Color="AlertColor.Warning" class="mt-4">
+		<strong>No tienes permiso</strong> para registrar nuevos clientes.
+	</Alert>
+}
+else if (clientId != null && !HasPermission("Clients", DemexClaims.Edit))
+{
+	<Alert Color="AlertColor.Warning" class="mt-4">
+		<strong>No tienes permiso</strong> para editar clientes.
+	</Alert>
+}
+else
+{
+	<div class="container mt-2">
+		<div class="card">
+			<div class="card-header">
+				<div class="d-flex justify-content-between align-items-center mt-3">
+					<h2>
+						@if (clientId.HasValue)
+						{
+							<Icon Name="IconName.PersonFillGear" Class="me-2" />
+							<text>Editar Cliente</text>
+						}
+						else
+						{
+							<Icon Name="IconName.PersonFillAdd" Class="me-2" />
+							<text>Nuevo Cliente</text>
+						}
+					</h2>
+					<a class="btn btn-outline-secondary" href="/clientes">
+						<Icon Name="IconName.ArrowLeft" />
+					</a>
+				</div>
+			</div>
+
+			<div class="card-body">
+				@if (client != null && editContext != null)
+				{
+					<EditForm EditContext="@editContext" OnValidSubmit="HandleOnValidSubmit">
+						<DataAnnotationsValidator />
+
+						<div class="d-flex justify-content-between">
 							<div class="container-sm">
-								<h3>Informacion de Ubicacion</h3>
+								<h3>Información de la Empresa</h3>
+
 								<div class="form-group row mb-3">
-									<label class="col-md-5 col-form-label ">Provincia <span class="text-danger">*</span></label>
+									<label class="col-md-5 col-form-label">
+										Nombre de la Empresa: <span class="text-danger">*</span>
+									</label>
+									<div class="col-md-8">
+										<TextInput Class="border-1" @bind-Value="@client.Name" Placeholder="Ingrese el nombre de la empresa" />
+										<ValidationMessage For="@(() => client.Name)" />
+									</div>
+								</div>
+
+								<div class="form-group row mb-3">
+									<label class="col-md-5 col-form-label">Contacto <span class="text-danger">*</span></label>
+									<div class="col-md-8">
+										<TextInput Class="border-1" @bind-Value="@client.PhoneNumber" Placeholder="Ingrese el contacto de la empresa" />
+										<ValidationMessage For="@(() => client.PhoneNumber)" />
+										<p class="text-black-50">Formato admitido: 8888-8888</p>
+									</div>
+								</div>
+
+								<div class="form-group row mb-3">
+									<label class="col-md-5 col-form-label">Correo <span class="text-danger">*</span></label>
+									<div class="col-md-8">
+										<TextInput Class="border-1" @bind-Value="@client.Email" Placeholder="Ingrese el correo electrónico" />
+										<ValidationMessage For="@(() => client.Email)" />
+									</div>
+								</div>
+							</div>
+
+							<div class="container-sm">
+								<h3>Información del Encargado</h3>
+
+								<div class="form-group row mb-3">
+									<label class="col-md-5 col-form-label">Nombre del Encargado: <span class="text-danger">*</span></label>
+									<div class="col-md-8">
+										<TextInput Class="border-1" @bind-Value="@client.Manager" Placeholder="Ingrese el nombre del encargado" />
+										<ValidationMessage For="@(() => client.Manager)" />
+									</div>
+								</div>
+
+								<div class="form-group row mb-3">
+									<label class="col-md-5 col-form-label">Contacto <span class="text-danger">*</span></label>
+									<div class="col-md-8">
+										<TextInput Class="border-1" @bind-Value="@client.ManagerPhoneNumber" Placeholder="Ingrese el contacto del encargado" />
+										<ValidationMessage For="@(() => client.ManagerPhoneNumber)" />
+										<p class="text-black-50">Formato admitido: xxxx-xxxx</p>
+									</div>
+								</div>
+
+								<h3>Ubicación</h3>
+								<div class="form-group row mb-3">
+									<label class="col-md-5 col-form-label">Provincia <span class="text-danger">*</span></label>
 									<div class="col-md-8">
 										<InputSelect Class="form-select" @bind-Value="@client.Location">
 											<option value="">Seleccione una provincia</option>
@@ -95,65 +137,74 @@
 										<ValidationMessage For="@(() => client.Location)" />
 									</div>
 								</div>
+
 								<div class="form-group row mb-3">
-									<label class="col-md-5 col-form-label ">Locacion Especifica <span class="text-danger">*</span></label>
+									<label class="col-md-5 col-form-label">Locación Específica <span class="text-danger">*</span></label>
 									<div class="col-md-8">
-										<TextInput Class="border-1" @bind-Value="@client.SpecificLocation" Placeholder="Ingrese ubicacion detallada" />
+										<TextInput Class="border-1" @bind-Value="@client.SpecificLocation" Placeholder="Ingrese ubicación detallada" />
 										<ValidationMessage For="@(() => client.SpecificLocation)" />
 									</div>
 								</div>
 							</div>
 						</div>
-					</div>
-					@if (showAlert)
-					{
-						<div>
+
+						@if (showAlert)
+						{
 							<Alert Color="AlertColor.Warning">
 								<Icon Name="IconName.ExclamationTriangleFill" />
-								<strong>@alertMessage</strong>									
+								<strong>@alertMessage</strong>
 							</Alert>
+						}
+
+						<div class="d-flex justify-content-end">
+							<a class="btn btn-outline-secondary me-2" href="/clientes">Cancelar</a>
+							@if ((clientId == null && HasPermission("Clients", DemexClaims.Create)) ||
+												(clientId != null && HasPermission("Clients", DemexClaims.Edit)))
+							{
+								<button class="btn btn-primary" type="submit">Guardar</button>
+							}
 						</div>
-					}
-					
-					<div class="d-flex justify-content-end">
-						<a class="btn btn-outline-secondary me-2"href="/clientes">Cancelar</a>
-						<button class="btn btn-primary" type="submit">Guardar</button>
+					</EditForm>
+				}
+				else
+				{
+					<div class="d-flex justify-content-center">
+						<Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
 					</div>
-				</EditForm>
-			}
-			else
-			{
-				<div class="d-flex justify-content-center">
-					<Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
-				</div>
-			}
-			
+				}
+			</div>
 		</div>
 	</div>
-</div>
+}
 
 @code {
-	[Inject] protected ToastService ToastService { get; set; } = default!;
+	// --- Autenticación y Claims ---
+	[CascadingParameter] private Task<AuthenticationState>? authenticationStateTask { get; set; }
+	private ClaimsPrincipal? user;
+
+	private bool HasPermission(string module, string action)
+		=> user?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
+
 	private Client? client;
 	private EditContext? editContext;
-	[Parameter]
-	public int? clientId { get; set; }
-	private readonly string[] provinces = { "San José", "Alajuela", "Heredia", "Cartago",
-									"Guanacaste", "Puntarenas", "Limon"};
+	[Parameter] public int? clientId { get; set; }
+
+	private readonly string[] provinces = { "San José", "Alajuela", "Heredia", "Cartago", "Guanacaste", "Puntarenas", "Limon" };
 	private ConfirmDialog dialog = default!;
 	bool showAlert;
 	string alertMessage;
+
 	protected override async Task OnParametersSetAsync()
 	{
-		client = new Client(); 
-		editContext = new EditContext(client);
+		var authState = await authenticationStateTask!;
+		user = authState.User;
 
-		StateHasChanged();
+		client = new Client();
+		editContext = new EditContext(client);
 
 		if (clientId.HasValue)
 		{
 			var loaded = await service.GetById(clientId.Value);
-
 			if (loaded == null)
 			{
 				nav.NavigateTo("/clientes");
@@ -164,41 +215,35 @@
 			editContext = new EditContext(client);
 		}
 
-
-		await InvokeAsync(StateHasChanged);
+		StateHasChanged();
 	}
-
-
-
 
 	public async Task HandleOnValidSubmit()
 	{
-
-		if (editContext!=null && editContext.Validate())
+		if (editContext != null && editContext.Validate())
 		{
-
 			try
 			{
 				if (clientId.HasValue)
 				{
-					var optons = new ConfirmDialogOptions
-						{
-							YesButtonText = "Confirmar",
-							YesButtonColor = ButtonColor.Success,
-							NoButtonText = "Cancelar",
-							NoButtonColor = ButtonColor.Danger
+					var options = new ConfirmDialogOptions
+					{
+						YesButtonText = "Confirmar",
+						YesButtonColor = ButtonColor.Success,
+						NoButtonText = "Cancelar",
+						NoButtonColor = ButtonColor.Danger
+					};
 
-						};
 					var confirmation = await dialog.ShowAsync(
 						title: "Editar cliente",
-						message1: $"¿Estas seguro de editar la informacion de {client!.Name} ?",
-						confirmDialogOptions: optons);
+						message1: $"¿Estás seguro de editar la información de {client!.Name}?",
+						confirmDialogOptions: options);
+
 					if (confirmation)
 					{
 						await service.Update(clientId.Value, client!);
+						ToastService.Notify(new(ToastType.Success, $"Se actualizaron los datos del cliente {client!.Name}"));
 					}
-
-					ToastService.Notify(new(ToastType.Success, $"Se actualizaron los datos del cliente {client!.Name}"));
 				}
 				else
 				{
@@ -206,25 +251,22 @@
 					client.IsActive = 1;
 					client.IsFrequent = 0;
 					await service.Create(client!);
-					ToastService.Notify(new(ToastType.Success, $"Se registro correctamente al cliente {client.Name}"));
-
+					ToastService.Notify(new(ToastType.Success, $"Se registró correctamente al cliente {client.Name}"));
 				}
+
 				await Task.Delay(1000);
 				nav.NavigateTo("/clientes");
 			}
 			catch (InvalidOperationException ex)
 			{
-				// ToastService.Notify(new(ToastType.Warning, ex.Message));
 				showAlert = true;
 				alertMessage = ex.Message;
-
-
-			}catch(Exception e)
-			{
-					ToastService.Notify(new(ToastType.Danger, $"Ocurrio un error inesperado:\n{e.Message}"));
 			}
-
+			catch (Exception e)
+			{
+				ToastService.Notify(new(ToastType.Danger, $"Ocurrió un error inesperado:\n{e.Message}"));
+			}
 		}
 	}
-	
 }
+

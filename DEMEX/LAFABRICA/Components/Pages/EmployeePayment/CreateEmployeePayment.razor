@@ -1,0 +1,317 @@
+﻿@page "/pagos/empleados/crear"
+@page "/pagos/empleados/editar/{PaymentId:int}"
+@attribute [Authorize]
+@using LAFABRICA.Models
+@using LAFABRICA.Data.DB
+@using LAFABRICA.Models.Interface
+@using LAFABRICA.Services.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject IEmployeePaymentService paymentService
+@inject IPayEmployeeProductService payProductService
+@inject IProductService productService
+@inject IUserService userService
+@inject NavigationManager nav
+@inject ToastService ToastService
+
+<PageTitle>@(IsEditing ? "Editar Pago" : "Registrar Pago")</PageTitle>
+
+@if (user == null)
+{
+    <div class="text-center p-4">
+        <Spinner Color="SpinnerColor.Primary" />
+        <p>Cargando autenticación...</p>
+    </div>
+}
+else if (!CanAccessPage)
+{
+    <Alert Color="AlertColor.Warning" class="mt-4">
+        <Icon Name="IconName.ExclamationTriangleFill" class="me-2" />
+        <strong>No tienes permiso</strong> para @(IsEditing ? "editar" : "registrar") pagos de empleados.
+    </Alert>
+}
+else if (allEmployees == null || allProducts == null)
+{
+    <div class="text-center p-4">
+        <Spinner Color="SpinnerColor.Primary" />
+        <p class="mt-2">Cargando empleados y productos...</p>
+    </div>
+}
+else
+{
+    <EditForm EditContext="@editContext" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary class="alert alert-danger mb-3" />
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center mt-3">
+                <h2 class="mb-0">
+                    <Icon Name="IconName.CashStack" class="me-2" />
+                    @(IsEditing ? "Editar Pago" : "Registrar Pago ")
+                </h2>
+                <a class="btn btn-outline-secondary" href="/pagos/empleados">
+                    <Icon Name="IconName.ArrowLeft" />
+                </a>
+            </div>
+
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Empleado *</label>
+                        <InputSelect @bind-Value="payment.EmployeeId" class="form-select" disabled="@IsEditing">
+                            <option value="0">-- Seleccione un empleado --</option>
+                            @foreach (var emp in allEmployees)
+                            {
+                                <option value="@emp.Id">@emp.Name</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => payment.EmployeeId)" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Fecha</label>
+                        <InputDate @bind-Value="payment.Date" class="form-control" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Estado</label>
+                        <InputSelect @bind-Value="payment.State" class="form-select">
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="Pagado">Pagado</option>
+                            <option value="Anulado">Anulado</option>
+                        </InputSelect>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Descripción</label>
+                    <InputTextArea @bind-Value="payment.Description" class="form-control" rows="2" />
+                </div>
+
+                <hr />
+
+                <h5 class="mt-3">Productos trabajados</h5>
+                <div class="input-group mb-3">
+                    <select @bind="selectedProductId" class="form-select" style="max-width: 50%;">
+                        <option value="0">-- Seleccione un producto --</option>
+                        @foreach (var p in allProducts)
+                        {
+                            <option value="@p.Id">@p.Name (@p.PriceBase.ToString("C"))</option>
+                        }
+                    </select>
+                    <InputNumber @bind-Value="selectedQuantity" class="form-control" placeholder="Cantidad" />
+                    <InputNumber @bind-Value="selectedUnitPrice" class="form-control" placeholder="Precio por pieza" />
+                    <button class="btn btn-success" type="button" @onclick="AddProductToPayment">
+                        <Icon Name="IconName.PlusLg" /> Añadir
+                    </button>
+                </div>
+
+                @if (productItems.Any())
+                {
+                    <ul class="list-group">
+                        @foreach (var item in productItems)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    @item.Quantity x @item.ProductName
+                                    <small class="d-block text-muted">@item.UnitPrice.ToString("C") c/u</small>
+                                </div>
+                                <span class="fw-bold">@((item.Quantity * item.UnitPrice).ToString("C"))</span>
+                                <button class="btn btn-outline-danger btn-sm" type="button" @onclick="() => RemoveProductFromPayment(item.ProductId)">
+                                    <Icon Name="IconName.Trash" />
+                                </button>
+                            </li>
+                        }
+
+                        <li class="list-group-item d-flex justify-content-between align-items-center bg-light">
+                            <span class="fw-bold">Total</span>
+                            <span class="fw-bold">₡@productItems.Sum(i => i.Quantity * i.UnitPrice).ToString("N2")</span>
+                        </li>
+                    </ul>
+                }
+                else
+                {
+                    <p class="text-muted text-center mt-2">Aún no se han añadido productos.</p>
+                }
+            </div>
+
+            <div class="card-footer d-flex justify-content-end gap-2">
+                <a href="/pagos/empleados" class="btn btn-light border">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int? PaymentId { get; set; }
+
+    [CascadingParameter] private Task<AuthenticationState>? authenticationStateTask { get; set; }
+    private ClaimsPrincipal? user;
+
+    private bool HasPermission(string module, string action)
+        => user?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
+
+    private bool CanAccessPage =>
+        (IsEditing && HasPermission("Workers_Payments", DemexClaims.Edit)) ||
+        (!IsEditing && HasPermission("Workers_Payments", DemexClaims.Create));
+
+    private EmployeePayment payment = new() { State = "Pendiente" };
+    private List<User>? allEmployees;
+    private List<Product>? allProducts;
+    private List<PaymentItem> productItems = new();
+
+    private int selectedProductId;
+    private int selectedQuantity = 1;
+    private decimal selectedUnitPrice;
+    private EditContext editContext = default!;
+    private bool IsEditing => PaymentId.HasValue;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationStateTask!;
+        user = authState.User;
+
+        // Solo carga datos si tiene permiso de acceso
+        if (!CanAccessPage) return;
+
+        var crTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central America Standard Time"));
+        editContext = new EditContext(payment);
+        allEmployees = (await userService.GetAllUsers()).ToList();
+        allProducts = (await productService.GetAllProducts()).ToList();
+
+        if (IsEditing)
+        {
+            var existing = await paymentService.GetPaymentByIdAsync(PaymentId.Value);
+            if (existing != null)
+            {
+                payment = existing;
+                productItems = (await payProductService.GetByEmployeePaymentIdAsync(existing.Id))
+                    .Select(p => new PaymentItem
+                    {
+                        ProductId = p.ProductId,
+                        ProductName = p.Product?.Name ?? "",
+                        Quantity = p.Quantity,
+                        UnitPrice = p.UnitPrice
+                    }).ToList();
+            }
+        }
+        else
+        {
+            payment.Date = crTime;
+        }
+    }
+
+    private void AddProductToPayment()
+    {
+        if (selectedProductId == 0 || selectedQuantity <= 0 || selectedUnitPrice <= 0)
+            return;
+
+        var product = allProducts?.FirstOrDefault(p => p.Id == selectedProductId);
+        if (product == null) return;
+
+        var existing = productItems.FirstOrDefault(i => i.ProductId == selectedProductId);
+        if (existing != null)
+        {
+            existing.Quantity += selectedQuantity;
+            existing.UnitPrice = selectedUnitPrice;
+        }
+        else
+        {
+            productItems.Add(new PaymentItem
+            {
+                ProductId = product.Id,
+                ProductName = product.Name,
+                Quantity = selectedQuantity,
+                UnitPrice = selectedUnitPrice
+            });
+        }
+
+        selectedProductId = 0;
+        selectedQuantity = 1;
+        selectedUnitPrice = 0;
+    }
+
+    private void RemoveProductFromPayment(int productId)
+    {
+        productItems.RemoveAll(i => i.ProductId == productId);
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (!CanAccessPage)
+        {
+            ToastService.Notify(new(ToastType.Warning, "Sin permiso", "No tienes permiso para guardar este pago."));
+            return;
+        }
+
+        if (payment.EmployeeId == 0)
+        {
+            ToastService.Notify(new(ToastType.Warning, "Debe seleccionar un empleado."));
+            return;
+        }
+
+        if (!productItems.Any())
+        {
+            ToastService.Notify(new(ToastType.Warning, "Debe agregar al menos un producto."));
+            return;
+        }
+
+        try
+        {
+            payment.TotalAmount = productItems.Sum(i => i.Quantity * i.UnitPrice);
+
+            if (IsEditing)
+            {
+                await paymentService.UpdatePaymentAsync(payment);
+
+                var oldItems = await payProductService.GetByEmployeePaymentIdAsync(payment.Id);
+                foreach (var item in oldItems)
+                    await payProductService.DeletePayEmployeeProductAsync(item.Id);
+
+                foreach (var item in productItems)
+                {
+                    await payProductService.AddProductToPaymentAsync(new PayEmployeeProduct
+                    {
+                        EmployeePaymentId = payment.Id,
+                        ProductId = item.ProductId,
+                        Quantity = item.Quantity,
+                        UnitPrice = item.UnitPrice
+                    });
+                }
+
+                ToastService.Notify(new(ToastType.Success, "Pago actualizado correctamente."));
+            }
+            else
+            {
+                var created = await paymentService.CreatePaymentAsync(payment);
+                foreach (var item in productItems)
+                {
+                    await payProductService.AddProductToPaymentAsync(new PayEmployeeProduct
+                    {
+                        EmployeePaymentId = created.Id,
+                        ProductId = item.ProductId,
+                        Quantity = item.Quantity,
+                        UnitPrice = item.UnitPrice
+                    });
+                }
+                ToastService.Notify(new(ToastType.Success, "Pago registrado correctamente."));
+            }
+
+            await Task.Delay(1000);
+            nav.NavigateTo("/pagos/empleados");
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new(ToastType.Danger, "Error al guardar el pago", ex.Message));
+        }
+    }
+
+    public class PaymentItem
+    {
+        public int ProductId { get; set; }
+        public string ProductName { get; set; } = "";
+        public int Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
+    }
+}

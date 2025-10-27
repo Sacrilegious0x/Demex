@@ -1,17 +1,39 @@
 ﻿@page "/inventario/crear"
+@attribute [Authorize]
 @using BlazorBootstrap
 @using LAFABRICA.Data.DB
 @using LAFABRICA.Models.AuxiliarDTOS
 @using LAFABRICA.Models.Interface
 @using LAFABRICA.Models
+@using LAFABRICA.Services.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 @inject IMaterialService MaterialService
 @inject ISupplierService SupplierService
 @inject NavigationManager NavigationManager
 @inject IWebHostEnvironment WebHostEnvironment
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Nuevo Material</PageTitle>
 <Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 
+@if (user == null)
+{
+    <div class="text-center p-5">
+        <Spinner Color="SpinnerColor.Primary" />
+        <p class="mt-2">Cargando autenticación...</p>
+    </div>
+}
+else if (!HasPermission("Inventory", DemexClaims.Create))
+{
+    <div class="text-center mt-5">
+        <i class="bi bi-shield-lock fs-1 text-warning"></i>
+        <h4 class="mt-3">Acceso denegado</h4>
+        <p>No tienes permiso para registrar materiales.</p>
+    </div>
+}
+else
+{
 <div class="container mt-2">
 	<div class="card">
 		<div class="card-header">
@@ -25,10 +47,10 @@
 				</a>
 			</div>
 		</div>
-
 		<div class="card-body">
 			@if (Material_Supp_Inv_Dto != null && suppliers != null)
 			{
+
 				<EditForm Model="@Material_Supp_Inv_Dto" OnValidSubmit="@HandleValidSubmit" FormName="CreateMaterialForm" enctype="multipart/form-data">
 					<DataAnnotationsValidator />
 
@@ -36,51 +58,53 @@
 						<div class="container-sm">
 							<h3>Información del Material</h3>
 
+
 							<div class="form-group row mb-3">
 								<label class="col-md-5 col-form-label">Nombre del Material: <span class="text-danger">*</span></label>
 								<div class="col-md-8">
-									<TextInput class="border-1" @bind-Value="newMaterial.Name" placeholder="Ej: Tubo PVC 1/2 pulgada" required />
-									<ValidationMessage For="@(() => newMaterial.Name)" />
+									<TextInput class="border-1" @bind-Value="Material_Supp_Inv_Dto.MaterialName" placeholder="Ej: Botones verdes" />
+									<ValidationMessage For="@(() => Material_Supp_Inv_Dto.MaterialName)" />
 								</div>
 							</div>
 
 							<div class="form-group row mb-3">
 								<label class="col-md-5 col-form-label">Unidad de Medida: <span class="text-danger">*</span></label>
 								<div class="col-md-8">
-									<TextInput class="border-1" @bind-Value="newMaterial.Unit" placeholder="Ej: Metro (m), Kilogramo (kg)" required />
-									<ValidationMessage For="@(() => newMaterial.Unit)" />
+									<TextInput class="border-1" @bind-Value="Material_Supp_Inv_Dto.Unit" placeholder="Ej: Metro (m), Kilogramo (kg)" />
+									<ValidationMessage For="@(() => Material_Supp_Inv_Dto.Unit)" />
 								</div>
 							</div>
+
 
 							<div class="form-group row mb-3">
 								<label class="col-md-5 col-form-label">Precio de Compra: <span class="text-danger">*</span></label>
 								<div class="col-md-8">
-									<NumberInput class="border-1" @bind-Value="newMaterial.PricePurchase" type="number" step="0.01" placeholder="Ej: 5.50" required />
-									<ValidationMessage For="@(() => newMaterial.PricePurchase)" />
+									<NumberInput class="border-1" @bind-Value="Material_Supp_Inv_Dto.PricePurchase" type="number" step="0.01" placeholder="Ej: 5.50" />
+									<ValidationMessage For="@(() => Material_Supp_Inv_Dto.PricePurchase)" />
 								</div>
 							</div>
 
-							@* --- Fixesillo loco: De TextInput a InputFile --- *@
 							<div class="form-group row mb-3">
 								<label class="col-md-5 col-form-label">Foto (Opcional):</label>
 								<div class="col-md-8">
-									<InputFile class="form-control" OnChange="@HandleFileSelected" />
+									<InputFile class="form-control" OnChange="@HandleFileSelected" accept=".jpg,.jpeg,.png,.ico" />
 									@if (selectedImage != null)
 									{
 										<small class="text-muted">Seleccionado: @selectedImage.Name</small>
 									}
 								</div>
 							</div>
-		
+
 						</div>
 
 						<div class="container-sm">
 							<h3>Suministro e Inventario Inicial</h3>
 
+
 							<div class="form-group row mb-3">
 								<label class="col-md-5 col-form-label">Proveedor Inicial: <span class="text-danger">*</span></label>
 								<div class="col-md-8">
-									<InputSelect class="form-select border-1" @bind-Value="Material_Supp_Inv_Dto.SupplierId">
+									<InputSelect class="form-select border-1" @bind-Value="Material_Supp_Inv_Dto.SupplierId" >
 										<option value="0" disabled>Seleccione un proveedor</option>
 										@foreach (var s in suppliers)
 										{
@@ -91,20 +115,25 @@
 								</div>
 							</div>
 
+
 							<div class="form-group row mb-3">
 								<label class="col-md-5 col-form-label">Stock entrante: <span class="text-danger">*</span></label>
 								<div class="col-md-8">
-									<NumberInput class="border-1" @bind-Value="Material_Supp_Inv_Dto.Quantity" type="number" placeholder="Ej: 100" required />
-									
+									<NumberInput class="border-1" @bind-Value="Material_Supp_Inv_Dto.Quantity" type="number" placeholder="Ej: 100" />
+
+									<ValidationMessage For="@(() => Material_Supp_Inv_Dto.Quantity)" />
 								</div>
 								<div>
 									<p class="text-black-50">Cantidad que suele pedir.</p>
 								</div>
 							</div>
+
+							<!-- Esto ya estaba bindeado al DTO, está correcto -->
 							<div class="form-group row mb-3">
 								<label class="col-md-5 col-form-label">Stock Mínimo: <span class="text-danger">*</span></label>
 								<div class="col-md-8">
-									<NumberInput class="border-1" @bind-Value="Material_Supp_Inv_Dto.MinimumQuantity" placeholder="Ej: 50" required />
+									<NumberInput class="border-1" @bind-Value="Material_Supp_Inv_Dto.MinimumQuantity" placeholder="Ej: 50" />
+
 									<ValidationMessage For="@(() => Material_Supp_Inv_Dto.MinimumQuantity)" />
 								</div>
 							</div>
@@ -116,7 +145,7 @@
 							<i class="bi bi-info-circle-fill me-2" style="font-size: 1.2rem;"></i>
 							<div>
 								<strong>Nota:</strong>
-								El proveedor no puede ser modificado
+								Una vez creado este material, no se le puede cambiar el proveedor
 							</div>
 						</div>
 					</div>
@@ -136,71 +165,80 @@
 							Cancelar
 						</button>
 						<button type="submit" class="btn btn-primary">
-							Guardar 
+							Guardar
 						</button>
 					</div>
 				</EditForm>
-			}
-			else
-			{
-				<div class="d-flex justify-content-center">
-					<Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
-				</div>
-			}
+				}
+				else
+				{
+					<div class="d-flex justify-content-center">
+						<Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
+					</div>
+				}
+			</div>
 		</div>
 	</div>
-</div>
-
+}
 
 @code {
+	[CascadingParameter] private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
+	private ClaimsPrincipal? user;
+
 	bool showAlert;
 	string alertMessage;
-
 	[Inject] protected ToastService ToastService { get; set; } = default!;
 
-	// Instancia del DTO que contendrá los datos del formulario
 	private MaterialSupplierInventoryDto Material_Supp_Inv_Dto = new MaterialSupplierInventoryDto();
-
-	private Material newMaterial = new Material();
 
 	// Lista de proveedores para el InputSelect
 	private List<SupplierDto>? suppliers;
 
 	private IBrowserFile? selectedImage;
-	private long maxFileSize = 1024 * 1024 * 5; // Límite de 5MB
+	private long maxFileSize = 1024 * 1024 * 5;
 
 	protected override async Task OnInitializedAsync()
 	{
-		// Cargar la lista de proveedores para el dropdown
-		suppliers = (await SupplierService.GetSuppliersAsync());
-		// Inicializar SupplierId con 0 para forzar la validación de selección
+		var authState = await AuthenticationStateTask;
+		user = authState.User;
+
+		if (!HasPermission("Inventory", DemexClaims.Create))
+			return;
+
+		suppliers = await SupplierService.GetSuppliersAsync();
 		Material_Supp_Inv_Dto.SupplierId = 0;
 	}
+
+	private bool HasPermission(string module, string action)
+		=> user?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
 
 	// Método que se ejecuta al enviar el formulario
 	private async Task HandleValidSubmit()
 	{
+		// Si llegamos aquí, las validaciones del DTO pasaron riteve
 		try
 		{
-			// 1. Subir el archivo ANTES de llamar al servicio
+			// Subir el archivo ANTES de llamar al servicio
 			string? uploadedPath = await UploadFileAsync();
 
-			// Si la subida falló (y no fue porque no se seleccionó nada), detener.
 			if (showAlert && selectedImage != null)
 			{
 				return;
 			}
 
-			// 2. Asignar la ruta (o null) al objeto material
-			newMaterial.PhotoUrl = uploadedPath;
+			// CAMBIO 5: Mapear el DTO a la entidad Material
+			var newMaterial = new Material
+			{
+				Name = Material_Supp_Inv_Dto.MaterialName,
+				Unit = Material_Supp_Inv_Dto.Unit,
+				PricePurchase = Material_Supp_Inv_Dto.PricePurchase,
+				PhotoUrl = uploadedPath ?? "", // Asignar la ruta (o null si la DB lo permite)
+				IsActive = true
+			};
 
-			newMaterial.IsActive = true;
 
-
-
-
-			// La lógica del servicio se encargará de crear los 3 registros
-			await MaterialService.CreateMaterial(newMaterial,Material_Supp_Inv_Dto.SupplierId,
+			// La lógica del servicio crea los 3 registros
+			await MaterialService.CreateMaterial(newMaterial, Material_Supp_Inv_Dto.SupplierId,
 				Material_Supp_Inv_Dto.Quantity,
 				Material_Supp_Inv_Dto.MinimumQuantity);
 
@@ -227,6 +265,20 @@
 		showAlert = false;
 		alertMessage = "";
 
+		var file = e.File;
+		var fileExtension = Path.GetExtension(file.Name).ToLowerInvariant();
+
+		var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+
+		if (!allowedExtensions.Contains(fileExtension))
+		{
+			showAlert = true;
+			alertMessage = "Formato de archivo no permitido. Solo se aceptan archivos .jpg, .jpeg y .png.";
+			selectedImage = null;
+			// Si se selecciona imagen se detiene
+			return;
+		}
+
 		if (e.File.Size > maxFileSize)
 		{
 			showAlert = true;
@@ -238,40 +290,34 @@
 		selectedImage = e.File;
 	}
 
-	// --- NUEVO: Método para subir el archivo al servidor ---
+	// --- Método para subir el archivo al servidor (sin cambios) ---
 	private async Task<string?> UploadFileAsync()
 	{
 		if (selectedImage == null)
 		{
-			return null; // No se seleccionó archivo
+
+			return ""; // Devolver vacío si no se selecciona nada
 		}
 
 		try
 		{
-			// 1. Definir la carpeta de destino relativa a wwwroot
 			string relativeFolderPath = Path.Combine("images", "materials");
-			// Obtener la ruta absoluta del servidor
 			string absoluteFolderPath = Path.Combine(WebHostEnvironment.WebRootPath, relativeFolderPath);
 
-			// 2. Asegurarse de que el directorio exista
 			if (!Directory.Exists(absoluteFolderPath))
 			{
 				Directory.CreateDirectory(absoluteFolderPath);
 			}
 
-			// 3. Crear un nombre de archivo único para evitar colisiones
 			string fileExtension = Path.GetExtension(selectedImage.Name);
 			string uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
 			string absoluteFilePath = Path.Combine(absoluteFolderPath, uniqueFileName);
 
-			// 4. Guardar el archivo en el servidor
 			await using (var fileStream = new FileStream(absoluteFilePath, FileMode.Create))
 			{
 				await selectedImage.OpenReadStream(maxFileSize).CopyToAsync(fileStream);
 			}
 
-			// 5. Devolver la RUTA RELATIVA que se guardará en la BD
-			// Reemplazar '\\' por '/' para que sea una URL web válida
 			string relativePath = Path.Combine(relativeFolderPath, uniqueFileName).Replace("\\", "/");
 
 			return $"/{relativePath}"; // Ej: /images/materials/archivo-unico.jpg
@@ -290,3 +336,4 @@
 		NavigationManager.NavigateTo("/inventario");
 	}
 }
+

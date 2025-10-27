@@ -1,10 +1,6 @@
 ﻿using LAFABRICA.Data.DB;
 using LAFABRICA.Models.Interface;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace LAFABRICA.Services
 {

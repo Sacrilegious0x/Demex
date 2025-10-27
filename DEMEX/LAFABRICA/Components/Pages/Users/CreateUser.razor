@@ -1,8 +1,12 @@
 ﻿@page "/usuarios/crear"
 @page "/usuarios/editar/{userId:int}"
 @attribute [Authorize]
+@using LAFABRICA.Models
 @using LAFABRICA.Data.DB
 @using LAFABRICA.Models.Interface
+@using LAFABRICA.Services.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 @inject IUserService userService
 @inject IRolService rolService
 @inject NavigationManager nav
@@ -12,118 +16,142 @@
 
 <Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 <ConfirmDialog @ref="dialog" />
+@if (user == null)
+{
+    <div class="d-flex justify-content-center">
+        <Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
+    </div>
+}
+else if (!HasAccess())
+{
+    <div class="text-center mt-5">
+        <i class="bi bi-shield-lock fs-1 text-warning"></i>
+        <h4 class="mt-3">Acceso denegado</h4>
+        <p>No tienes permiso para @(userId.HasValue ? "editar" : "crear") usuarios.</p>
+    </div>
+}
+else
+{
+    <div class="container mt-3">
+        <div class="card shadow">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <h2>
+                        @if (userId.HasValue)
+                        {
+                            <Icon Name="IconName.PersonFillGear" Class="me-2" />
+                            <text>Editar usuario</text>
+                        }
+                        else
+                        {
+                            <Icon Name="IconName.PersonPlusFill" Class="me-2" />
+                            <text>Nuevo usuario</text>
+                        }
+                    </h2>
+                    <a class="btn btn-outline-secondary" href="/usuarios">
+                        <Icon Name="IconName.ArrowLeft" />
+                    </a>
+                </div>
+            </div>
 
-<div class="container mt-3">
-    <div class="card shadow">
-        <div class="card-header">
-            <div class="d-flex justify-content-between align-items-center mt-3">
-                <h2>
-                    @if (userId.HasValue)
-                    {
-                        <Icon Name="IconName.PersonFillGear" Class="me-2" />
-                        <text>Editar usuario</text>
-                    }
-                    else
-                    {
-                        <Icon Name="IconName.PersonPlusFill" Class="me-2" />
-                        <text>Nuevo usuario</text>
-                    }
-                </h2>
-                <a class="btn btn-outline-secondary" href="/usuarios">
-                    <Icon Name="IconName.ArrowLeft" />
-                </a>
+            <div class="card-body">
+                @if (user != null && editContext != null)
+                {
+                    <EditForm EditContext="@editContext" OnValidSubmit="HandleOnValidSubmit">
+                        <DataAnnotationsValidator />
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>Información Personal</h5>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Nombre completo *</label>
+                                    <InputText class="form-control" @bind-Value="user.Name" />
+                                    <ValidationMessage For="@(() => user.Name)" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Identificación *</label>
+                                    <InputText class="form-control" @bind-Value="user.Identification" Placeholder="Ingrese la identificacion" />
+                                    <ValidationMessage For="@(() => user.Identification)" />
+                                    <p class="text-black-50">Formato admitido sin guiones ni espacios</p>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Correo electrónico *</label>
+                                    <InputText class="form-control" @bind-Value="user.Email" Placeholder="Ingrese el correo electrónico" />
+                                    <ValidationMessage For="@(() => user.Email)" />
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <h5>Detalles del Rol</h5>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Especialidad *</label>
+                                    <InputText class="form-control" @bind-Value="user.Speciality" Placeholder="Ejm. Diseñador, Vendedor, Pintor"/>
+                                    <ValidationMessage For="@(() => user.Speciality)" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Rol Asignado *</label>
+                                    <InputSelect class="form-select" @bind-Value="user.RolId">
+                                        <option value="">Seleccione un rol</option>
+                                        @foreach (var rol in roles)
+                                        {
+                                            <option value="@rol.Id">@rol.Name</option>
+                                        }
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => user.RolId)" />
+                                </div>
+                            </div>
+                        </div>
+                        @if (showAlert)
+                        {
+                            <Alert Color="AlertColor.Warning">
+                                <Icon Name="IconName.ExclamationTriangleFill" />
+                                <strong>@alertMessage</strong>
+                            </Alert>
+                        }
+                        <Alert Color="AlertColor.Info" class="mt-2 mb-4">
+                            <Icon Name="IconName.InfoCircleFill" class="me-2" />
+                            <strong>Importante:</strong> asegúrese de registrar un correo válido.<br />
+                            Se generará una contraseña temporal para el usuario.
+                        </Alert>
+
+                        <div class="d-flex justify-content-end mt-4">
+                            <a class="btn btn-outline-secondary me-2" href="/usuarios">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">Guardar</button>
+                        </div>
+                    </EditForm>
+                }
+                else
+                {
+                    <div class="d-flex justify-content-center">
+                        <Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
+                    </div>
+                }
             </div>
         </div>
-
-        <div class="card-body">
-            @if (user != null && editContext != null)
-            {
-                <EditForm EditContext="@editContext" OnValidSubmit="HandleOnValidSubmit">
-                    <DataAnnotationsValidator />
-                    @* <ValidationSummary /> *@
-
-                    <div class="row">
-                        <!-- Columna izquierda -->
-                        <div class="col-md-6">
-                            <h5>Información Personal</h5>
-
-                            <div class="mb-3">
-                                <label class="form-label">Nombre completo <span class="text-danger">*</span></label>
-                                <InputText class="form-control" @bind-Value="user.Name" placeholder="Ejemplo: Juan Pérez" />
-                                <ValidationMessage For="@(() => user.Name)" />
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Identificación <span class="text-danger">*</span></label>
-                                <InputText class="form-control" @bind-Value="user.Identification" placeholder="Ejemplo: 305120999" />
-                                <ValidationMessage For="@(() => user.Identification)" />
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Correo electrónico <span class="text-danger">*</span></label>
-                                <InputText class="form-control" @bind-Value="user.Email" placeholder="usuario@dominio.com" />
-                                <ValidationMessage For="@(() => user.Email)" />
-                            </div>
-                        </div>
-
-                        <!-- Columna derecha -->
-                        <div class="col-md-6">
-                            <h5>Detalles del Rol</h5>
-
-                            <div class="mb-3">
-                                <label class="form-label">Especialidad <span class="text-danger">*</span></label>
-                                <InputText class="form-control" @bind-Value="user.Speciality" placeholder="Ejemplo: Producción, Ventas..." />
-                                <ValidationMessage For="@(() => user.Speciality)" />
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Rol Asignado <span class="text-danger">*</span></label>
-                                <InputSelect class="form-select" @bind-Value="user.RolId">
-                                    <option value="">Seleccione un rol</option>
-                                    @foreach (var rol in roles)
-                                    {
-                                        <option value="@rol.Id">@rol.Name</option>
-                                    }
-                                </InputSelect>
-                                <ValidationMessage For="@(() => user.RolId)" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <Alert Color="AlertColor.Info" class="mt-2 mb-4">
-                        <Icon Name="IconName.InfoCircleFill" class="me-2" />
-                        <strong>Importante:</strong> asegúrese de registrar un
-                        <strong>correo electrónico válido y existente.</strong><br />
-                        Se generará una <strong>contraseña temporal</strong> para el usuario,
-                        quien deberá restablecerla (Olvide mi contraseña) al iniciar sesión.
-                </Alert>
-
-                    <div class="d-flex justify-content-end mt-4">
-                        <a class="btn btn-outline-secondary me-2" href="/usuarios">Cancelar</a>
-                        <button type="submit" class="btn btn-primary">Guardar</button>
-                    </div>
-                </EditForm>
-
-            }
-            else
-            {
-                <div class="d-flex justify-content-center">
-                    <Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
-                </div>
-            }
-        </div>
     </div>
-</div>
+}
 
 @code {
     [Parameter] public int? userId { get; set; }
+    private ClaimsPrincipal? userAuth;
     private User? user;
     private EditContext? editContext;
     private List<Rol> roles = new();
     private ConfirmDialog dialog = default!;
-
+    [CascadingParameter] 
+    private Task<AuthenticationState>? authenticationStateTask { get; set; }
+    bool showAlert;
+    string alertMessage;
     protected override async Task OnParametersSetAsync()
     {
+        var authState = await authenticationStateTask!;
+        userAuth = authState.User;
+
         user = new User();
         editContext = new EditContext(user);
         roles = (await rolService.GetAllRols()).ToList();
@@ -144,52 +172,57 @@
         await InvokeAsync(StateHasChanged);
     }
 
+    private bool HasPermission(string module, string action)
+        => userAuth?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
+
+    private bool HasAccess()
+    {
+        if (userId.HasValue)
+            return HasPermission("Users", DemexClaims.Edit);
+        else
+            return HasPermission("Users", DemexClaims.Create);
+    }
+
     private async Task HandleOnValidSubmit()
     {
-        if (editContext != null && editContext.Validate())
+        if (!HasAccess())
         {
-            try
+            ToastService.Notify(new(ToastType.Warning, "No tienes permiso para esta acción"));
+            return;
+        }
+
+        try
+        {
+            if (userId.HasValue)
             {
-                if (userId.HasValue)
+                var confirm = await dialog.ShowAsync(
+                    title: "Editar usuario",
+                    message1: $"¿Deseas actualizar los datos de {user!.Name}?"
+                );
+
+                if (confirm)
                 {
-                    var options = new ConfirmDialogOptions
-                    {
-                        YesButtonText = "Confirmar",
-                        YesButtonColor = ButtonColor.Success,
-                        NoButtonText = "Cancelar",
-                        NoButtonColor = ButtonColor.Danger
-                    };
-
-                    var confirm = await dialog.ShowAsync(
-                        title: "Editar usuario",
-                        message1: $"¿Deseas actualizar los datos de {user!.Name}?",
-                        confirmDialogOptions: options
-                    );
-
-                    if (confirm)
-                    {
-                        await userService.Update(userId.Value, user!);
-                        ToastService.Notify(new(ToastType.Success, $"Se actualizaron los datos del usuario {user!.Name}."));
-                    }
+                    await userService.Update(userId.Value, user!);
+                    ToastService.Notify(new(ToastType.Success, $"Datos actualizados."));
                 }
-                else
-                {
-                    await userService.Create(user!);
-                    ToastService.Notify(new(ToastType.Success, $"Se registró correctamente al usuario {user?.Name}."));
-                    ToastService.Notify(new(ToastType.Info, $"Se generó una contraseña temporal para el usuario."));
-                }
+            }
+            else
+            {
+                await userService.Create(user!);
+                ToastService.Notify(new(ToastType.Success, $"Usuario creado correctamente."));
+            }
 
-                await Task.Delay(1000);
-                nav.NavigateTo("/usuarios");
-            }
-            catch (InvalidOperationException ex)
-            {
-                ToastService.Notify(new(ToastType.Warning, ex.Message));
-            }
-            catch (Exception ex)
-            {
-                ToastService.Notify(new(ToastType.Danger, $"Ocurrió un error inesperado: {ex.Message}"));
-            }
+            await Task.Delay(1000);
+            nav.NavigateTo("/usuarios");
+        }
+        catch (InvalidOperationException ex)
+        {
+            showAlert = true;
+            alertMessage = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new(ToastType.Danger, ex.Message));
         }
     }
 }

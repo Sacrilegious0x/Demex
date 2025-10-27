@@ -1,0 +1,449 @@
+[33mcommit 145b63adfd964530259acd3502e7a91ecd1833cf[m[33m ([m[1;36mHEAD -> [m[1;32mPABLO[m[33m, [m[1;31morigin/DEV[m[33m, [m[1;32mDEV[m[33m)[m
+Merge: 90d65da a4c4d6d
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Sat Oct 25 01:57:24 2025 -0600
+
+    merge proyecto completo
+
+[33mcommit 90d65da1f7d50bb10b6a76c2803debf3b6ffe6e9[m
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Sat Oct 25 01:54:15 2025 -0600
+
+    cambios parciales
+
+[33mcommit a4c4d6d644bf82358560fa43503a5c512928e4a9[m
+Merge: 4f3c28c ba56b61
+Author: Angel Barboza <Angelbarbozareyes29@gmail.com>
+Date:   Sat Oct 25 01:43:35 2025 -0600
+
+    ANGEL + DEV
+
+[33mcommit 67e47e10b419c6c1ef3ded240186270314e0bf78[m
+Merge: 533605a ba56b61
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Sat Oct 25 00:44:48 2025 -0600
+
+    Merge branch 'DEV' of https://git.ucr.ac.cr/GABRIEL.MOYACARAVACA/la-fabrica into DEV
+
+[33mcommit 533605ad9ecad85600669d5c2c98d9f661383acb[m
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Sat Oct 25 00:44:36 2025 -0600
+
+    cambios en bd pablo
+
+[33mcommit ba56b6189b0ce9e9e7e1696fd922744c33b360ec[m
+Author: PambloUCR <PABLO.RAMIREZUGALDE@ucr.ac.cr>
+Date:   Sat Oct 25 00:43:39 2025 -0600
+
+    Integracion DEV Y PABLO ESTABLE
+
+[33mcommit 0f30cc49a545cb3bbab3f5c7a75653f646e3a3c6[m
+Merge: a8fae37 ac79422
+Author: PambloUCR <PABLO.RAMIREZUGALDE@ucr.ac.cr>
+Date:   Fri Oct 24 22:50:39 2025 -0600
+
+    Fixes luego de hacer merge PABLO A DEV
+
+[33mcommit 4f3c28cab73c518a7be43dc7919ca7d648463f66[m
+Author: Angel Barboza <Angelbarbozareyes29@gmail.com>
+Date:   Fri Oct 24 22:49:35 2025 -0600
+
+    elimine migraciones
+
+[33mcommit a8fae374447e4f1dd1f1ef1f226b48c3b6f79065[m
+Merge: fe84475 d191f06
+Author: PambloUCR <PABLO.RAMIREZUGALDE@ucr.ac.cr>
+Date:   Fri Oct 24 22:40:44 2025 -0600
+
+    Fixes merge de dev remoto a dev local PABLO 24_10_2025
+
+[33mcommit ac794221be4d1b408f43d34e1fc301e705bf0b22[m[33m ([m[1;31morigin/PABLO[m[33m)[m
+Author: PambloUCR <PABLO.RAMIREZUGALDE@ucr.ac.cr>
+Date:   Fri Oct 24 22:35:35 2025 -0600
+
+    Editado de materiales en el inventario completado y filtros para este
+
+[33mcommit d191f06655c1d634b70b5745a4fca79cd9ce4058[m
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Fri Oct 24 22:26:58 2025 -0600
+
+    fucionalidad usuarios
+
+[33mcommit bb228c5f7f2d533495b8aa040e21fa0d965d4491[m
+Author: Angel Barboza <Angelbarbozareyes29@gmail.com>
+Date:   Fri Oct 24 22:23:33 2025 -0600
+
+    reports y home modificados reports esta listo enetre muchas comillas
+
+[33mcommit 1a29b13fe24b209071f6a3a3bbccb01d84c034a5[m
+Author: Angel Barboza <Angelbarbozareyes29@gmail.com>
+Date:   Fri Oct 24 21:48:16 2025 -0600
+
+    ordenes en reportes listas faltan los productos
+
+[33mcommit a8b4b64483b611fe4d7ad0d726ec2b05b4828da9[m
+Author: Angel Barboza <Angelbarbozareyes29@gmail.com>
+Date:   Fri Oct 24 21:20:08 2025 -0600
+
+    reportes casi listos, faltan ajustes visuales y detalles
+
+[33mcommit f5eac4b6bdb450129e0276aae546af525de3d44f[m
+Author: PambloUCR <PABLO.RAMIREZUGALDE@ucr.ac.cr>
+Date:   Fri Oct 24 03:31:33 2025 -0600
+
+    Agregado de material al inventario, eliminado de material y estado de cantidad
+
+[33mcommit 7388237a7e01a15a28756e8a76ec38597b5bfb49[m
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Fri Oct 24 03:03:55 2025 -0600
+
+    Crud roles y permisos
+
+[33mcommit 088e211173e4ae2555fb244a3131b0ad424e910e[m
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Fri Oct 24 01:42:31 2025 -0600
+
+    login funcional
+
+[33mcommit e3109265f5cfc3b37260596ca0119508127ad84c[m
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Thu Oct 23 01:43:42 2025 -0600
+
+    login funcional
+
+[33mcommit ecf30cd5d1eaa2dc9e95943b6940dab28cff8f6b[m
+Author: Angel Barboza <Angelbarbozareyes29@gmail.com>
+Date:   Wed Oct 22 22:38:21 2025 -0600
+
+    pagos listos
+
+[33mcommit 9f4ec9ff7ce986fe97ec33a40632e76e9b8224fc[m
+Author: Angel Barboza <Angelbarbozareyes29@gmail.com>
+Date:   Wed Oct 22 16:28:29 2025 -0600
+
+    ordenes terminadas, recordar ajustar cambios cuando usuarios esten listos y pagos
+
+[33mcommit b95985022bdd7121306f89babf58229aba9394d8[m
+Author: Angel Barboza <Angelbarbozareyes29@gmail.com>
+Date:   Wed Oct 22 15:33:14 2025 -0600
+
+    Ordenes casi casi listos, pronto comienzo con pagos
+
+[33mcommit 567ff7e49e1dca116cff401bd3dfe48230be71de[m
+Author: Pablo Ramirez <PABLO.RAMIREZUGALDE@ucr.ac.cr>
+Date:   Mon Oct 20 01:12:29 2025 -0600
+
+    Vista de tabla de Inventario y formulario no funcional para agregar material
+
+[33mcommit f0bda848ba12f03197b8c1794f5e2d1a923b0db8[m
+Author: Pablo Ramirez <PABLO.RAMIREZUGALDE@ucr.ac.cr>
+Date:   Sat Oct 18 20:20:22 2025 -0600
+
+    Fixes actualizar rama Pablo con DEV luego de quitar los supplierId
+
+[33mcommit 550d0414add7e65b4bee2172826f05b3525ee693[m
+Merge: d88f2c9 fe84475
+Author: Pablo Ramirez <PABLO.RAMIREZUGALDE@ucr.ac.cr>
+Date:   Sat Oct 18 20:03:11 2025 -0600
+
+    Fix Inventario IsActive innecesario por merge
+
+[33mcommit fe8447508409d9e6e337c6796196f23b47dcbac5[m
+Merge: c0ce836 1bf7ded
+Author: Pablo Ramirez <PABLO.RAMIREZUGALDE@ucr.ac.cr>
+Date:   Sat Oct 18 19:59:57 2025 -0600
+
+    Fixes archivo migracion repetido
+
+[33mcommit c0ce83626e131d969f3065553d414e7de3539466[m
+Author: Pablo Ramirez <PABLO.RAMIREZUGALDE@ucr.ac.cr>
+Date:   Sat Oct 18 19:56:23 2025 -0600
+
+    Fixes DatabaseLogic
+
+[33mcommit 1bf7dedc84ce119d790666f2ddd9f5d5c29834a7[m
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Sat Oct 18 19:55:16 2025 -0600
+
+    fixes
+
+[33mcommit f9bc06ddab60720e90315c2bbcaac71f3e24effa[m
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Sat Oct 18 19:35:50 2025 -0600
+
+    Fixes en tablas BD
+
+[33mcommit ad181c1bdccdd302ed8eca9faa24f3588264c61e[m
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Sat Oct 18 18:39:17 2025 -0600
+
+    migracion bd
+
+[33mcommit d88f2c98bdb14d9e581edaaf591bfec5376ee514[m
+Merge: dc7d779 448e4dc
+Author: Pablo Ramirez <PABLO.RAMIREZUGALDE@ucr.ac.cr>
+Date:   Sat Oct 18 08:47:07 2025 -0600
+
+    Fixes merging
+
+[33mcommit dc7d7798462b6880f29172054c4eeb54af8d9a9e[m
+Author: Pablo Ramirez <PABLO.RAMIREZUGALDE@ucr.ac.cr>
+Date:   Sat Oct 18 08:44:10 2025 -0600
+
+    Preliminar Inventario
+
+[33mcommit ae50f100b0390df7339e9f319456dbddabb4b4f6[m
+Merge: 96fe0a0 24ca087
+Author: Angel Barboza <Angelbarbozareyes29@gmail.com>
+Date:   Sat Oct 18 00:02:12 2025 -0600
+
+    merge branch 'DEV' of https://git.ucr.ac.cr/GABRIEL.MOYACARAVACA/la-fabrica into ANGEL
+
+[33mcommit 96fe0a06bd01623d7e2933ffe0a15cbf8e51cc42[m
+Author: Angel Barboza <Angelbarbozareyes29@gmail.com>
+Date:   Sat Oct 18 00:00:02 2025 -0600
+
+    ordenes semifuncionales y libreria de pdf
+
+[33mcommit 24ca087c1abb4d84c7791adba0709fc77ad5464f[m
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Fri Oct 17 22:37:36 2025 -0600
+
+    validaciones datos repetidos y cambios visuales
+
+[33mcommit 448e4dc5978a31959a2ec5ef4992fb375eb94125[m
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Mon Oct 13 23:46:09 2025 -0600
+
+    Fixes
+
+[33mcommit e561c1abe9d1ea349df9edc1f5971ee55fef5320[m
+Author: Angel Barboza <Angelbarbozareyes29@gmail.com>
+Date:   Mon Oct 13 21:43:44 2025 -0600
+
+    todo
+
+[33mcommit 7a528c63138d03e5c14b8b92e58e5470cb0519e0[m
+Author: Angel Barboza <Angelbarbozareyes29@gmail.com>
+Date:   Mon Oct 13 21:32:50 2025 -0600
+
+    Ultimos cambios fusionados con dev
+
+[33mcommit 010c06924a055a3511124a405a81f05f5c9861c7[m
+Merge: d3ae3af 13313f0
+Author: Angel Barboza <Angelbarbozareyes29@gmail.com>
+Date:   Mon Oct 13 21:21:43 2025 -0600
+
+    Merge branch 'DEV' of https://git.ucr.ac.cr/GABRIEL.MOYACARAVACA/la-fabrica into ANGEL
+
+[33mcommit d3ae3af2e4617f5e3b88fa3e04103f2dfcc9c94c[m
+Author: Angel Barboza <Angelbarbozareyes29@gmail.com>
+Date:   Mon Oct 13 21:07:33 2025 -0600
+
+    un pequeño cambio para la personalizacion y creacion de productos
+
+[33mcommit f551602a607872458b791cc0a139d3d92d69813b[m
+Merge: 6b4e2f7 fcbf352
+Author: Angel Barboza <Angelbarbozareyes29@gmail.com>
+Date:   Mon Oct 13 20:59:07 2025 -0600
+
+    casi terminado, solo falta corregir un tema con la complejidad y la personalizacion, un checkpoint
+
+[33mcommit 13313f0a43edd86509564c52d0dd6eaa1656379d[m
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Mon Oct 13 19:08:33 2025 -0600
+
+    Cambios en Toast y tabla modulo proveedores
+
+[33mcommit 6b4e2f7e934b2c75f6c640186ca6fde6aebaa684[m
+Author: Angel Barboza <Angelbarbozareyes29@gmail.com>
+Date:   Mon Oct 13 17:45:56 2025 -0600
+
+    cambio en los iconos
+
+[33mcommit fcbf3528f7cf59617e1b254e44eed91ef28ee7b6[m
+Merge: 99e16aa fb993a1
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Mon Oct 13 16:05:36 2025 -0600
+
+    Merge branch 'DEV' of https://git.ucr.ac.cr/GABRIEL.MOYACARAVACA/la-fabrica into DEV
+
+[33mcommit 99e16aa149f916d0770fbb4aa5b6d768964508d4[m
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Mon Oct 13 16:05:24 2025 -0600
+
+    fixes
+
+[33mcommit fb993a191d558d99719710af2fe55a7fdfdf4f96[m
+Author: Pablo Ramirez <PABLO.RAMIREZUGALDE@ucr.ac.cr>
+Date:   Mon Oct 13 16:04:11 2025 -0600
+
+    fixes
+
+[33mcommit fc2455eaa36b6fb4cc7acd4a6b4ce1c9a5ad3d5c[m
+Merge: 0d0e058 0c655fe
+Author: Pablo Ramirez <PABLO.RAMIREZUGALDE@ucr.ac.cr>
+Date:   Mon Oct 13 15:49:35 2025 -0600
+
+    Fixes merge
+
+[33mcommit 0d0e0584be676409a62f6bf2f84a5c42cea2380a[m
+Author: Pablo Ramirez <PABLO.RAMIREZUGALDE@ucr.ac.cr>
+Date:   Mon Oct 13 15:10:52 2025 -0600
+
+    Fixes a validations
+
+[33mcommit 0c655feed453f8d776373f739cfc08d0d89b90e6[m
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Mon Oct 13 12:31:44 2025 -0600
+
+    Merge DEV-GABS-ANGEL
+
+[33mcommit 93706a3022238908f23db5a7d13e9b08c254e2c8[m
+Merge: 5c6ee11 2a14139
+Author: Angel Barboza <Angelbarbozareyes29@gmail.com>
+Date:   Mon Oct 13 11:16:14 2025 -0600
+
+    Cambios de dev + angel
+
+[33mcommit fe70f90fac913e81add725a136d04af5342cafa8[m
+Author: Pablo Ramirez <PABLO.RAMIREZUGALDE@ucr.ac.cr>
+Date:   Sun Oct 12 02:17:38 2025 -0600
+
+    Agregado de los Toast, validaciones, se removieron los 1000 y pico de iconos bootsrap
+
+[33mcommit 5c6ee116f9629accd2d3b486edbb79d998c31a22[m
+Author: Angel Barboza <Angelbarbozareyes29@gmail.com>
+Date:   Sun Oct 12 00:59:58 2025 -0600
+
+    CRUD completo de Productos sabado 1 am
+
+[33mcommit 2a14139f774dc7a592b57336829cef925a4228ee[m
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Sat Oct 11 11:03:49 2025 -0600
+
+    Filtrado y buscado
+
+[33mcommit 6c28525156fc59fb8bbc4bc80fa9318f9974a678[m
+Author: Pablo Ramirez <PABLO.RAMIREZUGALDE@ucr.ac.cr>
+Date:   Sat Oct 11 01:18:52 2025 -0600
+
+    Crud completo de proveedores
+
+[33mcommit 1f77ee69d6c3334dfc6856c40321020611f0a9ac[m
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Fri Oct 10 22:09:08 2025 -0600
+
+    Vista modal
+
+[33mcommit 6a6d4ac69299cb4d33000ac71eb660dbc854504e[m
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Fri Oct 10 21:49:36 2025 -0600
+
+    fixed
+
+[33mcommit 17486bb1d98d20f4f5fa2cdf2f31751b7b539ab3[m
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Fri Oct 10 21:31:07 2025 -0600
+
+    Funcionalidad crear/editar
+
+[33mcommit b63463c0e7e06d2efacc4af2ca2f7f994735d649[m
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Fri Oct 10 02:36:44 2025 -0600
+
+    Implementacion formulario
+
+[33mcommit 07fc3eadd897b0ab87461e5d082b4a590d2c2cfc[m
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Fri Oct 10 00:24:54 2025 -0600
+
+    Tabla de clientes
+
+[33mcommit 4eb939c4ae1b5c1ab73177ae7623819c3fd5ac15[m
+Author: Pablo Ramirez <PABLO.RAMIREZUGALDE@ucr.ac.cr>
+Date:   Fri Oct 10 00:16:30 2025 -0600
+
+    Crud Proveedores: Lista,Agregar y Parcial el de editar
+
+[33mcommit b8c2f5562059e4f67cd3da84241921947422de31[m
+Merge: 946765d 69a8e40
+Author: ANGEL ARMANDO BARBOZA REYES <angel.barboza@ucr.ac.cr>
+Date:   Fri Oct 10 00:55:17 2025 +0000
+
+    Merge branch 'GABS' into 'ANGEL'
+    
+    Estructura basica MainLayout y Controller Clientes
+    
+    See merge request GABRIEL.MOYACARAVACA/la-fabrica!4
+
+[33mcommit 69a8e40043b1d13b1d282c88a7f7ef3e217883ca[m
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Thu Oct 9 02:46:24 2025 -0600
+
+    Estructura basica MainLayout y Controller Clientes
+
+[33mcommit 946765d43dbb5decb8dee3948cb1a58169ad03f8[m
+Merge: 7e3c399 6fecfa0
+Author: ANGEL ARMANDO BARBOZA REYES <angel.barboza@ucr.ac.cr>
+Date:   Wed Oct 8 17:15:42 2025 +0000
+
+    Merge branch 'DEV' into 'ANGEL'
+    
+    Copiando la estructura del proyecto xd
+    
+    See merge request GABRIEL.MOYACARAVACA/la-fabrica!3
+
+[33mcommit b011d2cc7f1610fa3ac09e82617e203e7b8958a4[m
+Merge: 9b9fdf7 6fecfa0
+Author: Pablo Ramirez <PABLO.RAMIREZUGALDE@ucr.ac.cr>
+Date:   Tue Oct 7 19:55:10 2025 -0600
+
+    Merge branch 'DEV' into PABLO
+
+[33mcommit 6fecfa0273ddea91d805fc7b910d46554e0fbf59[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Tue Oct 7 19:47:25 2025 -0600
+
+    Mapeo y conexion a la base de datos
+
+[33mcommit 9b9fdf74db414efe5b31a35260873a79b76efee0[m
+Author: Pablo Ramirez <PABLO.RAMIREZUGALDE@ucr.ac.cr>
+Date:   Fri Oct 3 22:20:08 2025 -0600
+
+    prueba 1er commit
+
+[33mcommit 7e3c3991332b29a5a23ed5451d3d3d3b5179f3f7[m
+Merge: 1b4de72 7fe6f8a
+Author: ANGEL ARMANDO BARBOZA REYES <angel.barboza@ucr.ac.cr>
+Date:   Sat Oct 4 04:18:52 2025 +0000
+
+    Merge branch 'DEV' into 'ANGEL'
+    
+    Blank project
+    
+    See merge request GABRIEL.MOYACARAVACA/la-fabrica!2
+
+[33mcommit 7fe6f8a47656aabb310c5df6745d260bec6395d1[m[33m ([m[1;31morigin/GABS[m[33m)[m
+Author: Gabriel Moya <itsgamc@gmail.com>
+Date:   Fri Oct 3 21:37:26 2025 -0600
+
+    Blank project
+
+[33mcommit 1b4de72f223208f2e6f7ae5960e9163823b00ad9[m[33m ([m[1;31morigin/ANGEL[m[33m)[m
+Author: PABLO JOSUE RAMIREZ UGALDE <pablo.ramirezugalde@ucr.ac.cr>
+Date:   Tue Sep 16 01:12:05 2025 +0000
+
+    Primera Entrega Proyecto Análisis
+
+[33mcommit 9e4427bcb6b32140eea9b206028655c40a674417[m
+Author: GABRIEL ANDRES MOYA CARAVACA <gabriel.moyacaravaca@ucr.ac.cr>
+Date:   Tue Sep 16 01:08:21 2025 +0000
+
+    Add new directory
+
+[33mcommit bb964449c25985865379063f8bc65d4b2e55c720[m
+Author: GABRIEL ANDRES MOYA CARAVACA <gabriel.moyacaravaca@ucr.ac.cr>
+Date:   Fri Sep 12 19:27:22 2025 +0000
+
+    Initial commit

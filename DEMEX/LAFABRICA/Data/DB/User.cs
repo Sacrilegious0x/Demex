@@ -9,8 +9,10 @@ public partial class User
     public int Id { get; set; }
 
     [Required(ErrorMessage = "La identificación es requerida.")]
-    [RegularExpression(@"^(?!\s)(?!.*\s$).+$", ErrorMessage = "La identificación no debe tener espacios al inicio ni al final.")]
+    [RegularExpression(@"^[A-Za-z0-9]{9,12}$",
+      ErrorMessage = "La identificación debe tener entre 9 y 12 caracteres, sin espacios ni símbolos (solo letras y números).")]
     public string Identification { get; set; } = null!;
+
     [Required(ErrorMessage = "El nombre es requerido.")]
     [RegularExpression(@"^(?!\s)(?!.*\s$).+$", ErrorMessage = "El nombre no debe tener espacios al inicio ni al final.")]
     public string Name { get; set; } = null!;
@@ -33,4 +35,6 @@ public partial class User
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 
     public virtual Rol? Rol { get; set; }
+    public virtual ICollection<EmployeePayment> EmployeePayments { get; set; } = new List<EmployeePayment>();
+
 }

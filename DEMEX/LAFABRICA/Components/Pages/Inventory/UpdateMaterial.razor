@@ -1,43 +1,66 @@
 ﻿@page "/inventario/editar/{MaterialId:int}/{SupplierId:int}"
+@attribute [Authorize]
 @using BlazorBootstrap
 @using LAFABRICA.Data.DB
+@using LAFABRICA.Models
 @using LAFABRICA.Models.AuxiliarDTOS
 @using LAFABRICA.Models.Interface
-@using LAFABRICA.Models
+@using LAFABRICA.Services.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 @inject IMaterialService MaterialService
-@inject ISupplierService SupplierService // Inyectado para consistencia, aunque no se usa en este formulario específico
+@inject ISupplierService SupplierService
 @inject NavigationManager NavigationManager
 @inject IWebHostEnvironment WebHostEnvironment
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Editar Material</PageTitle>
+
 <Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 <ConfirmDialog @ref="dialog" />
 
-<div class="container mt-2">
-	<div class="card">
-		<div class="card-header">
-			<div class="d-flex justify-content-between align-items-center mt-3">
-				<h2>
-					<Icon Name="IconName.PencilSquare" />
-					<text>Editar Material de Inventario</text>
-				</h2>
-				<a class="btn btn-outline-secondary" href="/inventario">
-					<Icon Name="IconName.ArrowLeft"></Icon>
-				</a>
+@if (user == null)
+{
+	<div class="text-center p-5">
+		<Spinner Color="SpinnerColor.Primary" />
+		<p class="mt-2">Cargando autenticación...</p>
+	</div>
+}
+else if (!HasPermission("Inventory", DemexClaims.Edit))
+{
+	<div class="text-center mt-5">
+		<i class="bi bi-shield-lock fs-1 text-warning"></i>
+		<h4 class="mt-3">Acceso denegado</h4>
+		<p>No tienes permiso para editar materiales.</p>
+	</div>
+}
+else
+{
+	<div class="container mt-2">
+		<div class="card">
+			<div class="card-header">
+				<div class="d-flex justify-content-between align-items-center mt-3">
+					<h2>
+						<Icon Name="IconName.PencilSquare" />
+						<text>Editar Material de Inventario</text>
+					</h2>
+					<a class="btn btn-outline-secondary" href="/inventario">
+						<Icon Name="IconName.ArrowLeft"></Icon>
+					</a>
+				</div>
 			</div>
-		</div>
 
-		<div class="card-body">
-			@if (editModel != null && !isLoading)
-			{
-				<EditForm Model="@editModel" OnValidSubmit="@HandleValidSubmit" FormName="EditMaterialForm" enctype="multipart/form-data">
-					<DataAnnotationsValidator />
+			<div class="card-body">
+				@if (editModel != null && !isLoading)
+				{
+					<EditForm Model="@editModel" OnValidSubmit="@HandleValidSubmit" FormName="EditMaterialForm" enctype="multipart/form-data">
+						<DataAnnotationsValidator />
 
-					<div class="d-flex justify-content-between">
-						<div class="container-sm">
-							<h3>Información del Material</h3>
+						<div class="d-flex justify-content-between">
+							<div class="container-sm">
+								<h3>Información del Material</h3>
 
-							@* Material Name - Deshabilitado porque el nombre define al material *@
+							@* Material Name - Habilitao *@
 							<div class="form-group row mb-3">
 								<label class="col-md-5 col-form-label">Nombre del Material: <span class="text-danger">*</span></label>
 								<div class="col-md-8">
@@ -46,143 +69,121 @@
 								</div>
 							</div>
 
-							@* Unidad de Medida - Se edita en la tabla Material *@
-							<div class="form-group row mb-3">
-								<label class="col-md-5 col-form-label">Unidad de Medida: <span class="text-danger">*</span></label>
-								<div class="col-md-8">
-									<TextInput class="border-1" @bind-Value="editModel.Unit" placeholder="Ej: Metro (m), Kilogramo (kg)" required />
-									<ValidationMessage For="@(() => editModel.Unit)" />
+								<div class="form-group row mb-3">
+									<label class="col-md-5 col-form-label">Unidad:</label>
+									<div class="col-md-8">
+										<TextInput class="border-1" @bind-Value="editModel.Unit" required />
+										<ValidationMessage For="@(() => editModel.Unit)" />
+									</div>
+								</div>
+
+								<div class="form-group row mb-3">
+									<label class="col-md-5 col-form-label">Precio de Compra:</label>
+									<div class="col-md-8">
+										<NumberInput class="border-1" @bind-Value="editModel.PricePurchase" type="number" step="0.01" required />
+										<ValidationMessage For="@(() => editModel.PricePurchase)" />
+									</div>
+								</div>
+
+								<div class="form-group row mb-3">
+									<label class="col-md-5 col-form-label">Foto Actual:</label>
+									<div class="col-md-8">
+										@if (!string.IsNullOrEmpty(editModel.photoUrl))
+										{
+											<img src="@editModel.photoUrl" alt="Foto" class="rounded" style="width: 100px; height: 100px; object-fit: cover;" />
+										}
+										else
+										{
+											<p class="text-muted">No hay foto.</p>
+										}
+										<InputFile class="form-control mt-2" OnChange="@HandleFileSelected" />
+										@if (selectedImage != null)
+										{
+											<small class="text-muted">Nueva: @selectedImage.Name</small>
+										}
+									</div>
 								</div>
 							</div>
 
-							@* Precio de Compra - Se edita en la tabla Material *@
-							<div class="form-group row mb-3">
-								<label class="col-md-5 col-form-label">Precio de Compra: <span class="text-danger">*</span></label>
-								<div class="col-md-8">
-									<NumberInput class="border-1" @bind-Value="editModel.PricePurchase" type="number" step="0.01" placeholder="Ej: 5.50" required />
-									<ValidationMessage For="@(() => editModel.PricePurchase)" />
+							<div class="container-sm">
+								<h3>Inventario</h3>
+
+								<div class="form-group row mb-3">
+									<label class="col-md-5 col-form-label">Proveedor:</label>
+									<div class="col-md-8">
+										<TextInput class="border-1" @bind-Value="editModel.SupplierName" disabled />
+									</div>
 								</div>
-							</div>
-
-							@* Foto: Muestra la foto actual y permite seleccionar una nueva *@
-							<div class="form-group row mb-3">
-								<label class="col-md-5 col-form-label">Foto Actual:</label>
-								<div class="col-md-8">
-									@if (!string.IsNullOrEmpty(editModel.photoUrl))
-									{
-										<img src="@editModel.photoUrl" alt="Foto actual" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-bottom: 8px;" />
-									}
-									else
-									{
-										<p class="text-muted">No hay foto cargada.</p>
-									}
-									<InputFile class="form-control" OnChange="@HandleFileSelected" />
-									@if (selectedImage != null)
-									{
-										<small class="text-muted">Seleccionado para reemplazar: @selectedImage.Name</small>
-									}
-								</div>
-							</div>
-
-						</div>
-
-						<div class="container-sm">
-							<h3>Datos de Suministro e Inventario</h3>
-
-							@* Proveedor - Deshabilitado porque estás editando la relación Material-Proveedor existente *@
-							<div class="form-group row mb-3">
-								<label class="col-md-5 col-form-label">Proveedor Asociado: <span class="text-danger">*</span></label>
-								<div class="col-md-8">
-									<TextInput class="border-1" @bind-Value="editModel.SupplierName" disabled />
-								</div>
-							</div>
 
 							@* Stock Actual - Se edita en la tabla Material_Supplier.Quantity *@
 							<div class="form-group row mb-3">
 								<label class="col-md-5 col-form-label">Stock Actual: <span class="text-danger">*</span></label>
 								<div class="col-md-8">
 									<NumberInput class="border-1" @bind-Value="editModel.Quantity" type="number" placeholder="Ej: 100" required />
+									<ValidationMessage For="@(() => editModel.Quantity)" />
 								</div>
 								<div>
 									<p class="text-black-50">Cantidad física actual en el inventario.</p>
 								</div>
 							</div>
-							<hr class="mt-4 mb-4" />
 
-
-							@* Stock Mínimo - Se edita en la tabla Inventory.MinimunQuantity *@
-							<div class="form-group row mb-3">
-								<label class="col-md-5 col-form-label">Stock Mínimo: <span class="text-danger">*</span></label>
-								<div class="col-md-8">
-									<NumberInput class="border-1" @bind-Value="editModel.MinimumQuantity" placeholder="Ej: 50" required />
-									<ValidationMessage For="@(() => editModel.MinimumQuantity)" />
+								<div class="form-group row mb-3">
+									<label class="col-md-5 col-form-label">Stock Mínimo:</label>
+									<div class="col-md-8">
+										<NumberInput class="border-1" @bind-Value="editModel.MinimumQuantity" required />
+										<ValidationMessage For="@(() => editModel.MinimumQuantity)" />
+									</div>
 								</div>
 							</div>
 						</div>
-					</div>
 
-					<div class="alert alert-warning mt-4" role="alert">
-						<div class="d-flex align-items-start">
-							<i class="bi bi-exclamation-triangle-fill me-2" style="font-size: 1.2rem;"></i>
-							<div>
-								<strong>Atención:</strong>
-								El proveedor no se puede modificar, si lo necesita cambiar elimine este registro y agregue un material nuevo
-							</div>
-						</div>
-					</div>
-
-					@if (showAlert)
-					{
-						<div>
+						@if (showAlert)
+						{
 							<Alert Color="AlertColor.Warning">
-								<Icon Name="IconName.ExclamationTriangleFill" />
 								<strong>@alertMessage</strong>
 							</Alert>
-						</div>
-					}
+						}
 
-					<div class="d-flex justify-content-end mt-3">
-						<button type="button" class="btn btn-outline-secondary me-2" @onclick="HandleCancel">
-							Cancelar
-						</button>
-						<button type="submit" class="btn btn-primary" disabled="@isSaving">
-							@if (isSaving)
-							{
-								<Spinner Type="SpinnerType.Border" Size="SpinnerSize.Small" class="me-1" />
-								<span>Guardando...</span>
-							}
-							else
-							{
-								<Icon Name="IconName.Save"></Icon>
-								<span>Guardar </span>
-							}
-						</button>
+						<div class="d-flex justify-content-end mt-3">
+							<button type="button" class="btn btn-outline-secondary me-2" @onclick="HandleCancel">
+								Cancelar
+							</button>
+							<button type="submit" class="btn btn-primary" disabled="@isSaving">
+								@if (isSaving)
+								{
+									<Spinner Type="SpinnerType.Border" Size="SpinnerSize.Small" class="me-1" />
+									<span>Guardando...</span>
+								}
+								else
+								{
+									<Icon Name="IconName.Save" />
+									<span>Guardar</span>
+								}
+							</button>
+						</div>
+					</EditForm>
+				}
+				else
+				{
+					<div class="text-center">
+						<Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
 					</div>
-				</EditForm>
-			}
-			else
-			{
-				<div class="d-flex justify-content-center">
-					<Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
-				</div>
-			}
+				}
+			</div>
 		</div>
 	</div>
-</div>
-
+}
 
 @code {
-	[Parameter]
-	public int MaterialId { get; set; } // ID del Material a editar
+	[CascadingParameter] private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
+	private ClaimsPrincipal? user;
 
-	[Parameter]
-	public int SupplierId { get; set; } // ID del Proveedor asociado
+	[Parameter] public int MaterialId { get; set; }
+	[Parameter] public int SupplierId { get; set; }
 
 	bool showAlert;
 	string alertMessage = "";
-
 	private ConfirmDialog dialog = default!;
-
 	[Inject] public ToastService toastService { get; set; } = default!;
 
 	private MaterialSupplierInventoryDto? editModel;
@@ -190,29 +191,30 @@
 	private bool isSaving = false;
 
 	private IBrowserFile? selectedImage;
-	private long maxFileSize = 1024 * 1024 * 5; // Límite de 5MB
+	private long maxFileSize = 1024 * 1024 * 5;
 
 	protected override async Task OnInitializedAsync()
 	{
-		isLoading = true;
+		var auth = await AuthenticationStateTask;
+		user = auth.User;
+
+		if (!HasPermission("Inventory", DemexClaims.Edit))
+			return;
 
 		try
 		{
-
-			await Task.Delay(150); 
-
 			editModel = await MaterialService.GetMaterialDetailByIds(MaterialId, SupplierId);
 
 			if (editModel == null)
 			{
-				toastService.Notify(new(ToastType.Danger, "El material solicitado no pudo ser cargado."));
+				toastService.Notify(new(ToastType.Danger, "Error al cargar el material."));
 				NavigationManager.NavigateTo("/inventario");
 			}
 		}
 		catch (Exception ex)
 		{
-			Console.WriteLine($"Error al cargar el material: {ex.Message}");
-			toastService.Notify(new(ToastType.Danger, $"Error al cargar: {ex.Message}"));
+			Console.WriteLine($"Error: {ex.Message}");
+			toastService.Notify(new(ToastType.Danger, "No se pudo cargar el material."));
 			NavigationManager.NavigateTo("/inventario");
 		}
 		finally
@@ -220,6 +222,10 @@
 			isLoading = false;
 		}
 	}
+
+	private bool HasPermission(string module, string action)
+		=> user?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
+
 
 	// Método que se ejecuta al enviar el formulario
 	private async Task HandleValidSubmit()
@@ -298,14 +304,27 @@
 		alertMessage = "";
 		selectedImage = null; // Reset
 
-		if (e.File.Size > maxFileSize)
+		var file = e.File;
+		var fileExtension = Path.GetExtension(file.Name).ToLowerInvariant();
+
+		// 1. Validación de Extensión
+		var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+		if (!allowedExtensions.Contains(fileExtension))
+		{
+			showAlert = true;
+			alertMessage = "Formato de archivo no permitido. Solo se aceptan archivos .jpg, .jpeg y .png.";
+			return;
+		}
+
+		// 2. Validación de Tamaño
+		if (file.Size > maxFileSize)
 		{
 			showAlert = true;
 			alertMessage = $"El archivo es demasiado grande. El límite es {maxFileSize / 1024 / 1024} MB.";
 			return;
 		}
 
-		selectedImage = e.File;
+		selectedImage = file;
 	}
 
 	// Método para subir el archivo al servidor (mismo que en Crear)
@@ -318,32 +337,32 @@
 
 		try
 		{
-			// 1. Definir la carpeta de destino relativa a wwwroot
+			// Definir la carpeta de destino relativa a wwwroot
 			string relativeFolderPath = Path.Combine("images", "materials");
 			// Obtener la ruta absoluta del servidor
 			string absoluteFolderPath = Path.Combine(WebHostEnvironment.WebRootPath, relativeFolderPath);
 
-			// 2. Asegurarse de que el directorio exista
+
 			if (!Directory.Exists(absoluteFolderPath))
 			{
 				Directory.CreateDirectory(absoluteFolderPath);
 			}
 
-			// 3. Crear un nombre de archivo único para evitar colisiones
+			// Crear un nombre de archivo único para evitar colisiones
 			string fileExtension = Path.GetExtension(selectedImage.Name);
 			string uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
 			string absoluteFilePath = Path.Combine(absoluteFolderPath, uniqueFileName);
 
-			// 4. Guardar el archivo en el servidor
+			// Guardar el archivo en el servidor
 			await using (var fileStream = new FileStream(absoluteFilePath, FileMode.Create))
 			{
 				await selectedImage.OpenReadStream(maxFileSize).CopyToAsync(fileStream);
 			}
 
-			// 5. Devolver la RUTA RELATIVA que se guardará en la BD
+			// Devolver la RUTA RELATIVA que se guardará en la BD
 			string relativePath = Path.Combine(relativeFolderPath, uniqueFileName).Replace("\\", "/");
 
-			return $"/{relativePath}"; // Ej: /images/materials/archivo-unico.jpg
+			return $"/{relativePath}"; 
 		}
 		catch (Exception ex)
 		{
