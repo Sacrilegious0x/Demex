@@ -29,6 +29,11 @@
         font-weight: bold;
     }
 
+    .status-insuficient {
+        color: #FF7B45; /* Rojo de Bootstrap (Danger) */
+        font-weight: bold;
+    }
+
     .status-little {
         color: #ffc107; /* Amarillo/Naranja de Bootstrap (Warning) */
         font-weight: bold;
@@ -248,8 +253,10 @@ else
 
     private (string statusText, string statusClass) GetStockStatus(int currentStock, int minStock)
     {
-        if (currentStock <= minStock)
+        if (currentStock == 0)
             return ("Agotado", "status-sold_out");
+        if (currentStock <= minStock)
+            return ("Insuficiente", "status-insuficient");
         if (currentStock <= (int)(minStock * 1.5))
             return ("Queda poco", "status-little");
         return ("Aceptable", "status-aceptable");
