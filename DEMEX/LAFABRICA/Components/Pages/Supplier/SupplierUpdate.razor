@@ -139,8 +139,7 @@ else
     [CascadingParameter] 
     private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
     private ClaimsPrincipal? user;
-    [CascadingParameter]
-    private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
+   
 
 
     protected override async Task OnInitializedAsync()
