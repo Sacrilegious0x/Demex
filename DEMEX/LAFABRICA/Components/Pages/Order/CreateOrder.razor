@@ -53,10 +53,10 @@ else
             </CardHeader>
             <CardBody>
 
-                @if (!string.IsNullOrEmpty(cartErrorMessage))
+                @* @if (!string.IsNullOrEmpty(cartErrorMessage))
                 {
                     <div class="alert alert-warning">@cartErrorMessage</div>
-                }
+                } *@
 
                 <div class="row">
                     <!-- CLIENTE -->
@@ -95,9 +95,14 @@ else
                                     <option value="@product.Id">@product.Name (@product.PriceBase.ToString("C"))</option>
                                 }
                             </select>
-                            <InputNumber @bind-Value="selectedProductQuantity" class="form-control" placeholder="Cant." />
+                            <InputNumber @bind-Value="selectedProductQuantity" class="form-control" placeholder="Cant."  />
                             <Button Color="ButtonColor.Success" @onclick="AddProductToCart">Añadir</Button>
                         </div>
+                        @if (!string.IsNullOrEmpty(cartErrorMessage))
+                        {
+                            <div class="text-danger fw-bold mb-2">@cartErrorMessage</div>
+                        }
+
 
                         @if (cartItems.Any())
                         {
@@ -235,6 +240,15 @@ else
 
     private void AddProductToCart()
     {
+        cartErrorMessage = null;
+
+        if (selectedProductQuantity <= 0)
+        {
+            cartErrorMessage = "La cantidad debe ser mayor a 0.";
+            StateHasChanged();
+            return;
+        }
+
         if (selectedProductId == 0 || selectedProductQuantity <= 0) return;
         var product = allProducts?.FirstOrDefault(p => p.Id == selectedProductId);
         if (product == null) return;
