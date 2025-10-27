@@ -74,6 +74,7 @@ namespace LAFABRICA.Services
                 Notes = newSupplierDto.Notes,
                 IsActive = true
 
+
             };
 
             bool existEmail = await context.Suppliers

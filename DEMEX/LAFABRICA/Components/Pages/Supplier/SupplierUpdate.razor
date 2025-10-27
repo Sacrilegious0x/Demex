@@ -17,7 +17,6 @@
 <PageTitle>Editar Proveedor</PageTitle>
 <Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 <ConfirmDialog @ref="dialog" />
-
 @if (user == null)
 {
     <div class="text-center p-5">
@@ -50,7 +49,7 @@ else if (supplier == null)
 }
 else
 {
-    <!-- TU HTML ORIGINAL COMPLETO SIN CAMBIOS -->
+   
     <div class="container mt-2">
         <div class="card">
             <div class="card-header">
@@ -137,6 +136,8 @@ else
     private SupplierDto? supplier;
     private bool isBusy = true;
     private ConfirmDialog dialog = default!;
+    [CascadingParameter] 
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
     private ClaimsPrincipal? user;
     [CascadingParameter]
     private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
