@@ -55,11 +55,18 @@ public partial class AppDbContext : DbContext
 
             entity.ToTable("CLIENT");
 
-            entity.HasIndex(e => e.Email, "UQ_CLIENT_EMAIL").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ_CLIENT_EMAIL")
+                .IsUnique()
+                .HasFilter("[IS_ACTIVE] = 1");
 
-            entity.HasIndex(e => e.ManagerPhoneNumber, "UQ_CLIENT_MANAGER_PHONE_NUMBER").IsUnique();
+            entity.HasIndex(e => e.PhoneNumber, "UQ_CLIENT_PHONE_NUMBER")
+                .IsUnique()
+                .HasFilter("[IS_ACTIVE] = 1");
 
-            entity.HasIndex(e => e.PhoneNumber, "UQ_CLIENT_PHONE_NUMBER").IsUnique();
+            entity.HasIndex(e => e.ManagerPhoneNumber, "UQ_CLIENT_MANAGER_PHONE_NUMBER")
+                .IsUnique()
+                .HasFilter("[IS_ACTIVE] = 1");
+
 
             entity.Property(e => e.Id).HasColumnName("ID");
             entity.Property(e => e.Email)
@@ -350,9 +357,13 @@ public partial class AppDbContext : DbContext
 
             entity.ToTable("SUPPLIERS");
 
-            entity.HasIndex(e => e.Email, "UQ_SUPPLIER_EMAIL").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ_SUPPLIER_EMAIL")
+                  .IsUnique()
+                  .HasFilter("[IsActive] = 1");
 
-            entity.HasIndex(e => e.Phone, "UQ_SUPPLIER_PHONE").IsUnique();
+            entity.HasIndex(e => e.Phone, "UQ_SUPPLIER_PHONE")
+                  .IsUnique()
+                  .HasFilter("[IsActive] = 1");
 
             entity.Property(e => e.Id).HasColumnName("ID");
             entity.Property(e => e.Address)
@@ -373,6 +384,9 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Phone)
                 .HasMaxLength(15)
                 .HasColumnName("PHONE");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("IsActive");
         });
 
         modelBuilder.Entity<User>(entity =>
@@ -383,9 +397,13 @@ public partial class AppDbContext : DbContext
 
             entity.HasIndex(e => e.RolId, "IX_EMPLOYEE_ROL_ID");
 
-            entity.HasIndex(e => e.Email, "UQ_EMPLOYEE_EMAIL").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ_EMPLOYEE_EMAIL")
+                  .IsUnique()
+                  .HasFilter("[IS_ACTIVE] = 1");
 
-            entity.HasIndex(e => e.Identification, "UQ_EMPLOYEE_IDENTIFICATION").IsUnique();
+            entity.HasIndex(e => e.Identification, "UQ_EMPLOYEE_IDENTIFICATION")
+                  .IsUnique()
+                  .HasFilter("[IS_ACTIVE] = 1");
 
             entity.Property(e => e.Id).HasColumnName("ID");
             entity.Property(e => e.Email)

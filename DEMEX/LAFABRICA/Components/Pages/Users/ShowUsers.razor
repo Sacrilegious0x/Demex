@@ -98,6 +98,7 @@ else
                                 <tr>
                                     <th>#</th>
                                     <th>Nombre</th>
+                                    <th>Identificación</th>
                                     <th>Correo</th>
                                     <th>Rol</th>
                                     <th>Especialidad</th>
@@ -110,6 +111,7 @@ else
                                     <tr>
                                         <td>@(u.index + 1)</td>
                                         <td>@u.user.Name</td>
+                                        <td>@u.user.Identification</td>
                                         <td><Icon Name="IconName.EnvelopeAt" /> @u.user.Email</td>
                                         <td>@u.user.Rol?.Name</td>
                                         <td>@u.user.Speciality</td>
@@ -166,11 +168,17 @@ else
     private Modal modal = default!;
 
     private IEnumerable<User> filteredUsers =>
-        users?
-            .Where(u => u.IsActive == 1)
-            .Where(u => string.IsNullOrEmpty(selectedRole) || u.Rol != null && u.Rol.Name == selectedRole)
-            .Where(u => string.IsNullOrEmpty(searchText) || u.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase))
-            ?? [];
+    users?
+        .Where(u => u.IsActive == 1)
+        .Where(u => string.IsNullOrEmpty(selectedRole) || u.Rol != null && u.Rol.Name == selectedRole)
+        .Where(u =>
+            string.IsNullOrEmpty(searchText) ||
+            u.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+            u.Email.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+            u.Identification.Contains(searchText, StringComparison.OrdinalIgnoreCase)
+        )
+        ?? [];
+
 
     [CascadingParameter] private Task<AuthenticationState>? authenticationStateTask { get; set; }
 

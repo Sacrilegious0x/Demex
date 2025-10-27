@@ -72,13 +72,14 @@ else
 
                                 <div class="mb-3">
                                     <label class="form-label">Identificación *</label>
-                                    <InputText class="form-control" @bind-Value="user.Identification" />
+                                    <InputText class="form-control" @bind-Value="user.Identification" Placeholder="Ingrese la identificacion" />
                                     <ValidationMessage For="@(() => user.Identification)" />
+                                    <p class="text-black-50">Formato admitido sin guiones ni espacios</p>
                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label">Correo electrónico *</label>
-                                    <InputText class="form-control" @bind-Value="user.Email" />
+                                    <InputText class="form-control" @bind-Value="user.Email" Placeholder="Ingrese el correo electrónico" />
                                     <ValidationMessage For="@(() => user.Email)" />
                                 </div>
                             </div>
@@ -88,7 +89,7 @@ else
 
                                 <div class="mb-3">
                                     <label class="form-label">Especialidad *</label>
-                                    <InputText class="form-control" @bind-Value="user.Speciality" />
+                                    <InputText class="form-control" @bind-Value="user.Speciality" Placeholder="Ejm. Diseñador, Vendedor, Pintor"/>
                                     <ValidationMessage For="@(() => user.Speciality)" />
                                 </div>
 
@@ -105,7 +106,13 @@ else
                                 </div>
                             </div>
                         </div>
-
+                        @if (showAlert)
+                        {
+                            <Alert Color="AlertColor.Warning">
+                                <Icon Name="IconName.ExclamationTriangleFill" />
+                                <strong>@alertMessage</strong>
+                            </Alert>
+                        }
                         <Alert Color="AlertColor.Info" class="mt-2 mb-4">
                             <Icon Name="IconName.InfoCircleFill" class="me-2" />
                             <strong>Importante:</strong> asegúrese de registrar un correo válido.<br />
@@ -138,7 +145,8 @@ else
     private ConfirmDialog dialog = default!;
     [CascadingParameter] 
     private Task<AuthenticationState>? authenticationStateTask { get; set; }
-
+    bool showAlert;
+    string alertMessage;
     protected override async Task OnParametersSetAsync()
     {
         var authState = await authenticationStateTask!;
@@ -206,6 +214,11 @@ else
 
             await Task.Delay(1000);
             nav.NavigateTo("/usuarios");
+        }
+        catch (InvalidOperationException ex)
+        {
+            showAlert = true;
+            alertMessage = ex.Message;
         }
         catch (Exception ex)
         {

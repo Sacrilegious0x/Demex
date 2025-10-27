@@ -20,13 +20,16 @@ namespace LAFABRICA.Services
             using var context = _contextFactory.CreateDbContext();
 
 
-            bool existEmail = await context.Users.AnyAsync(u => u.Email == user.Email);
+            bool existEmail = await context.Users
+                .AnyAsync(u => u.Email == user.Email && u.IsActive == 1);
             if (existEmail)
                 throw new InvalidOperationException("El correo ya está registrado.");
 
-            bool existIdentification = await context.Users.AnyAsync(u => u.Identification == user.Identification);
+            bool existIdentification = await context.Users
+                .AnyAsync(u => u.Identification == user.Identification && u.IsActive == 1);
             if (existIdentification)
                 throw new InvalidOperationException("La identificación ya está registrada.");
+
 
 
             var rol = await context.Rols.FindAsync(user.RolId);
@@ -91,14 +94,15 @@ namespace LAFABRICA.Services
                 throw new KeyNotFoundException($"El usuario con id {id} no existe.");
 
 
-            bool existEmail = await context.Users.AnyAsync(u => u.Id != id && u.Email == user.Email);
+            bool existEmail = await context.Users
+                .AnyAsync(u => u.Id != id && u.Email == user.Email && u.IsActive == 1);
             if (existEmail)
                 throw new InvalidOperationException("El correo ya está registrado.");
 
-            bool existIdentification = await context.Users.AnyAsync(u => u.Id != id && u.Identification == user.Identification);
+            bool existIdentification = await context.Users
+                .AnyAsync(u => u.Id != id && u.Identification == user.Identification && u.IsActive == 1);
             if (existIdentification)
                 throw new InvalidOperationException("La identificación ya está registrada.");
-
 
             var rol = await context.Rols.FindAsync(user.RolId);
             if (rol == null)

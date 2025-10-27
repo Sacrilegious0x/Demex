@@ -45,8 +45,11 @@ else
     <EditForm EditContext="@editContext" OnValidSubmit="HandleValidSubmit">
         <DataAnnotationsValidator />
         <Card>
-            <CardHeader>
-                <CardTitle Size="HeadingSize.H5">Crear Nueva Orden / Cotización</CardTitle>
+            <CardHeader Class="d-flex justify-content-between align-items-center mt-3">
+                <CardTitle Size="HeadingSize.H2"><Icon Name="IconName.CartPlusFill"/> Crear Nueva Orden / Cotización</CardTitle>
+                <a class="btn btn-outline-secondary" href="/ordenes">
+                    <Icon Name="IconName.ArrowLeft" />
+                </a>
             </CardHeader>
             <CardBody>
 

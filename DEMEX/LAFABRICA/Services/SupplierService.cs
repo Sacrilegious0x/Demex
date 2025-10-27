@@ -76,16 +76,20 @@ namespace LAFABRICA.Services
 
             };
 
-            bool existEmail = await context.Suppliers.AnyAsync(s =>  s.Email == supplierEntity.Email);
+            bool existEmail = await context.Suppliers
+                           .AnyAsync(s => s.Email == supplierEntity.Email && s.IsActive == true);
             if (existEmail)
             {
-                throw new InvalidOperationException("El correo ya esta registrado");
+                throw new InvalidOperationException("El correo ya está registrado por un proveedor activo");
             }
-            bool existPhone = await context.Suppliers.AnyAsync(s =>  s.Phone == supplierEntity.Phone);
+
+            bool existPhone = await context.Suppliers
+                           .AnyAsync(s => s.Phone == supplierEntity.Phone && s.IsActive == true);
             if (existPhone)
             {
-                throw new InvalidOperationException("El contacto del proveedor ya esta registrado");
+                throw new InvalidOperationException("El contacto del proveedor ya está registrado por un proveedor activo");
             }
+
             context.Suppliers.Add(supplierEntity);
 
             //  Guardar los cambios en la base de datos
@@ -138,17 +142,21 @@ namespace LAFABRICA.Services
             var supplier = await context.Suppliers.FindAsync(updatedSupplierDto.Id);
             if (supplier == null) return false;
 
-            bool existEmail = await context.Suppliers.AnyAsync(s => s.Id != supplier.Id && s.Email == updatedSupplierDto.Email);
+            bool existEmail = await context.Suppliers
+                            .AnyAsync(s => s.Email == supplier.Email && s.IsActive == true);
             if (existEmail)
             {
-                throw new InvalidOperationException("El correo ya esta registrado");
+                throw new InvalidOperationException("El correo ya está registrado por un proveedor activo");
             }
-            bool existPhone = await context.Suppliers.AnyAsync(s => s.Id != supplier.Id && s.Phone == updatedSupplierDto.Phone);
+
+            bool existPhone = await context.Suppliers
+                            .AnyAsync(s => s.Phone == supplier.Phone && s.IsActive == true);
             if (existPhone)
             {
-                throw new InvalidOperationException("El contacto del proveedor ya esta registrado");
+                throw new InvalidOperationException("El contacto del proveedor ya está registrado por un proveedor activo");
             }
-            
+
+                
             supplier.Name = updatedSupplierDto.Name;
             supplier.Address = updatedSupplierDto.Address;
             supplier.Phone = updatedSupplierDto.Phone;
