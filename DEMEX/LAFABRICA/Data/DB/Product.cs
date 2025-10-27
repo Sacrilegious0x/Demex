@@ -28,4 +28,6 @@ public partial class Product
     public virtual ICollection<Material> Materials { get; set; } = new List<Material>();
 
     public virtual ICollection<ProductMaterial> ProductMaterials { get; set; } = new List<ProductMaterial>();
+    public virtual ICollection<PayEmployeeProduct> PayEmployeeProducts { get; set; } = new List<PayEmployeeProduct>();
+
 }

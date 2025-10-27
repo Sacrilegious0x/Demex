@@ -48,6 +48,8 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRolService, RolService>();
 builder.Services.AddScoped<IRolePermissonService, RolePermissionService>();
+builder.Services.AddScoped<IPayEmployeeProductService, PayEmployeeProductService>();
+builder.Services.AddScoped<IEmployeePaymentService, EmployeePaymentService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddBlazorBootstrap();
 
@@ -64,6 +66,9 @@ builder.Services.AddAuthentication("Identity.Application")
     {
         options.LoginPath = "/login"; 
     });
+
+builder.Logging.AddFilter("Microsoft.AspNetCore.SignalR", LogLevel.Debug);
+builder.Logging.AddFilter("Microsoft.AspNetCore.Http.Connections", LogLevel.Debug);
 
 
 

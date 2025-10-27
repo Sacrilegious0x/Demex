@@ -1,17 +1,39 @@
 ﻿@page "/inventario/crear"
+@attribute [Authorize]
 @using BlazorBootstrap
 @using LAFABRICA.Data.DB
 @using LAFABRICA.Models.AuxiliarDTOS
 @using LAFABRICA.Models.Interface
 @using LAFABRICA.Models
+@using LAFABRICA.Services.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 @inject IMaterialService MaterialService
 @inject ISupplierService SupplierService
 @inject NavigationManager NavigationManager
 @inject IWebHostEnvironment WebHostEnvironment
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Nuevo Material</PageTitle>
 <Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 
+@if (user == null)
+{
+    <div class="text-center p-5">
+        <Spinner Color="SpinnerColor.Primary" />
+        <p class="mt-2">Cargando autenticación...</p>
+    </div>
+}
+else if (!HasPermission("Inventory", DemexClaims.Create))
+{
+    <div class="text-center mt-5">
+        <i class="bi bi-shield-lock fs-1 text-warning"></i>
+        <h4 class="mt-3">Acceso denegado</h4>
+        <p>No tienes permiso para registrar materiales.</p>
+    </div>
+}
+else
+{
 <div class="container mt-2">
 	<div class="card">
 		<div class="card-header">
@@ -25,7 +47,6 @@
 				</a>
 			</div>
 		</div>
-
 		<div class="card-body">
 			@if (Material_Supp_Inv_Dto != null && suppliers != null)
 			{
@@ -140,42 +161,47 @@
 						</button>
 					</div>
 				</EditForm>
-			}
-			else
-			{
-				<div class="d-flex justify-content-center">
-					<Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
-				</div>
-			}
+				}
+				else
+				{
+					<div class="d-flex justify-content-center">
+						<Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
+					</div>
+				}
+			</div>
 		</div>
 	</div>
-</div>
-
+}
 
 @code {
+	[CascadingParameter] private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
+	private ClaimsPrincipal? user;
+
 	bool showAlert;
 	string alertMessage;
-
 	[Inject] protected ToastService ToastService { get; set; } = default!;
 
-	// Instancia del DTO que contendrá los datos del formulario
 	private MaterialSupplierInventoryDto Material_Supp_Inv_Dto = new MaterialSupplierInventoryDto();
-
 	private Material newMaterial = new Material();
-
-	// Lista de proveedores para el InputSelect
 	private List<SupplierDto>? suppliers;
 
 	private IBrowserFile? selectedImage;
-	private long maxFileSize = 1024 * 1024 * 5; // Límite de 5MB
+	private long maxFileSize = 1024 * 1024 * 5;
 
 	protected override async Task OnInitializedAsync()
 	{
-		// Cargar la lista de proveedores para el dropdown
-		suppliers = (await SupplierService.GetSuppliersAsync());
-		// Inicializar SupplierId con 0 para forzar la validación de selección
+		var authState = await AuthenticationStateTask;
+		user = authState.User;
+
+		if (!HasPermission("Inventory", DemexClaims.Create))
+			return;
+
+		suppliers = await SupplierService.GetSuppliersAsync();
 		Material_Supp_Inv_Dto.SupplierId = 0;
 	}
+
+	private bool HasPermission(string module, string action)
+		=> user?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
 
 	// Método que se ejecuta al enviar el formulario
 	private async Task HandleValidSubmit()

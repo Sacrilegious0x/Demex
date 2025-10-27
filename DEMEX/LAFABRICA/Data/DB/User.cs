@@ -33,4 +33,6 @@ public partial class User
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 
     public virtual Rol? Rol { get; set; }
+    public virtual ICollection<EmployeePayment> EmployeePayments { get; set; } = new List<EmployeePayment>();
+
 }

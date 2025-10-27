@@ -42,6 +42,10 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
 
+    public virtual DbSet<EmployeePayment> EmployeePayments { get; set; }
+    public virtual DbSet<PayEmployeeProduct> PayEmployeeProducts { get; set; }
+
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -429,6 +433,73 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        modelBuilder.Entity<EmployeePayment>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__EMPLOYEE_PAYMENT");
+
+            entity.ToTable("EMPLOYEE_PAYMENT");
+
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.EmployeeId).HasColumnName("EMPLOYEE_ID");
+            entity.Property(e => e.Date)
+                .HasColumnName("DATE")
+                .HasDefaultValueSql("GETDATE()");
+            entity.Property(e => e.State)
+                .HasMaxLength(50)
+                .HasDefaultValue("Pendiente")
+                .HasColumnName("STATE");
+            entity.Property(e => e.Description)
+                .HasMaxLength(255)
+                .HasColumnName("DESCRIPTION");
+            entity.Property(e => e.TotalAmount)
+                .HasColumnType("decimal(10,2)")
+                .HasColumnName("TOTAL_AMOUNT");
+
+            entity.HasOne(d => d.Employee)
+                .WithMany(p => p.EmployeePayments)
+                .HasForeignKey(d => d.EmployeeId)
+                .HasConstraintName("FK_PagoEmpleado_Usuario");
+        });
+
+        modelBuilder.Entity<PayEmployeeProduct>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__PAY_EMPLOYEE_PRODUCT");
+
+            entity.ToTable("PAY_EMPLOYEE_PRODUCT", t =>
+            {
+                // Nuevo estilo (toTable lambda)
+                t.HasCheckConstraint("CK_PAY_EMPLOYEE_PRODUCT_QUANTITY", "[QUANTITY] > 0");
+                t.HasTrigger("TRG_UpdateTotalAmount_OnPayEmployeeProduct");
+            });
+
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.EmployeePaymentId).HasColumnName("EMPLOYEE_PAYMENT_ID");
+            entity.Property(e => e.ProductId).HasColumnName("PRODUCT_ID");
+            entity.Property(e => e.Quantity).HasColumnName("QUANTITY");
+            entity.Property(e => e.UnitPrice)
+                .HasColumnType("decimal(10,2)")
+                .HasColumnName("UNIT_PRICE");
+
+            
+            entity.Property(e => e.Subtotal)
+                .HasColumnType("decimal(10,2)")
+                .HasColumnName("SUBTOTAL")
+                .ValueGeneratedOnAddOrUpdate() // Indica que la genera la BD
+                .Metadata.SetAfterSaveBehavior(Microsoft.EntityFrameworkCore.Metadata.PropertySaveBehavior.Ignore);
+
+            entity.HasOne(d => d.EmployeePayment)
+                .WithMany(p => p.PayEmployeeProducts)
+                .HasForeignKey(d => d.EmployeePaymentId)
+                .HasConstraintName("FK_PagoEmpleadoProducto_PagoEmpleado");
+
+            entity.HasOne(d => d.Product)
+                .WithMany(p => p.PayEmployeeProducts)
+                .HasForeignKey(d => d.ProductId)
+                .HasConstraintName("FK_PagoEmpleadoProducto_Producto");
+        });
+
+
 
         OnModelCreatingPartial(modelBuilder);
     }

@@ -2,7 +2,11 @@
 @attribute [Authorize]
 @using LAFABRICA.Data.DB
 @using LAFABRICA.Models.Interface
-@using System.ComponentModel.DataAnnotations // Necesario si añades validaciones aquí
+@using LAFABRICA.Models
+@using LAFABRICA.Services.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using System.ComponentModel.DataAnnotations
 @inject IOrderService orderService
 @inject IClientService clientService
 @inject IProductService productService
@@ -10,15 +14,26 @@
 @inject ToastService ToastService
 @inject IJSRuntime JSRuntime
 @inject IWebHostEnvironment WebHostEnvironment
-@* @using LAFABRICA.Utilities.PdfGeneration (EJEMPLO) *@
-
 
 <PageTitle>Editar Orden</PageTitle>
 
 <Toasts class="p-3" Autohide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 <ConfirmDialog @ref="dialog" />
 
-@if (orderToEdit == null || allClients == null || allProducts == null)
+@if (user == null)
+{
+    <div class="text-center p-5">
+        <Spinner Color="SpinnerColor.Primary" />
+        <p>Cargando autenticación...</p>
+    </div>
+}
+else if (!HasPermission("Orders", DemexClaims.View))
+{
+    <Alert Color="AlertColor.Warning" class="mt-4">
+        <strong>No tienes permiso</strong> para ver o editar órdenes.
+    </Alert>
+}
+else if (orderToEdit == null || allClients == null || allProducts == null)
 {
     <div class="text-center p-4">
         <Spinner Color="SpinnerColor.Primary" />
@@ -28,11 +43,12 @@
 else
 {
     <EditForm EditContext="@editContext" OnValidSubmit="ShowConfirmationAsync">
-        @* EditContext se asocia aquí *@
         <DataAnnotationsValidator />
         <Card>
             <CardHeader>
-                <CardTitle Size="HeadingSize.H5">Editando Orden #@orderToEdit.Id - @orderToEdit.Client?.Name</CardTitle>
+                <CardTitle Size="HeadingSize.H5">
+                    Editando Orden #@orderToEdit.Id - @orderToEdit.Client?.Name
+                </CardTitle>
             </CardHeader>
             <CardBody>
                 <ValidationSummary class="alert alert-danger mb-3" />
@@ -42,7 +58,9 @@ else
                         <h5>1. Información del Cliente</h5>
                         <div class="mb-3">
                             <label class="form-label">Cliente *</label>
-                            <InputSelect @bind-Value="orderToEdit.ClientId" class="form-select" @onchange="ClientSelectionChanged">
+                            <InputSelect @bind-Value="orderToEdit.ClientId" class="form-select" 
+                                         disabled="@(!HasPermission("Orders", DemexClaims.Edit))"
+                                         @onchange="ClientSelectionChanged">
                                 <option value="0">-- Seleccione un cliente --</option>
                                 @foreach (var client in allClients)
                                 {
@@ -51,17 +69,21 @@ else
                             </InputSelect>
                             <ValidationMessage For="@(() => orderToEdit.ClientId)" />
                         </div>
+
                         <div class="mb-3">
                             <label class="form-label">Prioridad de la Orden</label>
-                            <InputSelect @bind-Value="orderToEdit.Priority" class="form-select">
+                            <InputSelect @bind-Value="orderToEdit.Priority" class="form-select"
+                                         disabled="@(!HasPermission("Orders", DemexClaims.Edit))">
                                 <option value="Baja">Baja</option>
                                 <option value="Media">Media</option>
                                 <option value="Alta">Alta</option>
                             </InputSelect>
                         </div>
+
                         <div class="mb-3">
                             <label class="form-label">Estado de la Orden</label>
-                            <InputSelect @bind-Value="orderToEdit.State" class="form-select">
+                            <InputSelect @bind-Value="orderToEdit.State" class="form-select"
+                                         disabled="@(!HasPermission("Orders", DemexClaims.Edit))">
                                 <option value="Diseño">Diseño</option>
                                 <option value="Corte">Corte</option>
                                 <option value="Acabados">Acabados</option>
@@ -72,21 +94,26 @@ else
 
                     <div class="col-md-8">
                         <h5>2. Productos de la Orden *</h5>
+
                         @if (!cartItems.Any())
                         {
                             <div class="alert alert-warning small">Debe añadir al menos un producto.</div>
                         }
-                        <div class="input-group mb-3">
-                            <select @bind="selectedProductId" class="form-select" style="max-width: 60%;">
-                                <option value="0">-- Seleccione un producto para añadir --</option>
-                                @foreach (var product in allProducts)
-                                {
-                                    <option value="@product.Id">@product.Name (@product.PriceBase.ToString("C"))</option>
-                                }
-                            </select>
-                            <InputNumber @bind-Value="selectedProductQuantity" class="form-control" placeholder="Cant." />
-                            <Button Color="ButtonColor.Success" @onclick="AddProductToCart">Añadir</Button>
-                        </div>
+
+                        @if (HasPermission("Orders", DemexClaims.Edit))
+                        {
+                            <div class="input-group mb-3">
+                                <select @bind="selectedProductId" class="form-select" style="max-width: 60%;">
+                                    <option value="0">-- Seleccione un producto para añadir --</option>
+                                    @foreach (var product in allProducts)
+                                    {
+                                        <option value="@product.Id">@product.Name (@product.PriceBase.ToString("C"))</option>
+                                    }
+                                </select>
+                                <InputNumber @bind-Value="selectedProductQuantity" class="form-control" placeholder="Cant." />
+                                <Button Color="ButtonColor.Success" @onclick="AddProductToCart">Añadir</Button>
+                            </div>
+                        }
 
                         @if (cartItems.Any())
                         {
@@ -96,9 +123,13 @@ else
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <span>@item.Quantity x @item.ProductName</span>
                                         <span class="fw-bold">@((item.Quantity * item.PriceBase).ToString("C"))</span>
-                                        <Button Color="ButtonColor.Danger" IsOutlined="true" Size="ButtonSize.Small" @onclick="() => RemoveProductFromCart(item.ProductId)">
-                                            <Icon Name="IconName.Trash" />
-                                        </Button>
+                                        @if (HasPermission("Orders", DemexClaims.Edit))
+                                        {
+                                            <Button Color="ButtonColor.Danger" IsOutlined="true" Size="ButtonSize.Small" 
+                                                    @onclick="() => RemoveProductFromCart(item.ProductId)">
+                                                <Icon Name="IconName.Trash" />
+                                            </Button>
+                                        }
                                     </li>
                                 }
                             </ul>
@@ -116,47 +147,57 @@ else
                 <div class="row">
                     <div class="col-md-4">
                         <label class="form-label">Total Acordado (₡) *</label>
-                        <InputNumber @bind-Value="orderToEdit.TotalAmount" class="form-control" />
+                        <InputNumber @bind-Value="orderToEdit.TotalAmount" class="form-control"
+                                     disabled="@(!HasPermission("Orders", DemexClaims.Edit))" />
                         <ValidationMessage For="@(() => orderToEdit.TotalAmount)" />
                     </div>
+
                     <div class="col-md-4">
                         <label class="form-label">Descuento (%)</label>
-                        <InputNumber @bind-Value="orderToEdit.Discount" class="form-control" />
+                        <InputNumber @bind-Value="orderToEdit.Discount" class="form-control"
+                                     disabled="@(!HasPermission("Orders", DemexClaims.Edit))" />
                         @if (!string.IsNullOrEmpty(discountSuggestion))
                         {
                             <div class="form-text text-success">@discountSuggestion</div>
                         }
                     </div>
+
                     <div class="col-md-4">
                         <label class="form-label">Adelanto (₡)</label>
-                        <InputNumber @bind-Value="orderToEdit.Advancement" class="form-control" />
+                        <InputNumber @bind-Value="orderToEdit.Advancement" class="form-control"
+                                     disabled="@(!HasPermission("Orders", DemexClaims.Edit))" />
                         @if (orderToEdit.TotalAmount > 0)
                         {
                             <div class="form-text">Sugerido (50%): @((orderToEdit.TotalAmount * 0.5m).ToString("C"))</div>
                         }
                     </div>
                 </div>
-
             </CardBody>
+
             <CardFooter>
                 <div class="d-flex justify-content-end gap-2">
-
                     <a href="/ordenes" class="btn btn-secondary">Cancelar</a>
 
-                    <Button Color="ButtonColor.Info" IsOutlined="true"
-                            @onclick="GeneratePdfPreview"
-                            disabled="@(!cartItems.Any() || orderToEdit.ClientId == null)">
-                        <Icon Name="IconName.FileEarmarkPdf" /> Generar Resumen
-                    </Button>
+                    @if (HasPermission("Orders", DemexClaims.View))
+                    {
+                        <Button Color="ButtonColor.Info" IsOutlined="true"
+                                @onclick="GeneratePdfPreview"
+                                disabled="@(!cartItems.Any() || orderToEdit.ClientId == null)">
+                            <Icon Name="IconName.FileEarmarkPdf" /> Generar Resumen
+                        </Button>
+                    }
 
-                    <button type="submit" class="btn btn-primary" disabled="@(!cartItems.Any())">
-                        <Icon Name="IconName.Save" /> Guardar Cambios
-                    </button>
+                    @if (HasPermission("Orders", DemexClaims.Edit))
+                    {
+                        <button type="submit" class="btn btn-primary" disabled="@(!cartItems.Any())">
+                            <Icon Name="IconName.Save" /> Guardar Cambios
+                        </button>
 
-                    <button type="button" class="btn btn-success" @onclick="ShowFinishConfirmationAsync" disabled="@(!cartItems.Any())">
-                        <Icon Name="IconName.CheckCircle" /> Finalizar Orden
-                    </button>
-
+                        <button type="button" class="btn btn-success" 
+                                @onclick="ShowFinishConfirmationAsync" disabled="@(!cartItems.Any())">
+                            <Icon Name="IconName.CheckCircle" /> Finalizar Orden
+                        </button>
+                    }
                 </div>
             </CardFooter>
         </Card>
@@ -164,8 +205,23 @@ else
 }
 
 @code {
-    [Parameter]
-    public int OrderId { get; set; }
+    [Parameter] public int OrderId { get; set; }
+
+    [CascadingParameter] private Task<AuthenticationState>? authenticationStateTask { get; set; }
+    private ClaimsPrincipal? user;
+
+    private bool HasPermission(string module, string action)
+        => user?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
+
+    private Order? orderToEdit;
+    private List<Client>? allClients;
+    private List<Product>? allProducts;
+    private List<CartItem> cartItems = new();
+    private int selectedProductId;
+    private int selectedProductQuantity = 1;
+    private string discountSuggestion = "";
+    private ConfirmDialog dialog = default!;
+    private EditContext editContext = default!;
 
     public class CartItem
     {
@@ -175,27 +231,18 @@ else
         public decimal PriceBase { get; set; }
     }
 
-    private Order? orderToEdit;
-    private List<Client>? allClients;
-    private List<Product>? allProducts;
-    private List<CartItem> cartItems = new();
-
-    private int selectedProductId;
-    private int selectedProductQuantity = 1;
-    private string discountSuggestion = "";
-    private ConfirmDialog dialog = default!;
-    private EditContext editContext = default!;
-
     protected override async Task OnInitializedAsync()
     {
+        var authState = await authenticationStateTask!;
+        user = authState.User;
+
         allClients = (await clientService.GetAllClient()).ToList();
         allProducts = (await productService.GetAllProducts()).ToList();
         orderToEdit = await orderService.GetById(OrderId);
 
         if (orderToEdit != null)
         {
-            editContext = new EditContext(orderToEdit); // Inicializar EditContext
-
+            editContext = new EditContext(orderToEdit);
             cartItems = orderToEdit.ProductOrders.Select(po =>
             {
                 var productDetails = allProducts?.FirstOrDefault(p => p.Id == po.IdProduct);

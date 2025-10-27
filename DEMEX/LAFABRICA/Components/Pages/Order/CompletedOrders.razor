@@ -1,8 +1,13 @@
 ﻿@page "/ordenes/completadas"
+@attribute [Authorize]
 @using LAFABRICA.Data.DB
 @using LAFABRICA.Models.Interface
+@using LAFABRICA.Models
 @using LAFABRICA.Components.Pages.Product
 @using LAFABRICA.Components.Pages.Order
+@using LAFABRICA.Services.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 @inject IOrderService orderService
 @inject ToastService ToastService
 @inject NavigationManager nav
@@ -13,7 +18,20 @@
 <ConfirmDialog @ref="dialog" />
 <OrderDetailsModal @ref="detailsModal" />
 
-@if (orders == null)
+@if (user == null)
+{
+    <div class="text-center p-5">
+        <Spinner Color="SpinnerColor.Primary" />
+        <p>Cargando autenticación...</p>
+    </div>
+}
+else if (!HasPermission("Orders", DemexClaims.View))
+{
+    <Alert Color="AlertColor.Warning" class="mt-4">
+        <strong>No tienes permiso</strong> para ver las órdenes completadas.
+    </Alert>
+}
+else if (orders == null)
 {
     <div class="d-flex justify-content-center">
         <Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
@@ -22,7 +40,7 @@
 else if (!orders.Any())
 {
     <div>
-        <Alert Color="AlertColor.Info" class="d-flex justify-content-between align-items-center">
+        <Alert Color="AlertColor.Primary" class="d-flex justify-content-between align-items-center">
             <div>
                 <Icon Name="IconName.InfoCircleFill" class="me-2" />
                 <strong>No hay órdenes completadas registradas</strong>
@@ -44,7 +62,6 @@ else
                 </div>
 
                 <div class="d-flex flex-wrap justify-content-sm-start align-items-center gap-3 mt-3">
-
                     <!-- Filtro de Texto -->
                     <div class="d-flex align-items-center border rounded px-2">
                         <Icon Name="IconName.Search" class="text-secondary me-2" />
@@ -73,9 +90,10 @@ else
                     </div>
                 </div>
             </div>
+
             <div class="card-body text-center">
                 <div class="row">
-                    <div class="col-12 table-responsive" style=" max-height: 370px; overflow-y: auto;">
+                    <div class="col-12 table-responsive" style="max-height: 370px; overflow-y: auto;">
                         <table class="table table-hover">
                             <thead>
                                 <tr>
@@ -109,12 +127,19 @@ else
                                         <td>@ord.TotalAmount.ToString("C", new System.Globalization.CultureInfo("es-CR"))</td>
                                         <td>@ord.Advancement.ToString("C", new System.Globalization.CultureInfo("es-CR"))</td>
                                         <td>
-                                            <button class="btn btn-show" @onclick="() => detailsModal.ShowAsync(ord.Id)" title="Ver Detalles">
-                                                <Icon Name="IconName.Eye" Color="IconColor.Primary" />
-                                            </button>
-                                            <button class="btn btn-delete" @onclick="() => DeleteOrder(ord)" title="Eliminar">
-                                                <Icon Name="IconName.Trash" Color="IconColor.Danger"></Icon>
-                                            </button>
+                                            @if (HasPermission("Orders", DemexClaims.View))
+                                            {
+                                                <button class="btn btn-show" @onclick="() => detailsModal.ShowAsync(ord.Id)" title="Ver Detalles">
+                                                    <Icon Name="IconName.Eye" Color="IconColor.Primary" />
+                                                </button>
+                                            }
+
+                                            @if (HasPermission("Orders", DemexClaims.Delete))
+                                            {
+                                                <button class="btn btn-delete" @onclick="() => DeleteOrder(ord)" title="Eliminar">
+                                                    <Icon Name="IconName.Trash" Color="IconColor.Danger"></Icon>
+                                                </button>
+                                            }
                                         </td>
                                     </tr>
                                 }
@@ -123,6 +148,7 @@ else
                     </div>
                 </div>
             </div>
+
             <div class="card-footer">
                 <Icon Name="IconName.FileEarmarkText" /> Total de órdenes completadas: @filteredOrders.Count()
             </div>
@@ -131,6 +157,13 @@ else
 }
 
 @code {
+    // --- Autenticación y Claims ---
+    [CascadingParameter] private Task<AuthenticationState>? authenticationStateTask { get; set; }
+    private ClaimsPrincipal? user;
+
+    private bool HasPermission(string module, string action)
+        => user?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
+
     private List<Order>? orders;
     private ConfirmDialog dialog = default!;
     private OrderDetailsModal detailsModal = default!;
@@ -142,20 +175,12 @@ else
     private DateTime? filterEndDate;
     private List<string> locations = new();
 
-    // === PROPIEDAD COMPUTADA DE FILTROS (CORREGIDA) ===
+    // === PROPIEDAD COMPUTADA DE FILTROS ===
     private IEnumerable<Order> filteredOrders =>
         orders?
-            // 1. Filtro de Provincia (Ubicación)
             .Where(o => string.IsNullOrEmpty(selectedLocation) || o.Client?.Location == selectedLocation)
-
-            // 2. Filtro de Fecha "Desde" (CORREGIDO)
-            // Compara DateOnly (o.CreationDate) con el DateOnly convertido desde el filtro DateTime?
             .Where(o => !filterStartDate.HasValue || o.CreationDate >= DateOnly.FromDateTime(filterStartDate.Value))
-
-            // 3. Filtro de Fecha "Hasta" (CORREGIDO)
             .Where(o => !filterEndDate.HasValue || o.CreationDate <= DateOnly.FromDateTime(filterEndDate.Value))
-
-            // 4. Filtro de Texto (Cliente o ID)
             .Where(o => string.IsNullOrEmpty(searchText) ||
                         (o.Client?.Name?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
                         o.Id.ToString().Contains(searchText))
@@ -163,6 +188,8 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await authenticationStateTask!;
+        user = authState.User;
         await LoadOrders();
     }
 
@@ -241,4 +268,5 @@ else
         };
     }
 }
+
 

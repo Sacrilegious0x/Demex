@@ -1,48 +1,74 @@
 ﻿@page "/clientes"
 @attribute [Authorize]
 @using LAFABRICA.Data.DB
-@using LAFABRICA.Models.Interface;
-@inject IClientService service;
-@inject NavigationManager nav;
+@using LAFABRICA.Models.Interface
+@using LAFABRICA.Models
+@using LAFABRICA.Services.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject IClientService service
+@inject NavigationManager nav
+@inject ToastService ToastService
 
 <PageTitle>Clientes</PageTitle>
 
-<Modal @ref="modal" IsVerticallyCentered="true" Size="ModalSize.Large"  />
+<Modal @ref="modal" IsVerticallyCentered="true" Size="ModalSize.Large" />
 <Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 <ConfirmDialog @ref="dialog" />
 
-
-	@if(clients == null)
-	{
-		<div class="d-flex justify-content-center">
-			<Spinner Type="SpinnerType.Border"  Size="SpinnerSize.Large"/>
-		</div>
-
-	}else if (!clients.Any())
-	{
-		<div>
+@if (user == null)
+{
+	<div class="text-center p-5">
+		<Spinner Color="SpinnerColor.Primary" />
+		<p>Cargando autenticación...</p>
+	</div>
+}
+else if (!HasPermission("Clients", DemexClaims.View))
+{
+	<Alert Color="AlertColor.Warning" class="mt-4">
+		<strong>No tienes permiso</strong> para ver los clientes.
+	</Alert>
+}
+else if (clients == null)
+{
+	<div class="d-flex justify-content-center">
+		<Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
+	</div>
+}
+else if (!clients.Any())
+{
+	<div>
 		<Alert Color="AlertColor.Primary" class="d-flex justify-content-between align-items-center">
 			<div>
 				<Icon Name="IconName.InfoCircleFill" class="me-2" />
-				<strong>No hay materiales registrados </strong>
+				<strong>No hay clientes registrados</strong>
 			</div>
-			<a class="btn btn-outline-primary" href="/inventario/crear"><Icon Name="IconName.PlusLg" /> Nuevo Material</a>
+			@if (HasPermission("Clients", DemexClaims.Create))
+			{
+				<a class="btn btn-outline-primary" href="/clientes/crear">
+					<Icon Name="IconName.PlusLg" /> Nuevo Cliente
+				</a>
+			}
 		</Alert>
-		</div>
-	}
-	else
-	{
-		<div class="container mt-2">
-		
-			<div class="card">
-				<div class="card-header ">
-					<div class="d-flex justify-content-between align-items-center mt-3">
-					<h3> <Icon Name="IconName.PersonFill"></Icon> Gestion de Clientes</h3>
-					<a class="btn text-white" href="/clientes/crear" style="background-color: #0f54a1;"> <Icon Name="IconName.PlusLg"></Icon> Nuevo Cliente</a>
-					</div>
-				<div class="d-flex justify-content-sm-start align-items-center gap-3 mt-3">
+	</div>
+}
+else
+{
+	<div class="container mt-2">
+		<div class="card">
+			<div class="card-header ">
+				<div class="d-flex justify-content-between align-items-center mt-3">
+					<h3><Icon Name="IconName.PersonFill"></Icon> Gestión de Clientes</h3>
 
-		
+					@if (HasPermission("Clients", DemexClaims.Create))
+					{
+						<a class="btn text-white" href="/clientes/crear" style="background-color: #0f54a1;">
+							<Icon Name="IconName.PlusLg"></Icon> Nuevo Cliente
+						</a>
+					}
+				</div>
+
+				<div class="d-flex justify-content-sm-start align-items-center gap-3 mt-3">
 					<div class="d-flex align-items-center border rounded px-2">
 						<Icon Name="IconName.Search" class="text-secondary me-2" />
 						<input type="text" class="form-control border-0" @bind="searchText" @bind:event="oninput" placeholder="Buscar Empresa..." style="box-shadow:none;" />
@@ -58,158 +84,165 @@
 							}
 						</InputSelect>
 					</div>
-
 				</div>
+			</div>
 
-										
-				</div>
-				<div class="card-body text-center">
-					<div class="row">
-					<div class="col-12 table-responsive" style=" max-height: 370px; overflow-y: auto;">
-							<table class="table ">
-								<thead>
-									<tr>
-										<th>#</th>
-										<th>Empresa</th>
-										<th>Contacto</th>
-										<th>Encargado</th>
-										<th>Correo</th>
-										<th>Ubicacion</th>
-										<th>Zona</th>
-										<th>Acciones</th>
-									</tr>
-								</thead>
-								<tbody>
-
+			<div class="card-body text-center">
+				<div class="row">
+					<div class="col-12 table-responsive" style="max-height: 370px; overflow-y: auto;">
+						<table class="table">
+							<thead>
+								<tr>
+									<th>#</th>
+									<th>Empresa</th>
+									<th>Contacto</th>
+									<th>Encargado</th>
+									<th>Correo</th>
+									<th>Ubicación</th>
+									<th>Zona</th>
+									<th>Acciones</th>
+								</tr>
+							</thead>
+							<tbody>
 								@foreach (var clt in filteredClients.Select((c, index) => new { c, index }))
-									{
-										
-										<tr >
+								{
+									<tr>
+										<td>@(clt.index + 1)</td>
+										<td>
+											<div>@clt.c.Name</div>
+											@if (clt.c.IsFrequent == 1)
+											{
+												<span class="badge bg-success mt-1" style="font-size: 0.8rem;">
+													Cliente frecuente
+												</span>
+											}
+										</td>
+										<td>
+											<div><Icon Name="IconName.Telephone"></Icon> @clt.c.PhoneNumber</div>
+											<div class="text-black-50"><Icon Name="IconName.Telephone"></Icon> @clt.c.ManagerPhoneNumber</div>
+										</td>
+										<td><Icon Name="IconName.Person"></Icon> @clt.c.Manager</td>
+										<td><Icon Name="IconName.EnvelopeAt"></Icon> @clt.c.Email</td>
+										<td><Icon Name="IconName.GeoAlt"></Icon> @clt.c.Location</td>
+										<td><Icon Name="IconName.Geo"></Icon> @clt.c.SpecificLocation</td>
+										<td>
+											@if(HasPermission("Clients", DemexClaims.View))
+											{
+												<button class="btn btn-show" @onclick="() => ViewClientInfo(clt.c)">
+													<Icon Class="icon-show" Name="IconName.Eye"></Icon>
+												</button>
+											}
 											
-											<td>@(clt.index + 1)</td>
-											<td>
-												<div>@clt.c.Name</div>
-												@if (clt.c.IsFrequent == 1)
-												{
-													<span class="badge bg-success mt-1" style="font-size: 0.8rem;">
-														Cliente frecuente
-													</span>
-												}
-											</td>
-											<td>
-												<div><Icon Name="IconName.Telephone"></Icon> @clt.c.PhoneNumber</div>
-												<div class="text-black-50"><Icon Name="IconName.Telephone"></Icon> @clt.c.ManagerPhoneNumber</div>
 
+											@if (HasPermission("Clients", DemexClaims.Edit))
+											{
+												<button class="btn btn-edit" @onclick="() => EditClient(clt.c)">
+													<Icon Class="icon-edit" Name="IconName.PencilSquare"></Icon>
+												</button>
+											}
 
-											</td>
-											<td><Icon Name="IconName.Person"></Icon> @clt.c.Manager</td>
-											<td><Icon Name="IconName.EnvelopeAt"></Icon> @clt.c.Email</td>
-											<td><Icon Name="IconName.GeoAlt"></Icon> @clt.c.Location</td>
-											<td><Icon Name="IconName.Geo"></Icon> @clt.c.SpecificLocation</td>
-											<td>
-												<button class="btn btn-show" @onclick="()=> ViewClientInfo(clt.c)"> <Icon Class="icon-show" Name="IconName.Eye"></Icon> </button>
-												<button Class="btn btn-edit" @onclick="() => EditClient(clt.c)"> <Icon Class="icon-edit" Name="IconName.PencilSquare"></Icon> </button>
-												<button Class="btn btn-delete" @onclick="() => DeleteClient(clt.c)">
+											@if (HasPermission("Clients", DemexClaims.Delete))
+											{
+												<button class="btn btn-delete" @onclick="() => DeleteClient(clt.c)">
 													<Icon Name="IconName.Trash" Color="IconColor.Danger"></Icon>
 												</button>
-											</td>
-										</tr>																	
-									}
-								</tbody>
-
-							</table>
-
-						</div>
-
+											}
+										</td>
+									</tr>
+								}
+							</tbody>
+						</table>
 					</div>
 				</div>
-				<div class="card-footer">
-					<Icon Name="IconName.CircleFill" Color="IconColor.Success"></Icon>
-					Clientes frecuentes: @quantityFrecuentClient(clients)
-				</div>
-				
 			</div>
-			
+
+			<div class="card-footer">
+				<Icon Name="IconName.CircleFill" Color="IconColor.Success"></Icon>
+				Clientes frecuentes: @quantityFrecuentClient(clients)
+			</div>
 		</div>
-		
-	}
+	</div>
+}
 
 @code {
-	[Inject] protected ToastService ToastService { get; set; } = default!;
+	// --- Autenticación y Claims ---
+	[CascadingParameter] private Task<AuthenticationState>? authenticationStateTask { get; set; }
+	private ClaimsPrincipal? user;
+
+	private bool HasPermission(string module, string action)
+		=> user?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
+
 	private string selectedLocation = "";
 	private string searchText = string.Empty;
 	private readonly string[] provinces = { "San José", "Alajuela", "Heredia", "Cartago", "Guanacaste", "Puntarenas", "Limon" };
 	private List<Client>? clients;
 	private ConfirmDialog dialog = default!;
 	private Modal modal = default!;
+
 	private IEnumerable<Client> filteredClients =>
-	clients?
-		.Where(c => c.IsActive == 1)
-		.Where(c => string.IsNullOrEmpty(selectedLocation) || c.Location == selectedLocation)
-		.Where(c => string.IsNullOrEmpty(searchText)|| c.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase))
-		?? [];
-	
+		clients?
+			.Where(c => string.IsNullOrEmpty(selectedLocation) || c.Location == selectedLocation)
+			.Where(c => string.IsNullOrEmpty(searchText) || c.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+			?? [];
+
 	protected override async Task OnInitializedAsync()
 	{
+		var authState = await authenticationStateTask!;
+		user = authState.User;
 		await LoadClients();
 	}
+
 	private async Task LoadClients()
 	{
 		clients = (await service.GetAllClient()).ToList();
 	}
+
 	private int quantityFrecuentClient(List<Client> clients)
 	{
-		int count = 0;
-		foreach(var cl in clients)
-		{
-			if (cl.IsActive == 1 && cl.IsFrequent==1)
-				count++;
-		}
-		return count;
+		return clients.Count(c => c.IsFrequent == 1);
 	}
 
 	private async Task DeleteClient(Client cl)
 	{
-		var optons = new ConfirmDialogOptions
-			{
-				YesButtonText = "Eliminar",
-				YesButtonColor = ButtonColor.Danger,
-				NoButtonText = "Cancelar",
-				NoButtonColor = ButtonColor.Secondary
+		var options = new ConfirmDialogOptions
+		{
+			YesButtonText = "Eliminar",
+			YesButtonColor = ButtonColor.Danger,
+			NoButtonText = "Cancelar",
+			NoButtonColor = ButtonColor.Secondary
+		};
 
-			};
 		var confirmation = await dialog.ShowAsync(
 			title: "Eliminar cliente",
-			message1: $"¿Estas seguro de eliminar a {cl.Name} ?",
-			message2: "Esta accion es irreversible",
-			confirmDialogOptions: optons);
+			message1: $"¿Estás seguro de eliminar a {cl.Name}?",
+			message2: "Esta acción es irreversible",
+			confirmDialogOptions: options);
+
 		if (confirmation)
 		{
 			try
 			{
-				await service.Delete(cl.Id); //borra al cliente
-				await LoadClients(); //recarga datos
-				StateHasChanged(); //refresca
-				ToastService.Notify(new(ToastType.Success, $"Se elimino correctamente a {cl.Name}"));
-
-			}catch(Exception e)
+				await service.Delete(cl.Id);
+				await LoadClients();
+				StateHasChanged();
+				ToastService.Notify(new(ToastType.Success, $"Se eliminó correctamente a {cl.Name}"));
+			}
+			catch (Exception e)
 			{
-				ToastService.Notify(new(ToastType.Danger,
-					$"Ocurrio un error al tratar de eliminar a {cl.Name}: {e.Message}."));
-			}			
+				ToastService.Notify(new(ToastType.Danger, $"Ocurrió un error al eliminar a {cl.Name}: {e.Message}"));
+			}
 		}
 	}
 
-	private async void EditClient(Client clt)
+	private void EditClient(Client clt)
 	{
-		
-			nav.NavigateTo($"/clientes/editar/{clt.Id}");
-		
+		nav.NavigateTo($"/clientes/editar/{clt.Id}");
 	}
+
 	private async Task ViewClientInfo(Client clt)
 	{
-		var parameters = new Dictionary<string, object>();
-		parameters.Add("ClientId", clt.Id);
+		var parameters = new Dictionary<string, object> { { "ClientId", clt.Id } };
 		await modal.ShowAsync<ViewClient>(title: $"Detalles del cliente: {clt.Name}", parameters: parameters);
 	}
 }
+

@@ -1,180 +1,183 @@
 ﻿@page "/proveedor/crear"
+@attribute [Authorize]
 @using BlazorBootstrap
 @using LAFABRICA.Models
 @using LAFABRICA.Models.AuxiliarDTOS
 @using LAFABRICA.Models.Interface
 @using LAFABRICA.Services
+@using LAFABRICA.Services.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+
 @inject ISupplierService SupplierService
 @inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ToastService ToastService
+
 <PageTitle>Nuevo Proveedor</PageTitle>
 <Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 
-
-<div class="container mt-2">
-	<div class="card">
-		<div class="card-header">
-			<div class="d-flex justify-content-between align-items-center mt-3">
-				<h2>
-					<Icon Name="IconName.Building" />
-					<text>Registrar nuevo proveedor</text>
-				</h2>
-				<a class="btn btn-outline-secondary" href="/proveedor">
-					<Icon Name="IconName.ArrowLeft"></Icon>
-				</a>
+@if (user == null)
+{
+	<div class="text-center p-5">
+		<Spinner Color="SpinnerColor.Primary" />
+		<p class="mt-2">Cargando autenticación...</p>
+	</div>
+}
+else if (!HasPermission("Suppliers", DemexClaims.Create))
+{
+	<div class="text-center mt-5">
+		<i class="bi bi-shield-lock fs-1 text-warning"></i>
+		<h4 class="mt-3">Acceso denegado</h4>
+		<p>No tienes permiso para registrar proveedores.</p>
+	</div>
+}
+else
+{
+	<div class="container mt-2">
+		<div class="card">
+			<div class="card-header">
+				<div class="d-flex justify-content-between align-items-center mt-3">
+					<h2><Icon Name="IconName.Building" /> Registrar nuevo proveedor</h2>
+					<a class="btn btn-outline-secondary" href="/proveedor">
+						<Icon Name="IconName.ArrowLeft"></Icon>
+					</a>
+				</div>
 			</div>
-		</div>
 
-		<div class="card-body">
-			@if (supplier != null)
-			{
-				<EditForm Model="@supplier" OnValidSubmit="@HandleValidSubmit">
-					<DataAnnotationsValidator />
+			<div class="card-body">
+				@if (supplier != null)
+				{
+					<EditForm Model="@supplier" OnValidSubmit="@HandleValidSubmit">
+						<DataAnnotationsValidator />
 
-					<div class="d-flex justify-content-between">
-						<!-- Columna izquierda -->
-						<div class="container-sm">
-							<h3>Información del proveedor</h3>
+						<div class="d-flex justify-content-between">
+							<!-- Columna izquierda -->
+							<div class="container-sm">
+								<h3>Información del proveedor</h3>
 
-							<div class="form-group row mb-3">
-								<label class="col-md-5 col-form-label">Nombre de la empresa: <span class="text-danger">*</span></label>
-								<div class="col-md-8">
-									<TextInput class="border-1" id="name" @bind-Value="supplier.Name" placeholder="Ej: Cerámica Nacional" required />
-									<ValidationMessage For="@(() => supplier.Name)" />
+								<div class="form-group row mb-3">
+									<label class="col-md-5 col-form-label">Nombre de la empresa: *</label>
+									<div class="col-md-8">
+										<TextInput class="border-1" @bind-Value="supplier.Name" required />
+										<ValidationMessage For="@(() => supplier.Name)" />
+									</div>
+								</div>
+
+								<div class="form-group row mb-3">
+									<label class="col-md-5 col-form-label">Correo electrónico:</label>
+									<div class="col-md-8">
+										<TextInput class="border-1" @bind-Value="supplier.Email" type="email" />
+										<ValidationMessage For="@(() => supplier.Email)" />
+									</div>
+								</div>
+
+								<div class="form-group row mb-3">
+									<label class="col-md-5 col-form-label">Teléfono: *</label>
+									<div class="col-md-8">
+										<TextInput class="border-1" @bind-Value="supplier.Phone" required />
+										<ValidationMessage For="@(() => supplier.Phone)" />
+									</div>
+									<div><p class="text-black-50">Formato admitido: xxxx-xxxx</p></div>
 								</div>
 							</div>
 
-							<div class="form-group row mb-3">
-								<label class="col-md-5 col-form-label">Correo electrónico:</label>
-								<div class="col-md-8">
-									<TextInput class="border-1" id="email" @bind-Value="supplier.Email" type="email" placeholder="correo@ejemplo.com" />
-									<ValidationMessage For="@(() => supplier.Email)" />
-								</div>
-							</div>
+							<!-- Columna derecha -->
+							<div class="container-sm">
+								<h3>Ubicación y detalles</h3>
 
-							<div class="form-group row mb-3">
-								<label class="col-md-5 col-form-label">Teléfono: <span class="text-danger">*</span></label>
-								<div class="col-md-8">
-									<TextInput class="border-1" id="phone" @bind-Value="supplier.Phone" placeholder="8888-8888" required />
-									<ValidationMessage For="@(() => supplier.Phone)" />
+								<div class="form-group row mb-3">
+									<label class="col-md-5 col-form-label">Dirección:</label>
+									<div class="col-md-8">
+										<TextInput class="border-1" @bind-Value="supplier.Address" />
+										<ValidationMessage For="@(() => supplier.Address)" />
+									</div>
 								</div>
-								<div>
-									<p class="text-black-50">Formato admitido: xxxx-xxxx</p>
+
+								<div class="form-group row mb-3">
+									<label class="col-md-5 col-form-label">Notas adicionales:</label>
+									<div class="col-md-8">
+										<InputTextArea @bind-Value="supplier.Notes" class="form-control border-1" rows="3" />
+									</div>
 								</div>
 							</div>
 						</div>
 
-						<!-- Columna derecha -->
-						<div class="container-sm">
-							<h3>Ubicación y detalles</h3>
-
-							<div class="form-group row mb-3">
-								<label class="col-md-5 col-form-label">Dirección:</label>
-								<div class="col-md-8">
-									<TextInput class="border-1" id="address" @bind-Value="supplier.Address" placeholder="Dirección completa" />
-									<ValidationMessage For="@(() => supplier.Address)" />
-								</div>
-							</div>
-
-							<div class="form-group row mb-3">
-								<label class="col-md-5 col-form-label">Notas adicionales:</label>
-								<div class="col-md-8">
-									<InputTextArea id="notes" @bind-Value="supplier.Notes" class="form-control border-1" placeholder="Información adicional..." rows="3" />
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<!-- Alerta informativa -->
-					<div class="alert alert-info mt-4" role="alert">
-						<div class="d-flex align-items-start">
-							<i class="bi bi-info-circle-fill me-2" style="font-size: 1.2rem;"></i>
-							<div>
-								<strong>Nota:</strong>
-								Los proveedores creados podrán asignarse a materiales más adelante.
-							</div>
-						</div>
-					</div>
-
-					@if (showAlert)
-					{
-						<div>
-							<Alert Color="AlertColor.Warning">
+						@if (showAlert)
+						{
+							<Alert Color="AlertColor.Warning" class="mt-3">
 								<Icon Name="IconName.ExclamationTriangleFill" />
 								<strong>@alertMessage</strong>
 							</Alert>
-						</div>
-					}
+						}
 
-					<!-- Botones de acción -->
-					<div class="d-flex justify-content-end mt-3">
-						<button type="button" class="btn btn-outline-secondary me-2" @onclick="HandleCancel">
-							Cancelar
-						</button>
-						<button type="submit" class="btn btn-primary">
-							Guardar
-						</button>
+						<div class="d-flex justify-content-end mt-3">
+							<button type="button" class="btn btn-outline-secondary me-2" @onclick="HandleCancel">Cancelar</button>
+							<button type="submit" class="btn btn-primary">Guardar</button>
+						</div>
+					</EditForm>
+				}
+				else
+				{
+					<div class="d-flex justify-content-center">
+						<Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
 					</div>
-				</EditForm>
-			}
-			else
-			{
-				<div class="d-flex justify-content-center">
-					<Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
-				</div>
-			}
+				}
+			</div>
 		</div>
 	</div>
-</div>
-
+}
 
 @code {
+	[CascadingParameter] private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
+	private ClaimsPrincipal? user;
 
-    bool showAlert;
-    string alertMessage;
+	bool showAlert;
+	string alertMessage;
 
-    [Inject] protected ToastService ToastService { get; set; }
+	private SupplierDto supplier = new SupplierDto();
 
-    //  Instancia del DTO que contendrá los datos del formulario
-    private SupplierDto supplier = new SupplierDto();
+	private bool HasPermission(string module, string action)
+		=> user?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
 
-    
+	protected override async Task OnInitializedAsync()
+	{
+		var auth = await AuthenticationStateTask;
+		user = auth.User;
+	}
 
+	private async Task HandleValidSubmit()
+	{
+		if (!HasPermission("Suppliers", DemexClaims.Create))
+		{
+			ToastService.Notify(new(ToastType.Warning, "No tienes permiso para crear proveedores."));
+			return;
+		}
 
+		supplier.IsActive = true;
 
-    // Método que se ejecuta al enviar el formulario solo es valido ojito :v
-    private async Task HandleValidSubmit()
-    {
-        supplier.IsActive = true;
+		try
+		{
+			var newSupplier = await SupplierService.AddSupplierAsync(supplier);
+			ToastService.Notify(new(ToastType.Success, $"Proveedor '{supplier.Name}' creado correctamente."));
 
-        try
-        {
+			await Task.Delay(1000);
+			NavigationManager.NavigateTo("/proveedor");
+		}
+		catch (InvalidOperationException ex)
+		{
+			showAlert = true;
+			alertMessage = ex.Message;
+		}
+		catch (Exception ex)
+		{
+			ToastService.Notify(new(ToastType.Danger, $"Error al crear proveedor: {ex.Message}"));
+		}
+	}
 
-
-            var newSupplier = await SupplierService.AddSupplierAsync(supplier);
-
-            ToastService.Notify(new(ToastType.Success, $"Se agrego correctamente a {supplier.Name}"));
-
-            Console.WriteLine($"Proveedor creado con ID: {newSupplier.Id}");
-
-            await Task.Delay(1000);
-
-            NavigationManager.NavigateTo("/proveedor");
-        }
-        catch (InvalidOperationException ex)
-        {
-            showAlert = true;
-            alertMessage = ex.Message;
-        }
-        catch (Exception ex)
-        {
-            ToastService.Notify(new(ToastType.Danger, $"Se agrego correctamente a {supplier.Name}"));
-            await Task.Delay(1000);
-            Console.WriteLine($"Error al crear proveedor: {ex.Message}");
-        }
-    }
-
-    private void HandleCancel()
-    {
-        NavigationManager.NavigateTo("/proveedor");
-    }
+	private void HandleCancel()
+	{
+		NavigationManager.NavigateTo("/proveedor");
+	}
 }
+

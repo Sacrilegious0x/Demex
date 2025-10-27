@@ -55,7 +55,9 @@ namespace LAFABRICA.Services
         public async Task<IEnumerable<Client>> GetAllClient()
         {
             using var context = _contextFactory.CreateDbContext();
-            return await context.Clients.ToListAsync();
+            return await context.Clients
+                .Where(c => c.IsActive == 1)
+                .ToListAsync();
         }
 
         public async Task<Client?> GetById(int id)
