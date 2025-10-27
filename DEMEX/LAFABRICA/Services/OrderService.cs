@@ -132,5 +132,18 @@ namespace LAFABRICA.Services
             await context.SaveChangesAsync();
             return order;
         }
+
+        public async Task<IEnumerable<Order>> GetOrdersByClientId(int clientId)
+        {
+            using var context = _contextFactory.CreateDbContext();
+
+            return await context.Orders
+                .Where(o => o.ClientId == clientId && o.IsActive == 1)
+                .Include(o => o.ProductOrders)
+                    .ThenInclude(po => po.IdProductNavigation)
+                .Include(o => o.Client)
+                .ToListAsync();
+        }
+
     }
 }
