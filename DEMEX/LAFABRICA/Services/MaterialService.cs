@@ -61,7 +61,7 @@ namespace LAFABRICA.Services
         public async Task<IEnumerable<Material>> GetAllMaterials()
         {
             using var context = _contextFactory.CreateDbContext();
-            return await context.Materials.ToListAsync();
+            return await context.Materials.Where(m => m.IsActive == true).ToListAsync();
         }
 
         public async Task<Material>? GetMaterialById(int id)

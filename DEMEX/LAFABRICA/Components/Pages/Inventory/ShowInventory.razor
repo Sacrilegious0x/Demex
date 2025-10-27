@@ -15,6 +15,31 @@
 <Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 <ConfirmDialog @ref="dialog" />
 
+<style>
+    .material-img-thumbnail {
+        width: 60px; /* Tamaño fijo para la miniatura */
+        height: 60px;
+        object-fit: cover; /* la imagen cubra el espacio sin distorsionarse */
+        border-radius: 4px;
+        border: 1px solid #ddd;
+    }
+
+    .status-sold_out {
+        color: #dc3545; /* Rojo de Bootstrap (Danger) */
+        font-weight: bold;
+    }
+
+    .status-little {
+        color: #ffc107; /* Amarillo/Naranja de Bootstrap (Warning) */
+        font-weight: bold;
+    }
+
+    .status-aceptable {
+        color: #28a745; /* Verde de Bootstrap (Success) */
+    }
+</style>
+
+
 @if (user == null)
 {
     <div class="text-center p-5">
@@ -141,7 +166,7 @@ else
                                                 @if (HasPermission("Inventory", DemexClaims.Edit))
                                                 {
                                                     <button class="btn btn-edit" @onclick="() => EditMaterial(detail.MaterialId, detail.SupplierId)">
-                                                        <Icon Name="IconName.PencilSquare" />
+                                                        <Icon class="icon-edit" Name="IconName.PencilSquare" />
                                                     </button>
                                                 }
 

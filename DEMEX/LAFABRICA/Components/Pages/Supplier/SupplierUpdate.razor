@@ -169,14 +169,21 @@ else
 
         var confirm = await dialog.ShowAsync(
             "¿Seguro?",
-            "Una vez editado se pierde la información anterior"
+            "Una vez editado se pierde la información anterior",
+            confirmDialogOptions: new ConfirmDialogOptions
+            {
+                YesButtonText = "Confirmar",
+                YesButtonColor = ButtonColor.Success,
+                NoButtonText = "Cancelar",
+                NoButtonColor = ButtonColor.Danger
+            }
         );
 
         if (confirm)
         {
             await SupplierService.UpdateSupplierAsync(supplier!);
             ToastService.Notify(new(ToastType.Success, $"Proveedor '{supplier!.Name}' editado con éxito"));
-            await Task.Delay(1000);
+            await Task.Delay(650);
             NavigationManager.NavigateTo("/proveedor");
         }
     }
