@@ -19,20 +19,20 @@ namespace LAFABRICA.Services
             return await context.Products
                 .Where(p => p.IsActive == 1)
                 .Include(p => p.ProductMaterials)
-                    .ThenInclude(pm => pm.Material) // Correcto aquí
+                    .ThenInclude(pm => pm.Material) 
                 .ToListAsync();
         }
 
-        // === MÉTODO GetById CORREGIDO ===
+        
         public async Task<Product?> GetById(int id)
         {
             using var context = _contextFactory.CreateDbContext();
             return await context.Products
                 .Include(p => p.ProductMaterials)
-                    .ThenInclude(pm => pm.Material) // <-- AÑADIDO ESTE ThenInclude
-                .FirstOrDefaultAsync(p => p.Id == id && p.IsActive == 1); // Añadido IsActive por seguridad
+                    .ThenInclude(pm => pm.Material) 
+                .FirstOrDefaultAsync(p => p.Id == id && p.IsActive == 1); 
         }
-        // === FIN CORRECCIÓN ===
+       
 
         public async Task<Product> Create(Product product)
         {
@@ -82,7 +82,7 @@ namespace LAFABRICA.Services
             var toRemove = existingList.Where(pm => !incomingIds.Contains(pm.MaterialId)).ToList();
             if (toRemove.Any())
             {
-                context.ProductMaterials.RemoveRange(toRemove); // Usar el DbSet para borrar
+                context.ProductMaterials.RemoveRange(toRemove); 
             }
 
             // Añadir

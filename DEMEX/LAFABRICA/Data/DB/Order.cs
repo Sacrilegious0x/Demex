@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations; // <-- Añadido para validaciones
-using System.ComponentModel.DataAnnotations.Schema; // <-- Añadido para ForeignKey
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema; 
 
 namespace LAFABRICA.Data.DB;
 
@@ -17,7 +17,7 @@ public partial class Order
 
     public string Priority { get; set; } = null!;
 
-    // === VALIDACIÓN AÑADIDA ===
+   
     [Required(ErrorMessage = "El total acordado es obligatorio.")]
     [Range(0.01, (double)decimal.MaxValue, ErrorMessage = "El total acordado debe ser mayor que cero.")] // Usamos decimal.MaxValue
     public decimal TotalAmount { get; set; }

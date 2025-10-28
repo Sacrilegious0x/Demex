@@ -7,27 +7,27 @@ namespace LAFABRICA.Data.DB;
 
 public partial class ClientPayment
 {
-    public int Id { get; set; } // ID
+    public int Id { get; set; } 
 
     [Required(ErrorMessage = "El monto del pago es obligatorio.")]
     [Range(0.01, double.MaxValue, ErrorMessage = "El monto debe ser mayor que cero.")]
-    public decimal Amount { get; set; } // MONTO
+    public decimal Amount { get; set; } 
 
     [Required(ErrorMessage = "La fecha del pago es obligatoria.")]
-    public DateOnly PaymentDate { get; set; } //FECHA
+    public DateOnly PaymentDate { get; set; } 
 
     [Required(ErrorMessage = "El método de pago es obligatorio.")]
-    [StringLength(50, ErrorMessage = "El método de pago no puede exceder los 50 caracteres.")] // Opcional: Limitar longitud
-    public string PaymentMethod { get; set; } = null!; // METODO (Cambiado a no nullable con = null!)
+    [StringLength(50, ErrorMessage = "El método de pago no puede exceder los 50 caracteres.")] 
+    public string PaymentMethod { get; set; } = null!; 
 
-    // PhotoVoucherUrl NO es requerido
-    [StringLength(255, ErrorMessage = "La URL del comprobante no puede exceder los 255 caracteres.")] // Opcional: Limitar longitud
-    public string? PhotoVoucherUrl { get; set; } // COMPROBANTE (Cambiado a nullable y quitado '= null!')
+    
+    [StringLength(255, ErrorMessage = "La URL del comprobante no puede exceder los 255 caracteres.")] 
+    public string? PhotoVoucherUrl { get; set; } 
 
     [Required(ErrorMessage = "Debe asociar el pago a una orden.")]
     [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar una orden válida.")]
-    public int? OrderId { get; set; } // FK DE ORDENES
+    public int? OrderId { get; set; } 
 
-    [ForeignKey("OrderId")] // Especifica la clave foránea
+    [ForeignKey("OrderId")] 
     public virtual Order? Order { get; set; }
 }

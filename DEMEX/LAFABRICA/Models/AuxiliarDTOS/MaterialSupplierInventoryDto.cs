@@ -4,7 +4,7 @@ namespace LAFABRICA.Models.AuxiliarDTOS
 {
     public class MaterialSupplierInventoryDto
     {
-        // --- PROPIEDADES DEL MATERIAL ---
+        // PROPIEDADES DEL MATERIAL
         [Required(ErrorMessage = "El nombre del material es obligatorio.")]
         [StringLength(100, ErrorMessage = "El nombre debe tener como máximo 100 caracteres.")]
         public string? MaterialName { get; set; }
@@ -19,7 +19,7 @@ namespace LAFABRICA.Models.AuxiliarDTOS
 
         public string? photoUrl { get; set; }
 
-        // --- PROPIEDADES DE INVENTARIO Y PROVEEDOR ---
+        //  PROPIEDADES DE INVENTARIO Y PROVEEDOR 
         public string? SupplierName { get; set; }
 
         [Required(ErrorMessage = "El stock entrante es obligatorio.")]

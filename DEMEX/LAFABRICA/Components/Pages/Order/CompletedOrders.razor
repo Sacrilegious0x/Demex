@@ -56,8 +56,8 @@ else
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <h3><Icon Name="IconName.CheckCircleFill"></Icon> Órdenes Completadas</h3>
-                    <a class="btn btn-secondary" href="/ordenes">
-                        <Icon Name="IconName.ArrowLeft" /> Volver a Órdenes
+                    <a class="btn btn-outline-secondary" href="/ordenes">
+                        <Icon Name="IconName.ArrowLeft" /> 
                     </a>
                 </div>
 
@@ -70,7 +70,7 @@ else
 
                     <!-- Filtro de Provincia -->
                     <div class="d-flex align-items-center gap-2">
-                        <Icon Name="IconName.Map" class="text-secondary" />
+                        <Icon Name="IconName.Funnel" class="text-secondary" />
                         <InputSelect class="form-select form-select-sm" @bind-Value="selectedLocation">
                             <option value="">Todas las Provincias</option>
                             @foreach (var location in locations)

@@ -80,8 +80,7 @@ namespace LAFABRICA.Services
         {
             new() { Module = "CLIENTS", Canview = true, Cancreate = true, Candelete = true, Canedit = true },
             new() { Module = "CLIENTS_PAYMENTS", Canview = true, Cancreate = false, Candelete = false, Canedit = false },
-            new() { Module = "INVENTORY", Canview = true, Cancreate = true, Candelete = true, Canedit = true },
-            new() { Module = "MATERIAL", Canview = true , Cancreate = true, Candelete = true, Canedit = true },
+            new() { Module = "INVENTORY", Canview = true, Cancreate = true, Candelete = true, Canedit = true },           
             new() { Module = "ORDERS", Canview = true, Cancreate = true, Candelete = true, Canedit = true },
             new() { Module = "PRODUCTS", Canview = true, Cancreate = true, Candelete = true, Canedit = true },
             new() { Module = "REPORTS", Canview = true, Cancreate = true, Candelete = true, Canedit = true },

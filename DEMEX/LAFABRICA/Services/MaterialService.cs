@@ -148,14 +148,14 @@ namespace LAFABRICA.Services
                 // Guardar los cambios en la base de datos
                 await _context.SaveChangesAsync();
 
-                // Devolver true si no revento
+                
                 return true;
             }
             catch (Exception ex)
             {
 
                 Console.WriteLine(ex.ToString());
-                // Devolver false si la operación falló
+                
                 return false;
             }
         }

@@ -24,7 +24,7 @@ namespace LAFABRICA.Services
             {
                 using var context = _contextFactory.CreateDbContext();
                 var suppliers = await context.Suppliers
-                .Where(s => s.IsActive) // FILTRO
+                .Where(s => s.IsActive) 
                 .ToListAsync();
 
                 // Mapea la entidad a la DTO (Si el modelo Supplier no es igual a SupplierDto)

@@ -16,7 +16,7 @@ namespace LAFABRICA.Services
             _context = context;
         }
 
-        // === MÉTODO CREATE CORREGIDO ===
+        
         public async Task<ClientPayment> CreatePayment(ClientPayment payment)
         {
             // Busca la orden asociada
@@ -29,18 +29,18 @@ namespace LAFABRICA.Services
             // Añade el nuevo pago al contexto
             _context.ClientPayments.Add(payment);
 
-            // === INICIO CORRECCIÓN ===
+            
             // Actualiza el campo Advancement de la orden sumando el nuevo monto
             order.Advancement += payment.Amount;
             _context.Orders.Update(order); // Marca la orden como modificada
-            // === FIN CORRECCIÓN ===
+            
 
             // Guarda ambos cambios (el nuevo pago y la actualización de la orden)
             await _context.SaveChangesAsync();
             return payment;
         }
 
-        // === MÉTODO DELETE CORREGIDO ===
+        
         public async Task<bool> DeletePayment(int id)
         {
             // Busca el pago Y su orden asociada
@@ -52,7 +52,7 @@ namespace LAFABRICA.Services
                 return false; // No encontrado
             }
 
-            // === INICIO CORRECCIÓN ===
+           
             // Si la orden existe, resta el monto del pago del adelanto total
             if (payment.Order != null)
             {
@@ -64,12 +64,12 @@ namespace LAFABRICA.Services
                 }
                 _context.Orders.Update(payment.Order); // Marca la orden como modificada
             }
-            // === FIN CORRECCIÓN ===
+           
 
 
             _context.ClientPayments.Remove(payment); // Borrado físico del pago
             await _context.SaveChangesAsync(); // Guarda ambos cambios
-            return true; // Borrado exitoso
+            return true; 
         }
 
         public async Task<IEnumerable<ClientPayment>> GetAllPayments()
@@ -99,7 +99,7 @@ namespace LAFABRICA.Services
                                  .ToListAsync();
         }
 
-        // === MÉTODO UPDATE CORREGIDO (Simplificado asumiendo que NO se cambia OrderId) ===
+       
         public async Task<ClientPayment> UpdatePayment(int id, ClientPayment payment)
         {
             // Incluye la orden para poder actualizar el Advancement
@@ -117,7 +117,7 @@ namespace LAFABRICA.Services
                 throw new InvalidOperationException($"No se encontró la orden asociada al pago {id} para actualizar el adelanto.");
             }
 
-            // Guardamos el monto anterior ANTES de aplicar los nuevos valores
+            // Guardamos el monto anterior antes de aplicar los nuevos valores
             decimal oldAmount = existingPayment.Amount;
 
             // Actualizar propiedades simples del pago
@@ -127,7 +127,7 @@ namespace LAFABRICA.Services
             // existingPayment.OrderId = existingPayment.OrderId; // No debería cambiar OrderId al editar pago
 
 
-            // === INICIO CORRECCIÓN ===
+          
             // Calculamos la diferencia y actualizamos el Advancement de la orden
             decimal amountDifference = existingPayment.Amount - oldAmount; // Nuevo Monto - Monto Viejo
             existingPayment.Order.Advancement += amountDifference;
@@ -137,10 +137,10 @@ namespace LAFABRICA.Services
                 existingPayment.Order.Advancement = 0;
             }
             _context.Orders.Update(existingPayment.Order); // Marca la orden como modificada
-            // === FIN CORRECCIÓN ===
+            
 
 
-            await _context.SaveChangesAsync(); // Guarda ambos cambios
+            await _context.SaveChangesAsync(); 
             return existingPayment;
         }
     }

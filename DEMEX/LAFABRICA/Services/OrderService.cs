@@ -58,7 +58,7 @@ namespace LAFABRICA.Services
                 .FirstOrDefaultAsync(o => o.Id == id && o.IsActive == 1); // Añadido filtro IsActive por si acaso
         }
 
-        // === MÉTODO UPDATE CORREGIDO ===
+        
         public async Task<Order> Update(int id, Order order)
         {
             using var context = _contextFactory.CreateDbContext();
@@ -71,10 +71,10 @@ namespace LAFABRICA.Services
                 throw new KeyNotFoundException($"La orden con el id {id} no fue encontrada.");
             }
 
-            // 1. Actualizar propiedades simples de la orden
+            //  Actualizar propiedades simples de la orden
             context.Entry(existingOrder).CurrentValues.SetValues(order);
 
-            // === INICIO DE LA CORRECCIÓN: Sincronizar ProductOrders ===
+            
 
             // Lista de productos que vienen del formulario/UI
             var updatedProductOrders = order.ProductOrders ?? new List<ProductOrder>();
@@ -82,7 +82,7 @@ namespace LAFABRICA.Services
             // Lista de productos actualmente en la base de datos para esta orden
             var dbProductOrders = existingOrder.ProductOrders.ToList();
 
-            // 1. Identificar y ELIMINAR productos que ya no están en la lista actualizada
+            //  Identificar y ELIMINAR productos que ya no están en la lista actualizada
             var productsToRemove = dbProductOrders
                 .Where(dbPo => !updatedProductOrders.Any(updPo => updPo.IdProduct == dbPo.IdProduct))
                 .ToList();
@@ -93,20 +93,20 @@ namespace LAFABRICA.Services
                 context.ProductOrders.Remove(productToRemove);
             }
 
-            // 2. Identificar y AÑADIR o ACTUALIZAR productos
+            //Identificar y AÑADIR o ACTUALIZAR productos
             foreach (var updatedPo in updatedProductOrders)
             {
                 var existingPo = dbProductOrders.FirstOrDefault(dbPo => dbPo.IdProduct == updatedPo.IdProduct);
 
                 if (existingPo != null)
                 {
-                    // 3. ACTUALIZAR: El producto ya existe, solo actualiza la cantidad
+                    //  El producto ya existe, solo actualiza la cantidad
                     existingPo.Quantity = updatedPo.Quantity;
                     // No es necesario reasignar IdProductNavigation aquí si ya estaba cargado
                 }
                 else
                 {
-                    // 4. AÑADIR: El producto es nuevo en la orden
+                    //  El producto es nuevo en la orden
                     //    Creamos la nueva entidad y la añadimos al contexto.
                     //    Es importante asignar la navegación a la orden existente.
                     var newPo = new ProductOrder
@@ -114,20 +114,17 @@ namespace LAFABRICA.Services
                         IdOrder = existingOrder.Id, // Asigna el ID de la orden existente
                         IdProduct = updatedPo.IdProduct,
                         Quantity = updatedPo.Quantity,
-                        // NO asignamos IdOrderNavigation ni IdProductNavigation aquí,
-                        // EF lo manejará basado en los IDs si las claves foráneas están bien configuradas.
-                        // Opcionalmente, podrías buscar el producto y asignarlo si quieres ser explícito:
-                        // IdProductNavigation = await _context.Products.FindAsync(updatedPo.IdProduct) 
+                         
                     };
                     // Añadimos la nueva relación a la lista rastreada por EF
                     existingOrder.ProductOrders.Add(newPo);
                     // O directamente al contexto si prefieres: _context.ProductOrders.Add(newPo);
                 }
             }
-            // === FIN DE LA CORRECCIÓN ===
+            
 
 
-            // 3. Guardar todo. EF Core se encargará de comparar las listas,
+            
             // borrar los registros viejos en PRODUCT_ORDER y añadir los nuevos.
             await context.SaveChangesAsync();
             return order;

@@ -59,8 +59,9 @@ else
 {
     <div class="card shadow-sm h-100 d-flex flex-column">
         <div class="card-header p-4 border-bottom">
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <h1 class="h4 card-title text-gray-900">Gestión de Proveedores</h1>
+            <div class="d-flex justify-content-between align-items-center mt-3">
+
+                <h2> <Icon Name="IconName.Truck" /> Gestión de Proveedores</h2>
 
                 @if (HasPermission("Suppliers", DemexClaims.Create))
                 {
@@ -70,7 +71,7 @@ else
                 }
             </div>
 
-            <div class="d-flex align-items-center">
+            <div class="d-flex align-items-center mt3">
                 <div class="input-group" style="max-width:480px;">
                     <span class="input-group-text bg-white border-end-0">
                         <i class="bi bi-search text-gray-400"></i>
