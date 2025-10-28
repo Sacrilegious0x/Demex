@@ -21,7 +21,7 @@
         else if (paymentForDetails != null)
         {
             <div class="row">
-                @* --- COLUMNA 1: DETALLES DEL PAGO Y ORDEN --- *@
+                @* --- DETALLES DEL PAGO Y ORDEN --- *@
                 <div class="col-md-6">
                     <h5><Icon Name="IconName.CreditCardFill" /> Detalles del Pago</h5>
                     <p><strong>ID Pago:</strong> @paymentForDetails.Id</p>
@@ -46,7 +46,7 @@
                     }
                 </div>
 
-                @* --- COLUMNA 2: COMPROBANTE --- *@
+                @* --- COMPROBANTE --- *@
                 <div class="col-md-6">
                     <h5><Icon Name="IconName.Image" /> Comprobante Adjunto</h5>
                     @if (!string.IsNullOrEmpty(paymentForDetails.PhotoVoucherUrl))
