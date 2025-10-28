@@ -12,7 +12,6 @@
 @inject ToastService ToastService
 @inject IWebHostEnvironment WebHostEnvironment
 
-
 <PageTitle>Editar Producto</PageTitle>
 
 <Toasts class="p-3" Autohide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
@@ -61,8 +60,20 @@ else
                         <h5>Información Básica</h5>
                         <div class="mb-3">
                             <label class="form-label">Nombre del producto *</label>
-                            <InputText @bind-Value="productToEdit.Name" class="form-control" />
+                            <InputText @bind-Value="productToEdit.Name" class="@GetNameClass()" maxlength="50" />
                             <ValidationMessage For="@(() => productToEdit.Name)" />
+                            <div class="d-flex justify-content-between mt-1">
+                                <small class="text-muted">Máximo 50 caracteres</small>
+                                <small class="@GetNameCounterClass()">
+                                    @(productToEdit.Name?.Length ?? 0)/50
+                                </small>
+                            </div>
+                            @if (NameHasError())
+                            {
+                                <div class="invalid-feedback d-block">
+                                    El nombre no puede tener más de 50 caracteres
+                                </div>
+                            }
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Categoría *</label>
@@ -78,16 +89,40 @@ else
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Descripción</label>
-                            <InputTextArea @bind-Value="productToEdit.Description" class="form-control" rows="3" />
+                            <InputTextArea @bind-Value="productToEdit.Description" class="@GetDescriptionClass()" rows="3" maxlength="100" />
+                            <div class="d-flex justify-content-between mt-1">
+                                <small class="text-muted">Máximo 100 caracteres</small>
+                                <small class="@GetDescriptionCounterClass()">
+                                    @(productToEdit.Description?.Length ?? 0)/100
+                                </small>
+                            </div>
+                            @if (DescriptionHasError())
+                            {
+                                <div class="invalid-feedback d-block">
+                                    La descripción no puede tener más de 100 caracteres
+                                </div>
+                            }
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Precio base (₡) *</label>
-                            <InputNumber @bind-Value="productToEdit.PriceBase" class="form-control" />
+                            <InputNumber @bind-Value="productToEdit.PriceBase" class="@GetPriceClass()" min="0" />
                             <ValidationMessage For="@(() => productToEdit.PriceBase)" />
+                            @if (PriceHasError())
+                            {
+                                <div class="invalid-feedback d-block">
+                                    El precio no puede ser negativo
+                                </div>
+                            }
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Cambiar Foto del Producto</label>
-                            <InputFile OnChange="HandleFileSelected" class="form-control" />
+                            <InputFile OnChange="HandleFileSelected" class="@GetFileClass()" accept=".jpg,.jpeg,.png" />
+                            @if (FileHasError())
+                            {
+                                <div class="invalid-feedback d-block">
+                                    @fileValidationError
+                                </div>
+                            }
                             @if (!string.IsNullOrEmpty(currentPhotoUrl))
                             {
                                 <div class="mt-2 text-center">
@@ -95,6 +130,7 @@ else
                                     <img src="@currentPhotoUrl" alt="Foto actual" style="max-height: 150px; border-radius: 5px;" />
                                 </div>
                             }
+                            <small class="text-muted">Formatos permitidos: .jpg, .jpeg, .png</small>
                         </div>
                     </div>
 
@@ -108,14 +144,16 @@ else
                         @if (isCustomizable)
                         {
                             <div class="mb-3">
-                                <label class="form-label">Complejidad</label>
+                                <label class="form-label">Complejidad *</label>
                                 <InputSelect @bind-Value="productToEdit.Complexity" class="form-select">
+                                    <option value="">Seleccione complejidad</option>
                                     <option value="Muy baja">Muy baja</option>
                                     <option value="Baja">Baja</option>
                                     <option value="Media">Media</option>
                                     <option value="Alta">Alta</option>
                                     <option value="Muy alta">Muy alta</option>
                                 </InputSelect>
+                                <ValidationMessage For="@(() => productToEdit.Complexity)" />
                             </div>
                         }
 
@@ -148,7 +186,7 @@ else
 
                 <div class="d-flex justify-content-end">
                     <a href="/productos" class="btn btn-outline-secondary me-2">Cancelar</a>
-                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="submit" class="btn btn-primary" disabled="@(!IsFormValid())">Guardar</button>
                 </div>
             </EditForm>
         </div>
@@ -169,8 +207,35 @@ else
 
     private IBrowserFile? selectedFile;
     private string? currentPhotoUrl;
+    private string? fileValidationError;
 
     private ConfirmDialog dialog = default!;
+
+    // Formatos de imagen permitidos - solo JPG y PNG
+    private readonly string[] allowedImageTypes = new[]
+    {
+        "image/jpeg", "image/png"
+    };
+
+    private readonly string[] allowedExtensions = new[]
+    {
+        ".jpg", ".jpeg", ".png"
+    };
+
+    // Métodos para calcular clases condicionales
+    private string GetNameClass() => $"form-control {(NameHasError() ? "is-invalid" : "")}";
+    private string GetNameCounterClass() => NameHasError() ? "text-danger" : "text-muted";
+    private bool NameHasError() => productToEdit?.Name?.Length > 50;
+
+    private string GetDescriptionClass() => $"form-control {(DescriptionHasError() ? "is-invalid" : "")}";
+    private string GetDescriptionCounterClass() => DescriptionHasError() ? "text-danger" : "text-muted";
+    private bool DescriptionHasError() => productToEdit?.Description?.Length > 100;
+
+    private string GetPriceClass() => $"form-control {(PriceHasError() ? "is-invalid" : "")}";
+    private bool PriceHasError() => productToEdit?.PriceBase < 0;
+
+    private string GetFileClass() => $"form-control {(FileHasError() ? "is-invalid" : "")}";
+    private bool FileHasError() => !string.IsNullOrEmpty(fileValidationError);
 
     protected override async Task OnInitializedAsync()
     {
@@ -190,6 +255,12 @@ else
                 currentPhotoUrl = productToEdit.PhotoUrl;
                 allMaterials = await materialService.GetAllMaterials();
                 selectedMaterialIds = productToEdit.ProductMaterials.Select(pm => pm.MaterialId).ToHashSet();
+
+                // Asegurar que Complexity nunca sea null
+                if (string.IsNullOrWhiteSpace(productToEdit.Complexity))
+                {
+                    productToEdit.Complexity = isCustomizable ? "" : "Muy baja";
+                }
             }
         }
         catch (Exception ex)
@@ -201,7 +272,6 @@ else
 
     private bool HasPermission(string module, string action)
         => user?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
-
 
     private void OnMaterialCheckboxChanged(int materialId, object? checkedValue)
     {
@@ -220,8 +290,71 @@ else
 
     private void HandleFileSelected(InputFileChangeEventArgs e)
     {
+        fileValidationError = null;
         selectedFile = e.File;
+
+        // Validar tipo de archivo
+        if (selectedFile != null)
+        {
+            // Validar por tipo MIME
+            if (!allowedImageTypes.Contains(selectedFile.ContentType))
+            {
+                fileValidationError = "Tipo de archivo no permitido. Formatos aceptados: .jpg, .jpeg, .png";
+                selectedFile = null;
+                return;
+            }
+
+            // Validar por extensión
+            var fileExtension = Path.GetExtension(selectedFile.Name).ToLowerInvariant();
+            if (!allowedExtensions.Contains(fileExtension))
+            {
+                fileValidationError = "Tipo de archivo no permitido. Formatos aceptados: .jpg, .jpeg, .png";
+                selectedFile = null;
+                return;
+            }
+
+            // Validar tamaño del archivo (máximo 5MB)
+            if (selectedFile.Size > 5 * 1024 * 1024)
+            {
+                fileValidationError = "El archivo es demasiado grande. Tamaño máximo permitido: 5MB";
+                selectedFile = null;
+                return;
+            }
+        }
+
         currentPhotoUrl = null;
+        StateHasChanged();
+    }
+
+    private bool IsFormValid()
+    {
+        if (productToEdit == null) return false;
+
+        // Validar nombre
+        if (string.IsNullOrWhiteSpace(productToEdit.Name) || NameHasError())
+            return false;
+
+        // Validar categoría
+        if (string.IsNullOrWhiteSpace(productToEdit.Category))
+            return false;
+
+        // Validar descripción
+        if (DescriptionHasError())
+            return false;
+
+        // Validar precio
+        if (PriceHasError())
+            return false;
+
+        // Validar archivo (si se seleccionó uno)
+        if (FileHasError())
+            return false;
+
+        // Validar complejidad si es personalizable
+        if (isCustomizable && string.IsNullOrWhiteSpace(productToEdit.Complexity))
+            return false;
+
+        return true;
     }
 
     // Método que guarda los cambios, ahora se llama desde la confirmación
@@ -231,6 +364,38 @@ else
 
         try
         {
+            // Validaciones adicionales antes de enviar
+            if (NameHasError())
+            {
+                ToastService.Notify(new(ToastType.Danger, "El nombre no puede tener más de 50 caracteres"));
+                return;
+            }
+
+            if (DescriptionHasError())
+            {
+                ToastService.Notify(new(ToastType.Danger, "La descripción no puede tener más de 100 caracteres"));
+                return;
+            }
+
+            if (PriceHasError())
+            {
+                ToastService.Notify(new(ToastType.Danger, "El precio base no puede ser negativo"));
+                return;
+            }
+
+            // Validar complejidad si es personalizable
+            if (isCustomizable && string.IsNullOrWhiteSpace(productToEdit.Complexity))
+            {
+                ToastService.Notify(new(ToastType.Danger, "Debe seleccionar una complejidad para productos personalizables"));
+                return;
+            }
+
+            // Asegurarse de que Complexity nunca sea null
+            if (string.IsNullOrWhiteSpace(productToEdit.Complexity))
+            {
+                productToEdit.Complexity = "Muy baja";
+            }
+
             if (selectedFile != null)
             {
                 var uploadsFolder = Path.Combine(WebHostEnvironment.WebRootPath, "images", "products");
@@ -248,9 +413,11 @@ else
             }
 
             productToEdit.IsCustom = isCustomizable ? (byte)1 : (byte)0;
+
+            // Si no es personalizable, forzar complejidad "Muy baja"
             if (!isCustomizable)
             {
-                productToEdit.Complexity = "Baja";
+                productToEdit.Complexity = "Muy baja";
             }
 
             productToEdit.ProductMaterials = selectedMaterialIds.Select(id => new ProductMaterial { ProductId = ProductId, MaterialId = id }).ToList();
@@ -269,6 +436,13 @@ else
     // Nuevo método que se llama al enviar el formulario
     private async Task ShowConfirmationAsync()
     {
+        // Primero validamos el formulario antes de mostrar la confirmación
+        if (!IsFormValid())
+        {
+            ToastService.Notify(new(ToastType.Danger, "Error de validación", "Por favor, corrija los errores en el formulario antes de guardar."));
+            return;
+        }
+
         var options = new ConfirmDialogOptions
         {
             YesButtonText = "Confirmar",

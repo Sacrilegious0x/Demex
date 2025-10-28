@@ -34,8 +34,8 @@ namespace LAFABRICA.Services
 
             await addInMaterial_Supplier(material.Id, suppleirId, quantityToMaterialSupplier);
 
-            await addInInventory(material.Id,minimumQuantity);
-            
+            await addInInventory(material.Id, minimumQuantity);
+
 
             return material;
         }
@@ -173,7 +173,7 @@ namespace LAFABRICA.Services
                     MaterialId = materialId,
                     MinimunQuantity = (int)minimumQuantity,
                     State = "default",
-                    Quantity = 1
+                    Quantity = (int)(minimumQuantity ?? 0)
 
                 };
 
