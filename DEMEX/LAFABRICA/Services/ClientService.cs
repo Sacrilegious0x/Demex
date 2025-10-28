@@ -1,8 +1,9 @@
-﻿using LAFABRICA.Models.Interface;
-using Microsoft.EntityFrameworkCore;
+﻿using LAFABRICA.Components.Pages.Order;
 using LAFABRICA.Data.DB;
-using System.Data;
 using LAFABRICA.Models.AuxiliarDTOS;
+using LAFABRICA.Models.Interface;
+using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace LAFABRICA.Services
 {
@@ -133,7 +134,7 @@ namespace LAFABRICA.Services
                 .Where(o => o.ClientId == clientId && o.State == "Finalizada")
                 .CountAsync();
 
-            
+            client.QuantityPurchase = finalizedOrdersCount;
             client.IsFrequent = (byte)(finalizedOrdersCount >= 5 ? 1 : 0);
 
             

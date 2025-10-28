@@ -46,9 +46,6 @@ namespace LAFABRICA.Services
             context.Users.Add(user);
             await context.SaveChangesAsync();
 
-            // 🔹 (Opcional) Enviar correo con la contraseña temporal
-            // await emailService.SendAsync(user.Email, "Cuenta creada", $"Tu contraseña temporal es: {randomPassword}");
-
             return user;
         }
 

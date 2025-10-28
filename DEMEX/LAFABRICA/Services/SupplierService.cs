@@ -157,7 +157,17 @@ namespace LAFABRICA.Services
                 throw new InvalidOperationException("El contacto del proveedor ya está registrado por un proveedor activo");
             }
 
-                
+            bool dataChanged =
+                supplier.Name != updatedSupplierDto.Name ||
+                supplier.Phone != updatedSupplierDto.Phone ||
+                supplier.Email != updatedSupplierDto.Email ||
+                supplier.Address != updatedSupplierDto.Address ||
+                supplier.Notes != updatedSupplierDto.Notes ||
+                supplier.IsActive != updatedSupplierDto.IsActive;
+
+            if (!dataChanged)
+                return false;
+
             supplier.Name = updatedSupplierDto.Name;
             supplier.Address = updatedSupplierDto.Address;
             supplier.Phone = updatedSupplierDto.Phone;
