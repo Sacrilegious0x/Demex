@@ -197,16 +197,23 @@ namespace LAFABRICA.Pages
                     ))
                     .ToList();
 
-                // CÁLCULO: Pestaña 'Alertas de Inventario'
-                // Consulta la tabla de inventario y filtra solo los que están 'Bajo'.
-                inventoryAlertsPlaceholder = await _context.Inventories // <-- 1. Tu tabla
-                    .Where(i => i.State == "Bajo") // Filtramos solo los que están 'Bajo'
-                    .Include(i => i.Material)     // <-- 2. El "puente" de navegación
+                // --- CÁLCULO: Pestaña 'Alertas de Inventario' ---
+                inventoryAlertsPlaceholder = await _context.Inventories
+                    // Filtro donde la cantidad actual es menor o igual a la mínima
+                    .Where(i => i.Quantity <= i.MinimunQuantity)
+
+                    .Include(i => i.Material)
+
+                    // 4. Proyecta los resultados a tu modelo InventoryAlertPlaceholder SIN NOMBRES DE ARGUMENTO.
                     .Select(i => new InventoryAlertPlaceholder(
-                        i.Material.Name, // <-- 3. El nombre del material (usando el puente)
+                        // Posición 1: material
+                        i.Material.Name,
+                        // Posición 2: currentStock
                         i.Quantity,
+                        // Posición 3: minStock
                         i.MinimunQuantity,
-                        i.State
+                        // Posición 4: status
+                        i.Quantity == 0 ? "Agotado" : "Bajo"
                     ))
                     .ToListAsync();
             }
