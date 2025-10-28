@@ -129,7 +129,7 @@ else
 								</div>
 							</div>
 
-							<!-- Esto ya estaba bindeado al DTO, está correcto -->
+							<!-- Esto ya estaba bindeado al DTO-->
 							<div class="form-group row mb-3">
 								<label class="col-md-5 col-form-label">Stock Mínimo: <span class="text-danger">*</span></label>
 								<div class="col-md-8">
@@ -227,7 +227,7 @@ else
 				return;
 			}
 
-			// CAMBIO 5: Mapear el DTO a la entidad Material
+			// Mapear el DTO a la entidad Material
 			var newMaterial = new Material
 			{
 				Name = Material_Supp_Inv_Dto.MaterialName,
@@ -291,7 +291,7 @@ else
 		selectedImage = e.File;
 	}
 
-	// --- Método para subir el archivo al servidor (sin cambios) ---
+	//  Método para subir el archivo al servidor (sin cambios) 
 	private async Task<string?> UploadFileAsync()
 	{
 		if (selectedImage == null)

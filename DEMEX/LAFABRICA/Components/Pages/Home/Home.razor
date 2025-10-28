@@ -157,33 +157,31 @@
     {
         try
         {
-            // === Carga secuencial ===
+            // Carga secuencial 
             var allProducts = await productService.GetAllProducts();
             var allOrders = await orderService.GetAllOrders();
             var allPayments = await paymentService.GetAllPayments();
 
-            // 2. CORRECCIÓN: Cálculo de Alertas de Inventario (¡Directamente en el DbContext!)
-            // Esta consulta cumple con:
-            // a) Material.IsActive == true
-            // b) MaterialSupplier.Quantity (Stock) <= Inventory.MinimunQuantity (Alerta Mínima)
+            // Cálculo de Alertas de Inventario 
+           
             inventoryAlertCount = await _context.Materials
-                // Paso 1: Filtrar solo materiales activos (IsActive = 1 o true)
+                // Filtrar solo materiales activos (IsActive = 1 o true)
                 .Where(m => m.IsActive == true || m.IsActive == true)
 
-                // Paso 2: Unir con Inventario y MaterialSupplier
+                //  Unir con Inventario y MaterialSupplier
                 .Join(_context.Inventories,
                       m => m.Id,
                       i => i.MaterialId,
                       (m, i) => new { Material = m, Inventory = i })
 
-                // Nota: Usamos SelectMany para obtener todas las posibles relaciones MaterialSupplier
+                //  Usamos SelectMany para obtener todas las posibles relaciones MaterialSupplier
                 .SelectMany(
                     anon => _context.MaterialSuppliers
                                     .Where(ms => ms.MaterialId == anon.Material.Id),
                     (anon, ms) => new { anon.Material, anon.Inventory, MaterialSupplier = ms }
                 )
 
-                // Paso 3: Aplicar la condición de Alerta: Stock Actual <= Cantidad Mínima
+                //  Aplicar la condición de Alerta: Stock Actual <= Cantidad Mínima
                 // Se verifica que Quantity tenga un valor antes de comparar.
                 .CountAsync(dto => dto.MaterialSupplier.Quantity.HasValue && dto.MaterialSupplier.Quantity <= dto.Inventory.MinimunQuantity);
 

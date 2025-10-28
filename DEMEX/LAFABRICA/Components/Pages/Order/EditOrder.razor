@@ -409,10 +409,10 @@ else
         }
     }
 
-    // === ShowConfirmationAsync CORREGIDO ===
+    
     private async Task ShowConfirmationAsync()
     {
-        // Validaciones previas
+        
         if (!cartItems.Any())
         {
             ToastService.Notify(new(ToastType.Warning, "Faltan Productos", "Añada productos antes de guardar."));
@@ -432,7 +432,7 @@ else
             NoButtonText = "No, cancelar",
             NoButtonColor = ButtonColor.Secondary
         };
-        // Mostrar diálogo CON ARGUMENTOS
+        // Mostrar diálogo 
         var confirmation = await dialog.ShowAsync(
             title: "¿Confirmar Cambios?",
             message1: $"¿Estás seguro de que deseas guardar las modificaciones para la orden #{orderToEdit?.Id}?",
@@ -444,10 +444,10 @@ else
         }
     }
 
-    // === ShowFinishConfirmationAsync CORREGIDO ===
+    
     private async Task ShowFinishConfirmationAsync()
     {
-        // Validaciones previas
+        
         if (!cartItems.Any())
         {
             ToastService.Notify(new(ToastType.Warning, "Faltan Productos", "Añada productos antes de finalizar."));

@@ -157,7 +157,7 @@ else
 }
 
 @code {
-    // --- Autenticación y Claims ---
+    // Autenticación y Claims
     [CascadingParameter] private Task<AuthenticationState>? authenticationStateTask { get; set; }
     private ClaimsPrincipal? user;
 
@@ -168,14 +168,14 @@ else
     private ConfirmDialog dialog = default!;
     private OrderDetailsModal detailsModal = default!;
 
-    // === VARIABLES DE FILTRO ===
+    
     private string searchText = string.Empty;
     private string selectedLocation = "";
     private DateTime? filterStartDate;
     private DateTime? filterEndDate;
     private List<string> locations = new();
 
-    // === PROPIEDAD COMPUTADA DE FILTROS ===
+   
     private IEnumerable<Order> filteredOrders =>
         orders?
             .Where(o => string.IsNullOrEmpty(selectedLocation) || o.Client?.Location == selectedLocation)

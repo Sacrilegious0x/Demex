@@ -184,14 +184,14 @@ else
 }
 
 @code {
-    // --- Autenticación y Claims ---
+    //  Autenticación y Claims
     [CascadingParameter] private Task<AuthenticationState>? authenticationStateTask { get; set; }
     private ClaimsPrincipal? user;
 
     private bool HasPermission(string module, string action)
         => user?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
 
-    // --- Datos y estados ---
+    // Datos y estados 
     private List<Order>? orders;
     private bool InitialLoadComplete = false;
     private ConfirmDialog dialog = default!;

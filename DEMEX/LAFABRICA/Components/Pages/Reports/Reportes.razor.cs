@@ -10,7 +10,7 @@ namespace LAFABRICA.Pages
 {
     public partial class ShowReports : ComponentBase, IAsyncDisposable
     {
-        // --- Inyecciones (Estas están bien como private) ---
+        
         [Inject] private IOrderService orderService { get; set; }
         [Inject] private IProductService productService { get; set; }
         [Inject] private IClientService clientService { get; set; }
@@ -19,74 +19,73 @@ namespace LAFABRICA.Pages
         [Inject] private IJSRuntime JSRuntime { get; set; }
         [Inject] private AppDbContext _context { get; set; }
 
-        // --- Definiciones de tipos (Pueden ser public o protected) ---
+        //  Definiciones de tipos (Pueden ser public o protected) 
         public record SalesDataPoint(string Month, decimal Ventas, int Ordenes);
         public record CategoryDataPoint(string Name, decimal Value, string Color);
         public record TopClientPlaceholder(int Rank, string name, int orders, decimal total);
         public record InventoryAlertPlaceholder(string material, int currentStock, int minStock, string status);
 
-        // --- Propiedades para el estado de la UI (Deben ser PROTECTED) ---
+        // --- Propiedades para el estado de la UI ---
         protected bool isLoading = true;
         protected string selectedPeriod = "Últimos 6 meses";
         protected List<string> periodOptions = new() { "Último mes", "Últimos 3 meses", "Últimos 6 meses", "Último año" };
         protected string selectedTab = "sales";
 
-        // --- Propiedades para las métricas (Deben ser PROTECTED) ---
+        // --- Propiedades para las métricas  ---
         protected decimal totalSales = 0;
         protected int totalOrders = 0;
         protected decimal avgOrderValue = 0;
         protected int activeClientsCount = 0;
 
-        // --- Listas para los datos (Deben ser PROTECTED) ---
+        // --- Listas para los datos ---
         protected List<InventoryAlertPlaceholder> inventoryAlertsPlaceholder = new();
         protected List<TopClientPlaceholder> topClientsPlaceholder = new();
         protected List<KeyValuePair<string, int>> topProductsPlaceholder = new();
 
-        // --- Listas internas (Pueden ser PRIVATE) ---
+        // --- Listas internas  ---
         private List<SalesDataPoint> salesData = new();
         private List<CategoryDataPoint> categoryData = new();
 
-        // --- Ciclos de Vida (Ya son protected) ---
+        // --- Ciclos de Vida  ---
         protected override async Task OnInitializedAsync()
         {
             isLoading = true;
             await LoadReportDataAsync();
             isLoading = false;
         }
-        // CÓDIGO NUEVO:
+        
         protected override void OnInitialized()
         {
-            // Solo establece el estado de carga. La carga de datos
-            // se moverá a OnAfterRenderAsync para la carga inicial.
+            
             isLoading = true;
         }
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             // Este método se ejecuta DESPUÉS de que el HTML se renderiza.
-            // Si es la PRIMERA vez que se renderiza (firstRender == true):
+            
             if (firstRender)
             {
-                // 1. Carga los datos de la base de datos
+               
                 await LoadReportDataAsync();
 
-                // 2. Marca la carga como completada
+                
                 isLoading = false;
 
-                // 3. Forzamos una actualización de la UI (para ocultar el spinner)
+                
                 StateHasChanged();
 
-                // 4. AHORA que los datos están listos y la UI actualizada,
-                //    podemos llamar a JavaScript para que dibuje los gráficos.
+                
+                
                 await RenderCharts();
             }
         }
 
-        // --- Métodos de carga (Puede ser PRIVATE) ---
+        //  Métodos de carga 
         private async Task LoadReportDataAsync()
         {
             try
             {
-                // --- 1. Definición del Período ---
+                // Definición del Período
                 // Establece las fechas de inicio y fin basadas en la selección del dropdown.
                 DateTime endDate = DateTime.Now;
                 DateTime startDate;
@@ -101,7 +100,7 @@ namespace LAFABRICA.Pages
                 DateOnly startDateOnly = DateOnly.FromDateTime(startDate);
                 DateOnly endDateOnly = DateOnly.FromDateTime(endDate);
 
-                // --- 2. Carga Principal de Datos ---
+                //  Carga Principal de Datos 
                 // Obtiene todas las órdenes activas del período, incluyendo sus clientes
                 // y los detalles de producto (ProductOrders) para cálculos posteriores.
                 var ordersInPeriod = await _context.Orders
@@ -111,9 +110,9 @@ namespace LAFABRICA.Pages
                         .ThenInclude(po => po.IdProductNavigation)
                     .ToListAsync();
 
-                // --- 3. Cálculo de Métricas (Tarjetas Superiores) ---
+                // Cálculo de Métricas (Tarjetas Superiores) 
 
-                // CÁLCULO: Clientes Activos
+                // Clientes Activos
                 // Cuenta cuántos clientes únicos (agrupando por ID) tienen al menos
                 // una orden que NO esté 'Finalizada' en el período.
                 activeClientsCount = ordersInPeriod
@@ -121,27 +120,27 @@ namespace LAFABRICA.Pages
                     .GroupBy(o => o.Client.Id)
                     .Count();
 
-                // CÁLCULO: Ventas Totales
+                // Ventas Totales
                 // Suma el 'TotalAmount' únicamente de las órdenes que están 'Finalizada'.
                 totalSales = ordersInPeriod
                     .Where(o => o.State == "Finalizada")
                     .Sum(o => o.TotalAmount);
 
-                // CÁLCULO: Total Órdenes (Pendientes)
+                // Total Órdenes (Pendientes)
                 // Cuenta cuántas órdenes tienen un estado DIFERENTE a 'Finalizada'.
                 totalOrders = ordersInPeriod
                     .Where(o => o.State != "Finalizada")
                     .Count();
 
-                // CÁLCULO: Valor Promedio
+                // Valor Promedio
                 // Divide las Ventas Totales (de finalizadas) entre el número
                 // de órdenes finalizadas para obtener el promedio por venta.
                 int finalizedOrdersCount = ordersInPeriod.Count(o => o.State == "Finalizada");
                 avgOrderValue = finalizedOrdersCount > 0 ? totalSales / finalizedOrdersCount : 0;
 
-                // --- 4. Preparación de Datos para Gráficos y Pestañas ---
+                // Preparación de Datos para Gráficos y Pestañas
 
-                // CÁLCULO: Gráfico de Tendencia de Ventas y Órdenes por Mes
+                // Gráfico de Tendencia de Ventas y Órdenes por Mes
                 // Agrupa todas las órdenes por mes y suma sus totales y conteos
                 // para mostrar en los gráficos de líneas/barras.
                 // NOTA: Este gráfico suma el total de TODAS las órdenes (incluidas pendientes).
@@ -155,7 +154,7 @@ namespace LAFABRICA.Pages
                     .OrderBy(d => DateTime.ParseExact(d.Month, "MMM", new CultureInfo("es-ES")))
                     .ToList();
 
-                // CÁLCULO: Pestaña 'Mejores Clientes'
+                // Pestaña 'Mejores Clientes'
                 // Agrupa las órdenes (sin importar estado) por cliente, suma el total gastado
                 // por cada uno, se queda con el Top 5 y les asigna un ranking.
                 topClientsPlaceholder = ordersInPeriod
@@ -169,11 +168,11 @@ namespace LAFABRICA.Pages
                     .Select((c, index) => c with { Rank = index + 1 })
                     .ToList();
 
-                // CÁLCULO: Pestaña 'Productos Más Vendidos'
+                // Pestaña 'Productos Más Vendidos'
                 // Filtra solo órdenes 'Finalizada', LUEGO expande en líneas de detalle,
                 // agrupa por producto, suma cantidades y se queda con el Top 5.
                 topProductsPlaceholder = ordersInPeriod
-                    .Where(o => o.State == "Finalizada") // <-- ¡FILTRO AÑADIDO AQUÍ!
+                    .Where(o => o.State == "Finalizada") 
                     .SelectMany(o => o.ProductOrders)
                     .Where(po => po.IdProductNavigation != null)
                     .GroupBy(po => po.IdProductNavigation)
@@ -182,11 +181,11 @@ namespace LAFABRICA.Pages
                     .Select(p => new KeyValuePair<string, int>(p.ProductName, (int)p.TotalQuantity))
                     .ToList();
 
-                // CÁLCULO: Gráfico 'Ventas por Categoría'
+                //  Gráfico 'Ventas por Categoría'
                 // Filtra solo órdenes 'Finalizada', LUEGO expande,
                 // agrupa por 'Categoría' y suma el valor total (Cantidad * Precio).
                 categoryData = ordersInPeriod
-                    .Where(o => o.State == "Finalizada") // <-- ¡FILTRO AÑADIDO AQUÍ!
+                    .Where(o => o.State == "Finalizada") 
                     .SelectMany(o => o.ProductOrders)
                     .Where(po => po.IdProductNavigation != null && !string.IsNullOrEmpty(po.IdProductNavigation.Category))
                     .GroupBy(po => po.IdProductNavigation.Category)
@@ -197,14 +196,14 @@ namespace LAFABRICA.Pages
                     ))
                     .ToList();
 
-                // --- CÁLCULO: Pestaña 'Alertas de Inventario' ---
+                // Pestaña 'Alertas de Inventario' 
                 inventoryAlertsPlaceholder = await _context.Inventories
                     // Filtro donde la cantidad actual es menor o igual a la mínima
                     .Where(i => i.Quantity <= i.MinimunQuantity)
 
                     .Include(i => i.Material)
 
-                    // 4. Proyecta los resultados a tu modelo InventoryAlertPlaceholder SIN NOMBRES DE ARGUMENTO.
+                    // Proyecta los resultados a tu modelo InventoryAlertPlaceholder 
                     .Select(i => new InventoryAlertPlaceholder(
                         // Posición 1: material
                         i.Material.Name,
@@ -223,7 +222,7 @@ namespace LAFABRICA.Pages
             }
         }
 
-        // --- Métodos internos (Pueden ser PRIVATE) ---
+
         private string GetRandomColor()
         {
             var r = new Random();
@@ -247,9 +246,9 @@ namespace LAFABRICA.Pages
         {
             try
             {
-                // Primero, destruimos cualquier gráfico existente para evitar conflictos
+                // Destruye cualquier gráfico existente para evitar conflictos
                 await JSRuntime.InvokeVoidAsync("chartInterop.destroyCharts");
-                // Luego, renderizamos los nuevos con los datos actuales
+                // Renderiza los nuevos  graficos con los datos actuales
                 await JSRuntime.InvokeVoidAsync("chartInterop.renderAllCharts", GetChartJsData());
             }
             catch (Exception ex)
@@ -258,7 +257,7 @@ namespace LAFABRICA.Pages
             }
         }
 
-        // --- Manejadores de eventos (Deben ser PROTECTED) ---
+        //  Manejadores de eventos 
         protected async Task OnPeriodChangedViaEvent(ChangeEventArgs e)
         {
             selectedPeriod = e.Value?.ToString() ?? "Últimos 6 meses";
@@ -284,13 +283,13 @@ namespace LAFABRICA.Pages
             Console.WriteLine("Generar Reporte presionado");
         }
 
-        // --- Métodos de utilidad para la vista (Deben ser PROTECTED) ---
+        
         protected string FormatPrice(decimal price)
         {
             return price.ToString("C0", new CultureInfo("es-CR"));
         }
 
-        // --- Dispose ---
+        
         public async ValueTask DisposeAsync()
         {
             try

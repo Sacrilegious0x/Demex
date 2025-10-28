@@ -251,7 +251,7 @@ else
 
 			try
 			{
-				// 1. Manejar la foto (subir si se seleccionó una nueva)
+				//  Manejar la foto (subir si se seleccionó una nueva)
 				string? newPhotoUrl = await UploadFileAsync();
 
 				// Si la subida falló (y no fue porque no se seleccionó nada), detener.
@@ -267,7 +267,7 @@ else
 					editModel.photoUrl = newPhotoUrl;
 				}
 
-				// ***** IMPORTANTE: REEMPLAZAR CON TU MÉTODO REAL DEL SERVICIO *****
+				
 				await MaterialService.UpdateMaterial(editModel);
 				await Task.Delay(600);
 
@@ -306,7 +306,7 @@ else
 		var file = e.File;
 		var fileExtension = Path.GetExtension(file.Name).ToLowerInvariant();
 
-		// 1. Validación de Extensión
+		// Validación de Extensión
 		var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
 		if (!allowedExtensions.Contains(fileExtension))
 		{
@@ -315,7 +315,7 @@ else
 			return;
 		}
 
-		// 2. Validación de Tamaño
+		// Validación de Tamaño
 		if (file.Size > maxFileSize)
 		{
 			showAlert = true;

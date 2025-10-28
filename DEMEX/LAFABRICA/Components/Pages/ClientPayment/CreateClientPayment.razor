@@ -124,7 +124,7 @@ else
 }
 
 @code {
-    // === Autenticación y permisos ===
+    //  Autenticación y permisos 
     [CascadingParameter] private Task<AuthenticationState>? authenticationStateTask { get; set; }
     private ClaimsPrincipal? user;
 
@@ -135,7 +135,7 @@ else
     private EditContext editContext = default!;
     private List<Order>? activeOrders;
 
-    // --- Subida de archivo ---
+    // Subida de archivo 
     private IBrowserFile? selectedFile;
     private string? fileUploadMessage;
     private long maxFileSize = 1024 * 1024 * 5; // 5 MB

@@ -191,14 +191,14 @@ else
 }
 
 @code {
-    // --- Autenticación y Claims ---
+    //  Autenticación y Claims 
     [CascadingParameter] private Task<AuthenticationState>? authenticationStateTask { get; set; }
     private ClaimsPrincipal? user;
 
     private bool HasPermission(string module, string action)
         => user?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
 
-    // --- Modelo y servicios ---
+    // Modelo y servicios 
     private Order newOrder = new() { Priority = "Media", Discount = 0 };
     private List<Client>? allClients;
     private List<Product>? allProducts;
@@ -209,7 +209,7 @@ else
     private int selectedProductId;
     private int selectedProductQuantity = 1;
 
-    // --- Modelo auxiliar para productos ---
+    //  Modelo auxiliar para productos 
     public class CartItem
     {
         public int ProductId { get; set; }
@@ -218,7 +218,7 @@ else
         public decimal PriceBase { get; set; }
     }
 
-    // --- Ciclo de vida ---
+    // Ciclo de vida 
     protected override async Task OnInitializedAsync()
     {
         var authState = await authenticationStateTask!;
@@ -229,7 +229,7 @@ else
         allProducts = (await productService.GetAllProducts()).ToList();
     }
 
-    // --- Lógica interna ---
+    //  Lógica interna 
     private void ClientSelectionChanged(ChangeEventArgs e)
     {
         var clientId = int.Parse(e.Value?.ToString() ?? "0");
@@ -311,7 +311,7 @@ else
         StateHasChanged();
     }
 
-    // --- Guardar Orden ---
+    //  Guardar Orden 
     private async Task SaveOrder(bool beginOrder)
     {
         cartErrorMessage = null;
@@ -364,7 +364,7 @@ else
 
     private async Task HandleValidSubmit() => await SaveOrder(true);
 
-    // --- PDF ---
+    //  PDF 
     private async Task GeneratePdfPreview()
     {
         if (!cartItems.Any() || newOrder.ClientId == null)
