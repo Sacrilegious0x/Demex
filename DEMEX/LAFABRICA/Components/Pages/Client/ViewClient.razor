@@ -1,5 +1,6 @@
 ﻿@using LAFABRICA.Data.DB;
 @using LAFABRICA.Models.Interface;
+@using LAFABRICA.Models.AuxiliarDTOS
 @inject IClientService service;
 
 <div class="container">
@@ -25,7 +26,7 @@
 
             <div class="row mb-2">
                 <div class="col-6 text-start fw-bold">Cantidad de compras:</div>
-                <div class="col-2">@client?.QuantityPurchase</div>
+                <div class="col-2">@client?.CompletedOrders</div>
             </div>
         </div>
 
@@ -56,30 +57,26 @@
     </div>
     <div class="row mt-4">
         <div class="col-12">
-            @if (client?.IsFrequent == 1)
+            @if (client?.IsFrequent==true)
             {
                 <Alert Color="AlertColor.Info" class="w-100">
-                    <Icon Name="IconName.ExclamationCircle" /> Cliente frecuente (más de 3 compras), elegible para descuentos especiales
+                    <Icon Name="IconName.ExclamationCircle" /> Cliente frecuente, elegible para descuentos especiales
                 </Alert>
             }
-            <Tooltip Class="d-inline-block float-end" Title="Proximamente" role="button">
-                <button class="btn btn-outline-secondary  " disabled>Ver ordenes</button>
-            </Tooltip>
-            
         </div>
     </div>
 </div>
 
 
 @code {
-	private Client? client;
-	[Parameter] 
-	public int ClientId { get; set; }
+    private ClientOrdersDTO? client;
+    [Parameter] 
+    public int ClientId { get; set; }
     protected override async Task OnParametersSetAsync()
     {
         if (ClientId != 0)
         {
-            client = await service.GetById(ClientId); 
+            client = await service.GetClientWithCompletedOrders(ClientId);
         }
         // await InvokeAsync(StateHasChanged);
     }

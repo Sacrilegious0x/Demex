@@ -77,9 +77,10 @@ else
 
 
 							<div class="form-group row mb-3">
-								<label class="col-md-5 col-form-label">Precio de Compra: <span class="text-danger">*</span></label>
+								
+								<label class="col-md-5 col-form-label">Precio de Compra (₡): <span class="text-danger">*</span></label>
 								<div class="col-md-8">
-									<NumberInput class="border-1" @bind-Value="Material_Supp_Inv_Dto.PricePurchase" type="number" step="0.01" placeholder="Ej: 5.50" />
+									<NumberInput class="border-1" @bind-Value="Material_Supp_Inv_Dto.PricePurchase" type="number" placeholder="Ej: 550" Min="1"/>
 									<ValidationMessage For="@(() => Material_Supp_Inv_Dto.PricePurchase)" />
 								</div>
 							</div>
@@ -119,7 +120,7 @@ else
 							<div class="form-group row mb-3">
 								<label class="col-md-5 col-form-label">Stock entrante: <span class="text-danger">*</span></label>
 								<div class="col-md-8">
-									<NumberInput class="border-1" @bind-Value="Material_Supp_Inv_Dto.Quantity" type="number" placeholder="Ej: 100" />
+									<NumberInput class="border-1" @bind-Value="Material_Supp_Inv_Dto.Quantity" type="number" placeholder="Ej: 100" Min="1" />
 
 									<ValidationMessage For="@(() => Material_Supp_Inv_Dto.Quantity)" />
 								</div>
@@ -132,7 +133,7 @@ else
 							<div class="form-group row mb-3">
 								<label class="col-md-5 col-form-label">Stock Mínimo: <span class="text-danger">*</span></label>
 								<div class="col-md-8">
-									<NumberInput class="border-1" @bind-Value="Material_Supp_Inv_Dto.MinimumQuantity" placeholder="Ej: 50" />
+									<NumberInput class="border-1" @bind-Value="Material_Supp_Inv_Dto.MinimumQuantity" placeholder="Ej: 50" Min="1" />
 
 									<ValidationMessage For="@(() => Material_Supp_Inv_Dto.MinimumQuantity)" />
 								</div>
