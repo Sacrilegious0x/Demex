@@ -1,4 +1,4 @@
-﻿// En LAFABRICA/Services/MaterialService.cs
+﻿
 using AspNetCoreGeneratedDocument;
 using LAFABRICA.Data.DB;
 using LAFABRICA.Models.AuxiliarDTOS;
@@ -97,7 +97,7 @@ namespace LAFABRICA.Services
             using var _context = _contextFactory.CreateDbContext();
 
             var queryMaterialsToInventory = _context.Materials
-                // 1. Une MATERIAL con MATERIAL_SUPPLIER (N:M)
+                // se Une MATERIAL con MATERIAL_SUPPLIER 
                 // Se usa SelectMany para aplanar la relación y generar filas por cada Material-Supplier
                 .Where(m => (bool)m.IsActive)
                 .SelectMany(m => m.MaterialSuppliers, (m, ms) => new { m, ms })
@@ -113,7 +113,7 @@ namespace LAFABRICA.Services
                     MaterialId = dto.m.Id,
                     SupplierId = dto.ms.SupplierId,
                     MaterialName = dto.m.Name,
-                    SupplierName = dto.ms.Supplier.Name, // Navegación implícita a Supplier
+                    SupplierName = dto.ms.Supplier.Name, // Navegación  a Supplier
                     Quantity = dto.ms.Quantity, //Cantidad de la tabla material_Supplier
                     Unit = dto.m.Unit,
                     MinimumQuantity = dto.i.MinimunQuantity, // Cantidad minima del inventario
@@ -131,7 +131,7 @@ namespace LAFABRICA.Services
 
             try
             {
-                // 1. Crear una nueva instancia de la entidad de enlace
+                // Crear una nueva instancia de la entidad de enlace
                 var newMaterialSupplier = new MaterialSupplier
                 {
                     // Las dos claves primarias/foráneas
@@ -153,8 +153,7 @@ namespace LAFABRICA.Services
             }
             catch (Exception ex)
             {
-                // Opcional: Loguear el error (recomendado)
-                // Console.WriteLine($"Error al agregar MaterialSupplier: {ex.Message}");
+
                 Console.WriteLine(ex.ToString());
                 // Devolver false si la operación falló
                 return false;
@@ -167,7 +166,7 @@ namespace LAFABRICA.Services
             using var _context = _contextFactory.CreateDbContext();
             try
             {
-                // 1. Crear una nueva instancia de la entidad de enlace
+                //  nueva instancia de la entidad de enlace
                 var newMaterialInInventory = new Inventory
                 {
                     // Las dos claves primarias/foráneas
@@ -178,13 +177,13 @@ namespace LAFABRICA.Services
 
                 };
 
-                // 2. Agregar la nueva entidad al DbSet
+                //  Agregar la nueva entidad al DbSet
                 _context.Inventories.Add(newMaterialInInventory);
 
-                // 3. Guardar los cambios en la base de datos
+                // Guardar los cambios en la base de datos
                 await _context.SaveChangesAsync();
 
-                // 4. Devolver true si la operación fue exitosa
+                // Devolver true si la operación fue bien xd
                 return true;
             }
             catch (Exception ex)
@@ -198,56 +197,55 @@ namespace LAFABRICA.Services
 
         }
 
-        // Este es un fragmento de la clase MaterialService
+
         public async Task<MaterialSupplierInventoryDto?> GetMaterialDetailByIds(int materialId, int supplierId)
         {
             using var _context = _contextFactory.CreateDbContext();
 
             var query = _context.Materials
-                // Filtra por el MaterialId inmediatamente 
+                // Filtra por el MaterialId  
                 .Where(m => m.Id == materialId && (bool)m.IsActive)
 
                 // Une MATERIAL con MATERIAL_SUPPLIER
                 .SelectMany(m => m.MaterialSuppliers.Where(ms => ms.SupplierId == supplierId), (m, ms) => new { m, ms })
 
-                // 2. Une el resultado con INVENTORY
+                // Une el resultado con INVENTORY
                 .Join(_context.Inventories,
                     anon => anon.m.Id,
                     i => i.MaterialId,
                     (anon, i) => new { anon.m, anon.ms, i })
 
-                // Filtramos también en la relación Inventory por si acaso (aunque Inventory está 1:1 con Material)
-                // Y lo más importante, filtramos por el SupplierId que viene en el SelectMany
+                // filtrao también en la relación Inventory 
+                //  filtramo tmbn por el SupplierId que viene en el SelectMany
                 .Where(dto => dto.ms.SupplierId == supplierId && dto.m.Id == materialId)
 
-                // Construye el DTO
+                
                 .Select(dto => new MaterialSupplierInventoryDto
                 {
                     MaterialId = dto.m.Id,
                     SupplierId = dto.ms.SupplierId,
                     MaterialName = dto.m.Name,
-                    SupplierName = dto.ms.Supplier.Name, // Navegación implícita a Supplier
+                    SupplierName = dto.ms.Supplier.Name, // pegue a Supplier
                     Quantity = dto.ms.Quantity,         // Cantidad de Material_Supplier (Stock Actual)
                     Unit = dto.m.Unit,
-                    MinimumQuantity = dto.i.MinimunQuantity, // Cantidad minima de Inventario
+                    MinimumQuantity = dto.i.MinimunQuantity, // Cantidad minima de Inventory xd
                     PricePurchase = dto.m.PricePurchase,
                     photoUrl = dto.m.PhotoUrl
                 });
 
-            // Usa FirstOrDefaultAsync ya que solo esperamos un resultado
+            
             return await query.FirstOrDefaultAsync();
         }
 
-        // Este es un fragmento de la clase MaterialService
+        
         public async Task UpdateMaterial(MaterialSupplierInventoryDto dto)
         {
             using var _context = _contextFactory.CreateDbContext();
-            // Inicia una transacción si tu contexto lo permite (buena práctica para actualizar múltiples tablas)
-            // using var transaction = await _context.Database.BeginTransactionAsync();
+
 
             try
             {
-                // 1. ACTUALIZAR ENTIDAD MATERIAL
+                // ACTUALIZAR ENTIDAD MATERIAL
                 var material = await _context.Materials
                     .FirstOrDefaultAsync(m => m.Id == dto.MaterialId);
 
@@ -256,16 +254,16 @@ namespace LAFABRICA.Services
                     throw new InvalidOperationException($"Material con ID {dto.MaterialId} no encontrado.");
                 }
 
-                // Se actualizan campos del Material
+  
 
                 material.Name = dto.MaterialName;
                 material.Unit = dto.Unit;
                 material.PricePurchase = dto.PricePurchase;
                 material.PhotoUrl = dto.photoUrl; // Se actualiza si hay una URL nueva
-                                                  // No es necesario llamar a _context.Update(material) si EF Core está siguiendo la entidad
+                                                 
 
                 // ACTUALIZAR ENTIDAD INVENTORY
-                // Inventory está relacionado 1:1 o 1:N con Material
+
                 var inventory = await _context.Inventories
                     .FirstOrDefaultAsync(i => i.MaterialId == dto.MaterialId);
 
@@ -287,18 +285,18 @@ namespace LAFABRICA.Services
                     throw new InvalidOperationException($"Relación Material-Proveedor para IDs {dto.MaterialId} y {dto.SupplierId} no encontrada.");
                 }
 
-                // Se actualiza el stock actual de esa relación
+                // Se actualiza el stock actual 
                 materialSupplier.Quantity = dto.Quantity;
 
 
                 // GUARDAR TODOS LOS CAMBIOS
                 await _context.SaveChangesAsync();
-                // await transaction.CommitAsync();
+
 
             }
             catch (Exception)
             {
-                // await transaction.RollbackAsync();
+
                 throw; // Relanza la excepción para que el Blazor Component la capture y muestre el Toast
             }
         }

@@ -2,19 +2,17 @@
 using System.Threading.Tasks;
 using Xunit;
 using Microsoft.EntityFrameworkCore;
-using Moq; 
+using Moq;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using LAFABRICA.Data.DB; 
-using LAFABRICA.Models; 
+using LAFABRICA.Data.DB;
+using LAFABRICA.Models;
 using LAFABRICA.Services;
 
 namespace LAFABRICA.Service.Tests
 {
     public class MaterialServiceTests
     {
-
-        // 1. Método de Configuración para el Contexto In-Memory
-
+        // Método de Configuración que configura la BD en la memoria al parecer
         private AppDbContext GetInMemoryDbContext(string dbName)
         {
             var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -24,26 +22,25 @@ namespace LAFABRICA.Service.Tests
             return new AppDbContext(options);
         }
 
-        // 2. Pruebas Unitarias para CreateMaterial
+        // Pruebas Unitarias para CreateMaterial (versión corregida)
         [Fact]
         public async Task CreateMaterial_ShouldCreateThreeRecords_WhenCalledWithValidData()
         {
-            // ARRANGE (Preparación): Configurar el entorno y los datos de prueba
+            // ARRANGE
             string dbName = "CreateMaterialTestDB1";
 
-            // 1. Crear el contexto In-Memory
+
             var testContext = GetInMemoryDbContext(dbName);
 
-            // 2. Crear un Mock de IDbContextFactory
+            // Mock de la factoría: devuelve una NUEVA instancia en cada llamada.
+            // Devolver nuevas instancias permite que el servicio cree y disponga su propio contexto
+            // sin afectar a 'testContext' que usamos para comprobar resultsss.
             var mockFactory = new Mock<IDbContextFactory<AppDbContext>>();
+            mockFactory.Setup(f => f.CreateDbContext())
+                       .Returns(() => GetInMemoryDbContext(dbName)); // lambda que crea una instancia nueva
 
-            // 3. Configurar el Mock: cuando alguien llame a CreateDbContext(), debe devolver nuestro contexto In-Memory
-            mockFactory.Setup(f => f.CreateDbContext()).Returns(testContext);
-
-            // 4. Inicializar el servicio, pasando el Mock de la factoría (.Object)
             var service = new MaterialService(mockFactory.Object);
 
-            // Datos de entrada para la prueba
             var newMaterial = new Material
             {
                 Name = "Tornillo M8",
@@ -55,7 +52,7 @@ namespace LAFABRICA.Service.Tests
             int? quantityToMaterialSupplier = 500;
             int? minimumQuantity = 50;
 
-            // ACT (Ejecución): Llamar al método a probar
+            // ACT
             var createdMaterial = await service.CreateMaterial(
                 newMaterial,
                 supplierId,
@@ -63,8 +60,7 @@ namespace LAFABRICA.Service.Tests
                 minimumQuantity
             );
 
-            // ASSERT (Verificación): Usar el mismo contexto In-Memory (que ya contiene los datos)
-            // Ya que el contexto fue creado por el Mock, lo usamos directamente para verificar.
+            // ASSERT: se usa 'testContext' (que NO fue devuelto al servicio) para leer lo que se cambio, asi lo entendi.
             var material = await testContext.Materials.FirstOrDefaultAsync(m => m.Name == "Tornillo M8");
             Assert.NotNull(material);
             Assert.Equal("Unidad", material.Unit);
@@ -77,36 +73,40 @@ namespace LAFABRICA.Service.Tests
             var inventory = await testContext.Inventories
                 .FirstOrDefaultAsync(i => i.MaterialId == material.Id);
             Assert.NotNull(inventory);
-            Assert.Equal(50, inventory.Quantity);
+            Assert.Equal(minimumQuantity, inventory.MinimunQuantity);
 
-            // IMPORTANTE: El contexto In-Memory debe ser cerrado o liberado después de la prueba.
-            // Esto se maneja mejor usando un IDisposable si se usa la misma DB en múltiples pruebas, 
-            // pero para esta prueba unitaria simple, el contexto es desechable al final del método.
+            // Limpieza 
+            await testContext.Database.EnsureDeletedAsync();
+            await testContext.DisposeAsync();
         }
 
         [Fact]
         public async Task CreateMaterial_ShouldHandleNullPhotoUrlAndSetDefault()
         {
-            // ARRANGE
+            
             string dbName = "CreateMaterialTestDB2";
 
+            
             var testContext = GetInMemoryDbContext(dbName);
+
             var mockFactory = new Mock<IDbContextFactory<AppDbContext>>();
-            mockFactory.Setup(f => f.CreateDbContext()).Returns(testContext);
+            mockFactory.Setup(f => f.CreateDbContext())
+                       .Returns(() => GetInMemoryDbContext(dbName)); 
+
             var service = new MaterialService(mockFactory.Object);
 
             var newMaterial = new Material
             {
                 Name = "Alambre Cobre",
                 Unit = "Metro",
-                PricePurchase = 1.20m,
+                PricePurchase = 100,
                 PhotoUrl = null
             };
             int supplierId = 202;
             int? quantityToMaterialSupplier = 100;
             int? minimumQuantity = 10;
 
-            // ACT
+            
             var createdMaterial = await service.CreateMaterial(
                 newMaterial,
                 supplierId,
@@ -114,11 +114,138 @@ namespace LAFABRICA.Service.Tests
                 minimumQuantity
             );
 
-            // ASSERT
+            
             var material = await testContext.Materials.FirstOrDefaultAsync(m => m.Name == "Alambre Cobre");
             Assert.NotNull(material);
-            // Verifica que la lógica dentro del servicio funcione
+            // Verifica que la lógica dentro del servicio haya puesto "default" si PhotoUrl venía null
             Assert.Equal("default", material.PhotoUrl);
+
+           
+            await testContext.Database.EnsureDeletedAsync();
+            await testContext.DisposeAsync();
         }
+
+        [Fact]
+        public async Task GetMaterialById_ShouldReturnMaterial_WhenExists()
+        {
+            
+            string dbName = Guid.NewGuid().ToString(); 
+            var seedContext = GetInMemoryDbContext(dbName);
+            var seededMaterial = new Material
+            {
+                Name = "Botones Verdes",
+                Unit = "Unidad",
+                PricePurchase = 100,
+                PhotoUrl = "default"
+            };
+            seedContext.Materials.Add(seededMaterial);
+            await seedContext.SaveChangesAsync();
+
+            var insertedId = seededMaterial.Id; 
+            await seedContext.DisposeAsync(); 
+            var mockFactory = new Mock<IDbContextFactory<AppDbContext>>();
+            mockFactory.Setup(f => f.CreateDbContext())
+                       .Returns(() => GetInMemoryDbContext(dbName));
+            var service = new MaterialService(mockFactory.Object);
+            var result = await service.GetMaterialById(insertedId);
+            
+
+            Assert.NotNull(result);
+            Assert.Equal(insertedId, result.Id);
+            Assert.Equal("Botones Verdes", result.Name);
+        }
+
+        [Fact]
+        public async Task DeleteMaterial_ShouldSetIsActiveToFalse_WhenMaterialExists()
+        {
+            string dbName = Guid.NewGuid().ToString();
+
+            var seedContext = GetInMemoryDbContext(dbName);
+            var seededMaterial = new Material
+            {
+                Name = "Arandela 10",
+                Unit = "Unidad",
+                PricePurchase = 100,
+                PhotoUrl = "default",
+                IsActive = true 
+            };
+            seedContext.Materials.Add(seededMaterial);
+            await seedContext.SaveChangesAsync();
+            var insertedId = seededMaterial.Id;
+            await seedContext.DisposeAsync();
+
+            var mockFactory = new Mock<IDbContextFactory<AppDbContext>>();
+            mockFactory.Setup(f => f.CreateDbContext())
+                       .Returns(() => GetInMemoryDbContext(dbName));
+
+            var service = new MaterialService(mockFactory.Object);
+
+            await service.DeleteMaterial(insertedId);
+
+            var verifyContext = GetInMemoryDbContext(dbName);
+            var materialAfter = await verifyContext.Materials.FindAsync(insertedId);
+            Assert.NotNull(materialAfter);
+            Assert.False(materialAfter.IsActive); 
+
+            await verifyContext.Database.EnsureDeletedAsync();
+            await verifyContext.DisposeAsync();
+        }
+
+        [Fact]
+        public async Task UpdateMaterial_ShouldUpdateFields_WhenMaterialExists()
+        {
+            string dbName = Guid.NewGuid().ToString();
+            var seedContext = GetInMemoryDbContext(dbName);
+            var seededMaterial = new Material
+            {
+                Name = "CLIPS ROJOS",
+                Unit = "Metro",
+                PricePurchase = 50,
+                PhotoUrl = "old",
+                IsActive = true
+            };
+            seedContext.Materials.Add(seededMaterial);
+            await seedContext.SaveChangesAsync();
+            var insertedId = seededMaterial.Id;
+            await seedContext.DisposeAsync();
+
+
+            var mockFactory = new Mock<IDbContextFactory<AppDbContext>>();
+            mockFactory.Setup(f => f.CreateDbContext())
+                       .Returns(() => GetInMemoryDbContext(dbName));
+
+            var service = new MaterialService(mockFactory.Object);
+
+            //  se mantiene el mismo Id)
+            var updatedMaterial = new Material
+            {
+                Id = insertedId,
+                Name = "CLIPS VERDES",
+                Unit = "Centímetro",
+                PricePurchase = 40,
+                PhotoUrl = "new",
+                IsActive = true
+            };
+            var result = await service.UpdateMaterial(insertedId, updatedMaterial);
+
+            Assert.NotNull(result);
+            Assert.Equal(updatedMaterial.Name, result.Name);
+
+            var verifyContext = GetInMemoryDbContext(dbName);
+            var materialAfter = await verifyContext.Materials.FindAsync(insertedId);
+            Assert.NotNull(materialAfter);
+            Assert.Equal("CLIPS VERDES", materialAfter.Name);
+            Assert.Equal("Centímetro", materialAfter.Unit);
+            Assert.Equal(40, materialAfter.PricePurchase);
+            Assert.Equal("new", materialAfter.PhotoUrl);
+
+            await verifyContext.Database.EnsureDeletedAsync();
+            await verifyContext.DisposeAsync();
+        }
+
+       
+
     }
+
+
 }

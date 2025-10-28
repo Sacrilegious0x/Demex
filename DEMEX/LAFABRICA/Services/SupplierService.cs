@@ -112,7 +112,7 @@ namespace LAFABRICA.Services
         public async Task<SupplierDto?> GetSupplierByIdAsync(int id)
         {
             using var context = _contextFactory.CreateDbContext();
-            // 1. Buscar la entidad en la base de datos
+            // se buscar la entidad en la base de datos
             var supplierEntity = await context.Suppliers
                                                .AsNoTracking() // Es un método de lectura, no necesitamos seguimiento porque si lo seguimos explota todo
                                                .FirstOrDefaultAsync(s => s.Id == id);
@@ -144,20 +144,30 @@ namespace LAFABRICA.Services
             if (supplier == null) return false;
 
             bool existEmail = await context.Suppliers
-                            .AnyAsync(s=> s.Id != updatedSupplierDto.Id &&  s.Email == supplier.Email && s.IsActive == true);
+                            .AnyAsync(s=> s.Id != updatedSupplierDto.Id &&  s.Email == updatedSupplierDto.Email && s.IsActive == true);
             if (existEmail)
             {
                 throw new InvalidOperationException("El correo ya está registrado por un proveedor activo");
             }
 
             bool existPhone = await context.Suppliers
-                            .AnyAsync(s => s.Id != updatedSupplierDto.Id && s.Phone == supplier.Phone && s.IsActive == true);
+                            .AnyAsync(s => s.Id != updatedSupplierDto.Id && s.Phone == updatedSupplierDto.Phone && s.IsActive == true);
             if (existPhone)
             {
                 throw new InvalidOperationException("El contacto del proveedor ya está registrado por un proveedor activo");
             }
 
-                
+            bool dataChanged =
+                supplier.Name != updatedSupplierDto.Name ||
+                supplier.Phone != updatedSupplierDto.Phone ||
+                supplier.Email != updatedSupplierDto.Email ||
+                supplier.Address != updatedSupplierDto.Address ||
+                supplier.Notes != updatedSupplierDto.Notes ||
+                supplier.IsActive != updatedSupplierDto.IsActive;
+
+            if (!dataChanged)
+                return false;
+
             supplier.Name = updatedSupplierDto.Name;
             supplier.Address = updatedSupplierDto.Address;
             supplier.Phone = updatedSupplierDto.Phone;

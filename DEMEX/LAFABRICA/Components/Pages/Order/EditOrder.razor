@@ -398,6 +398,7 @@ else
             orderToEdit.State = "Finalizada";
             SyncProductList();
             await orderService.Update(OrderId, orderToEdit);
+            await clientService.UpdateFrequentStatus(orderToEdit.ClientId!.Value);
             ToastService.Notify(new(ToastType.Success, "Orden Finalizada", "La orden ha sido completada exitosamente."));
             NavigationManager.NavigateTo("/ordenes");
         }
