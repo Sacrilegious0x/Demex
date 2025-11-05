@@ -172,7 +172,7 @@ namespace LAFABRICA.Pages
                 // Filtra solo órdenes 'Finalizada', LUEGO expande en líneas de detalle,
                 // agrupa por producto, suma cantidades y se queda con el Top 5.
                 topProductsPlaceholder = ordersInPeriod
-                    .Where(o => o.State == "Finalizada") 
+                    .Where(o => o.State == "Finalizada")
                     .SelectMany(o => o.ProductOrders)
                     .Where(po => po.IdProductNavigation != null)
                     .GroupBy(po => po.IdProductNavigation)
@@ -185,7 +185,7 @@ namespace LAFABRICA.Pages
                 // Filtra solo órdenes 'Finalizada', LUEGO expande,
                 // agrupa por 'Categoría' y suma el valor total (Cantidad * Precio).
                 categoryData = ordersInPeriod
-                    .Where(o => o.State == "Finalizada") 
+                    .Where(o => o.State == "Finalizada")
                     .SelectMany(o => o.ProductOrders)
                     .Where(po => po.IdProductNavigation != null && !string.IsNullOrEmpty(po.IdProductNavigation.Category))
                     .GroupBy(po => po.IdProductNavigation.Category)
@@ -196,7 +196,7 @@ namespace LAFABRICA.Pages
                     ))
                     .ToList();
 
-                // Pestaña 'Alertas de Inventario' 
+             /*   // Pestaña 'Alertas de Inventario' 
                 inventoryAlertsPlaceholder = await _context.Inventories
                     // Filtro donde la cantidad actual es menor o igual a la mínima
                     .Where(i => i.Quantity <= i.MinimunQuantity)
@@ -215,6 +215,39 @@ namespace LAFABRICA.Pages
                         i.Quantity == 0 ? "Agotado" : "Bajo"
                     ))
                     .ToListAsync();
+             */
+
+                inventoryAlertsPlaceholder = await _context.Materials
+                    // Filtrar solo materiales activos
+                    .Where(m => (bool)m.IsActive)
+
+                    //  c une Material con MaterialSupplier para el stock como tal
+                    .SelectMany(m => m.MaterialSuppliers, (m, ms) => new { m, ms })
+
+                    // c une con Inventory (donde está el stock mínimo)
+                    .Join(_context.Inventories,
+                          anon => anon.m.Id,
+                          i => i.MaterialId,
+                          (anon, i) => new {
+                              MaterialName = anon.m.Name,
+                              CurrentStock = anon.ms.Quantity, // Stock real de Material_Supplier)
+                              MinStock = i.MinimunQuantity  // Stock mínimo de Inventory)
+                          })
+
+                    // se aplica el filtro para el estado/alerta (Stock real <= Stock mínimo)
+                    .Where(inventoryAlert => inventoryAlert.CurrentStock <= inventoryAlert.MinStock)
+
+                    
+                    .Select(inventoryAlterPalceHolder => new InventoryAlertPlaceholder(
+                        inventoryAlterPalceHolder.MaterialName,
+                        (int)inventoryAlterPalceHolder.CurrentStock, 
+                        (int)inventoryAlterPalceHolder.MinStock,     
+                        inventoryAlterPalceHolder.CurrentStock == 0 ? "Agotado" : "Insuficiente"
+                    ))
+                    .ToListAsync();
+
+
+
             }
             catch (Exception ex)
             {
