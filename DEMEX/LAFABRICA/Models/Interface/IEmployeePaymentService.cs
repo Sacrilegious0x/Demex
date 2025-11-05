@@ -21,7 +21,10 @@ namespace LAFABRICA.Models.Interface
 
         // Eliminar un pago (opcional)
         Task<bool> DeletePaymentAsync(int id);
+        //Verifica si hay algun pago pendiente
+        Task<bool> HasPendingPaymentAsync(int employeeId);
 
-   
+
+
     }
 }

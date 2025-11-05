@@ -1,5 +1,6 @@
 ﻿@page "/login"
 @using LAFABRICA.Services.Auth
+@using System.ComponentModel.DataAnnotations
 @inject DemexAuthenticationStateProvider AuthProvider
 @inject NavigationManager NavigationManager
 
@@ -10,16 +11,17 @@
 
     <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
         <DataAnnotationsValidator />
-        <ValidationSummary />
 
         <div class="mb-3">
             <label for="email" class="form-label">Correo electrónico</label>
             <InputText id="email" class="form-control" @bind-Value="loginModel.Email" />
+            <ValidationMessage For="@(()=>loginModel.Email)" />
         </div>
 
         <div class="mb-3">
             <label for="password" class="form-label">Contraseña</label>
             <InputText id="password" class="form-control" @bind-Value="loginModel.Password" type="password" />
+            <ValidationMessage For="@(() => loginModel.Password)" />
         </div>
 
         <button type="submit" class="btn w-100 text-white" style="background-color: #0f54a1;">Ingresar</button>
@@ -32,7 +34,7 @@
     <div class="text-center mt-3">
         <a href="/forgot-password" class="text-decoration-none" >Olvide mi contraseña</a>
     </div>
-        
+    
 </div>
 
 @code {
@@ -74,7 +76,11 @@
 
     public class LoginModel
     {
+        [Required(ErrorMessage = "El correo es obligatorio")]
+        [EmailAddress(ErrorMessage = "Formato de correo inválido")]
         public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "La contraseña es obligatoria")]
         public string Password { get; set; } = string.Empty;
     }
 }

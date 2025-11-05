@@ -209,7 +209,7 @@ else
 
     private async Task DeletePaymentConfirmation(ClientPayment payment)
     {
-        if (!HasPermission("Payments", DemexClaims.Delete))
+        if (!HasPermission("Clients_Payments", DemexClaims.Delete))
         {
             ToastService.Notify(new(ToastType.Warning, "Sin permiso", "No tienes permiso para eliminar pagos."));
             return;

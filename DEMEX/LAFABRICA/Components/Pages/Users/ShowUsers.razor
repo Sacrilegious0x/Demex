@@ -7,6 +7,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @inject IUserService userService
+@inject IEmployeePaymentService paymentService
 @inject NavigationManager nav
 @inject ToastService ToastService
 
@@ -168,6 +169,7 @@ else
 
     private IEnumerable<User> filteredUsers =>
     users?
+        .Where(u => u.Email != user?.FindFirstValue(ClaimTypes.Email))
         .Where(u => u.IsActive == 1)
         .Where(u => string.IsNullOrEmpty(selectedRole) || u.Rol != null && u.Rol.Name == selectedRole)
         .Where(u =>
@@ -220,6 +222,7 @@ else
 
     private async Task DeleteUser(User user)
     {
+        string messageSecondary = "Esta acción es irreversible.";
         if (!HasPermission("Users", DemexClaims.Delete))
         {
             ToastService.Notify(new(ToastType.Warning, "No tienes permiso para eliminar usuarios"));
@@ -234,11 +237,15 @@ else
             NoButtonColor = ButtonColor.Secondary
         };
 
+        bool hasPendingPay = await paymentService.HasPendingPaymentAsync(user.Id);
+        if (hasPendingPay)
+            messageSecondary = "Este empleado tiene uno o más pagos pendientes";
+       
         var confirm = await dialog.ShowAsync(
-            "Eliminar usuario",
-            $"¿Estás seguro de eliminar a {user.Name}?",
-            "Esta acción es irreversible.",
-            options);
+          "Eliminar usuario",
+          $"¿Estás seguro de eliminar a {user.Name}?",
+          messageSecondary,          
+          options);
 
         if (confirm)
         {

@@ -283,7 +283,20 @@ else
             confirmDialogOptions: options);
 
         if (confirm)
-            await DeleteMaterial(materialId);
+        {
+            try
+            {
+                await DeleteMaterial(materialId);
+                
+            }
+            catch (Exception e)
+            {
+                toastService.Notify(new(ToastType.Danger, $"Ha ocurrido un error inesperado {e.Message}"));
+            }
+
+            
+        }
+       
     }
 
     private async Task DeleteMaterial(int materialId)
@@ -295,10 +308,12 @@ else
         }
 
         await materialService.DeleteMaterial(materialId);
+        await LoadMaterials();
+        StateHasChanged();
         toastService.Notify(new(ToastType.Success, "Material eliminado correctamente."));
 
         await Task.Delay(1000);
-        NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+        // NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
     }
 
     private bool HasPermission(string module, string action)

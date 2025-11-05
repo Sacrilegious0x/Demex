@@ -73,5 +73,13 @@ namespace LAFABRICA.Services
             return true;
         }
 
+        public async Task<bool> HasPendingPaymentAsync(int employeeId)
+        {
+            using var context = _contextFactory.CreateDbContext();
+            return await context.EmployeePayments
+                .AnyAsync(p => p.EmployeeId == employeeId && p.State == "Pendiente");
+        }
+
+
     }
 }

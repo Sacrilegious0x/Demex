@@ -195,10 +195,17 @@ else
         {
             if (userId.HasValue)
             {
+                var options = new ConfirmDialogOptions
+                {
+                    YesButtonText = "Confirmar",
+                    YesButtonColor = ButtonColor.Success,
+                    NoButtonText = "Cancelar",
+                    NoButtonColor = ButtonColor.Danger
+                };
                 var confirm = await dialog.ShowAsync(
-                    title: "Editar usuario",
-                    message1: $"¿Deseas actualizar los datos de {user!.Name}?"
-                );
+                         title: "Editar Usuario",
+                         message1: $"¿Estás seguro de editar la información de {user!.Name}?",
+                         confirmDialogOptions: options);
 
                 if (confirm)
                 {
