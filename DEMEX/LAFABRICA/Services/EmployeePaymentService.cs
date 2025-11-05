@@ -25,6 +25,7 @@ namespace LAFABRICA.Services
         {
             using var context = _contextFactory.CreateDbContext();
             return await context.EmployeePayments
+                .Where(p => p.IsActive)
                 .Include(p => p.Employee)
                 .Include(p => p.PayEmployeeProducts)
                 .ToListAsync();
@@ -65,13 +66,17 @@ namespace LAFABRICA.Services
         public async Task<bool> DeletePaymentAsync(int id)
         {
             using var context = _contextFactory.CreateDbContext();
-            var payment = await context.EmployeePayments.FindAsync(id);
-            if (payment == null) return false;
 
-            context.EmployeePayments.Remove(payment);
+            var payment = await context.EmployeePayments.FindAsync(id);
+            if (payment == null)
+                return false;
+
+            payment.IsActive = false;
             await context.SaveChangesAsync();
+
             return true;
         }
+
 
         public async Task<bool> HasPendingPaymentAsync(int employeeId)
         {
@@ -79,7 +84,19 @@ namespace LAFABRICA.Services
             return await context.EmployeePayments
                 .AnyAsync(p => p.EmployeeId == employeeId && p.State == "Pendiente");
         }
+        //pagos eliminados, posible historial
+        public async Task<bool> RestorePaymentAsync(int id)
+        {
+            using var context = _contextFactory.CreateDbContext();
 
+            var payment = await context.EmployeePayments.FindAsync(id);
+            if (payment == null)
+                return false;
+
+            payment.IsActive = true;
+            await context.SaveChangesAsync();
+            return true;
+        }
 
     }
 }

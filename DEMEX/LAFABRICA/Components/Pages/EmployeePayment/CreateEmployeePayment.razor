@@ -6,6 +6,7 @@
 @using LAFABRICA.Models.Interface
 @using LAFABRICA.Services.Auth
 @using Microsoft.AspNetCore.Components.Authorization
+@using System.ComponentModel.DataAnnotations
 @using System.Security.Claims
 @inject IEmployeePaymentService paymentService
 @inject IPayEmployeeProductService payProductService
@@ -15,6 +16,7 @@
 @inject ToastService ToastService
 
 <PageTitle>@(IsEditing ? "Editar Pago" : "Registrar Pago")</PageTitle>
+<Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 
 @if (user == null)
 {
@@ -71,6 +73,7 @@ else
                     <div class="col-md-4">
                         <label class="form-label fw-bold">Fecha</label>
                         <InputDate @bind-Value="payment.Date" class="form-control" />
+                        <ValidationMessage For="@(() => payment.Date)" />
                     </div>
 
                     <div class="col-md-4">
@@ -80,12 +83,14 @@ else
                             <option value="Pagado">Pagado</option>
                             <option value="Anulado">Anulado</option>
                         </InputSelect>
+                        <ValidationMessage For="@(() => payment.State)" />
                     </div>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label fw-bold">Descripción</label>
                     <InputTextArea @bind-Value="payment.Description" class="form-control" rows="2" />
+                    
                 </div>
 
                 <hr />
@@ -117,6 +122,7 @@ else
                                  class="form-control"
                                  style="flex: 1;"
                                  placeholder="Cantidad" />
+
 
                     <InputNumber @bind-Value="selectedUnitPrice"
                                  class="form-control"
@@ -230,8 +236,24 @@ else
 
     private void AddProductToPayment()
     {
-        if (selectedProductId == 0 || selectedQuantity <= 0 || selectedUnitPrice <= 0)
+        if (selectedProductId == 0)
+        {
+            ToastService.Notify(new(ToastType.Warning, "Debe seleccionar un producto."));
             return;
+        }
+
+        if(selectedQuantity <= 0)
+        {
+            ToastService.Notify(new(ToastType.Warning, "La cantidad debe ser al menos 1"));
+            return;
+        }
+
+        if(selectedUnitPrice <= 0)
+        {
+            ToastService.Notify(new(ToastType.Warning, "El precio no puede ser 0"));
+            return;
+        }
+            
 
         var product = allProducts?.FirstOrDefault(p => p.Id == selectedProductId);
         if (product == null) return;
@@ -280,6 +302,13 @@ else
         if (!productItems.Any())
         {
             ToastService.Notify(new(ToastType.Warning, "Debe agregar al menos un producto."));
+            return;
+        }
+
+        if (productItems.Any(i => i.Quantity <= 0 || i.UnitPrice <= 0))
+        {
+            ToastService.Notify(new(ToastType.Warning,
+                "Los productos deben tener cantidad y precio mayores a 0."));
             return;
         }
 
@@ -335,9 +364,13 @@ else
 
     public class PaymentItem
     {
+        [Required]
         public int ProductId { get; set; }
+        [Required]
         public string ProductName { get; set; } = "";
+        [Range(1, int.MaxValue, ErrorMessage = "La cantidad debe ser mayor que 0.")]
         public int Quantity { get; set; }
+        [Range(0.01, double.MaxValue, ErrorMessage = "El precio debe ser mayor que 0.")]
         public decimal UnitPrice { get; set; }
     }
 }

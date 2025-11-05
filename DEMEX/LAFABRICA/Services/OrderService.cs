@@ -142,5 +142,21 @@ namespace LAFABRICA.Services
                 .ToListAsync();
         }
 
+        public async Task<bool> HasPendingPaymentAsync(int clientId)
+        {
+            using var context = _contextFactory.CreateDbContext();
+
+            var order = await context.Orders
+                .AsNoTracking()
+                .FirstOrDefaultAsync(o => o.ClientId == clientId && o.IsActive == 1);
+
+            if (order == null)
+                throw new InvalidOperationException("La orden no existe o está inactiva.");
+
+          
+            return order.Advancement < order.TotalAmount;
+        }
+
+
     }
 }

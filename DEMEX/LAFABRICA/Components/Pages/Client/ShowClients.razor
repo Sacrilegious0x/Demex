@@ -7,6 +7,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @inject IClientService service
+@inject IOrderService orderService
 @inject NavigationManager nav
 @inject ToastService ToastService
 
@@ -204,6 +205,13 @@ else
 
 	private async Task DeleteClient(Client cl)
 	{
+
+		bool hasPayPendingPay = await orderService.HasPendingPaymentAsync(cl.Id);
+		if (hasPayPendingPay)
+		{
+			ToastService.Notify(new(ToastType.Warning, $"No se puede eliminar a {cl.Name} ya que tiene saldo pendiente de pago"));
+			return;
+		}
 		var options = new ConfirmDialogOptions
 		{
 			YesButtonText = "Eliminar",
