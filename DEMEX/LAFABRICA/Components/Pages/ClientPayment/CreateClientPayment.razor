@@ -9,16 +9,19 @@
 @using System.ComponentModel.DataAnnotations
 @using System.IO
 @using Microsoft.AspNetCore.Hosting
+@using System.Globalization
 
 @inject IClientPaymentService paymentService
 @inject IOrderService orderService
+@inject IClientService clientService
 @inject NavigationManager NavigationManager
 @inject ToastService ToastService
 @inject IWebHostEnvironment Environment
+@inject IConfiguration Configuration
 
 <PageTitle>Registrar Nuevo Pago</PageTitle>
 
-<Toasts class="p-3" Autohide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+<Toasts classs="p-3" Autohide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 
 @if (user == null)
 {
@@ -34,11 +37,11 @@ else if (!HasPermission("Clients_Payments", DemexClaims.Create))
         <strong>No tienes permiso</strong> para registrar nuevos pagos.
     </Alert>
 }
-else if (activeOrders == null)
+else if (allClients == null || activeOrders == null)
 {
     <div class="text-center p-4">
         <Spinner Color="SpinnerColor.Primary" />
-        <p class="mt-2">Cargando órdenes activas...</p>
+        <p class="mt-2">Cargando datos...</p>
     </div>
 }
 else
@@ -58,31 +61,50 @@ else
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Orden Asociada *</label>
-                        <InputSelect @bind-Value="newPayment.OrderId" class="form-select">
-                            <option value="0">-- Seleccione una orden --</option>
-                            @foreach (var order in activeOrders)
+                        <label class="form-label">Cliente *</label>
+                        <InputSelect @bind-Value="BoundClientId" class="form-select">
+                            <option value="0">-- Seleccione un cliente --</option>
+                            @if (allClients != null)
                             {
-                                <option value="@order.Id">Orden #@order.Id (@order.Client?.Name)</option>
+                                @foreach (var client in allClients)
+                                {
+                                    <option value="@client.Id">@client.Name</option>
+                                }
                             }
                         </InputSelect>
-                        <ValidationMessage For="@(() => newPayment.OrderId)" />
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Fecha del Pago *</label>
-                        <InputDate @bind-Value="newPayment.PaymentDate" class="form-control" />
-                        <ValidationMessage For="@(() => newPayment.PaymentDate)" />
+                        <label class="form-label">Orden Asociada *</label>
+                        <InputSelect @bind-Value="newPayment.OrderId" class="form-select" disabled="@(BoundClientId == 0)">
+                            <option value="0">-- Seleccione una orden --</option>
+                            @foreach (var order in ordersForSelectedClient)
+                            {
+                                var pendingAmount = order.TotalAmount - order.Advancement;
+                                <option value="@order.Id">
+                                    Orden #@order.Id (Pendiente: @pendingAmount.ToString("C", cultureInfo))
+                                </option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => newPayment.OrderId)" />
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
+                        <label class="form-label">Fecha del Pago *</label>
+                        <InputDate @bind-Value="newPayment.PaymentDate" class="form-control" />
+                        <ValidationMessage For="@(() => newPayment.PaymentDate)" />
+                    </div>
+
+                    <div class="col-md-6 mb-3">
                         <label class="form-label">Monto (₡) *</label>
                         <InputNumber @bind-Value="newPayment.Amount" class="form-control" />
                         <ValidationMessage For="@(() => newPayment.Amount)" />
                     </div>
+                </div>
 
+                <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Método de Pago *</label>
                         <InputSelect @bind-Value="newPayment.PaymentMethod" class="form-select">
@@ -94,10 +116,8 @@ else
                         </InputSelect>
                         <ValidationMessage For="@(() => newPayment.PaymentMethod)" />
                     </div>
-                </div>
 
-                <div class="row">
-                    <div class="col-12 mb-3">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label">Comprobante (Opcional, solo imágenes)</label>
                         <InputFile OnChange="LoadFile" class="form-control" accept="image/*" />
                         @if (!string.IsNullOrEmpty(fileUploadMessage))
@@ -108,12 +128,12 @@ else
                         }
                     </div>
                 </div>
-
             </CardBody>
 
             <CardFooter>
                 <div class="d-flex justify-content-end gap-2">
                     <a href="/pagos" class="btn btn-outline-secondary border">Cancelar</a>
+
                     <button type="submit" class="btn btn-primary">
                         Guardar
                     </button>
@@ -124,7 +144,6 @@ else
 }
 
 @code {
-    //  Autenticación y permisos 
     [CascadingParameter] private Task<AuthenticationState>? authenticationStateTask { get; set; }
     private ClaimsPrincipal? user;
 
@@ -133,16 +152,56 @@ else
 
     private ClientPayment newPayment = new();
     private EditContext editContext = default!;
-    private List<Order>? activeOrders;
 
-    // Subida de archivo 
+    // Listas de estado
+    private List<Order>? activeOrders;
+    private List<Client>? allClients;
+    private List<Order> ordersForSelectedClient = new();
+
+    private CultureInfo cultureInfo = new CultureInfo("es-CR");
+
+    // Propiedad para el binding del Cliente
+    private int _boundClientId;
+    private int BoundClientId
+    {
+        get => _boundClientId;
+        set
+        {
+            _boundClientId = value;
+
+            newPayment.OrderId = 0;
+            ordersForSelectedClient.Clear();
+
+            if (_boundClientId > 0 && activeOrders != null)
+            {
+                ordersForSelectedClient = activeOrders
+                    .Where(o => o.ClientId == _boundClientId)
+                    .ToList();
+            }
+
+            // =========================================================================
+            //     CORRECCIÓN 2: Se elimina esta línea para evitar la validación prematura.
+            // =========================================================================
+            // editContext.NotifyFieldChanged(FieldIdentifier.Create(() => newPayment.OrderId));
+        }
+    }
+
+    // Subida de archivo
     private IBrowserFile? selectedFile;
     private string? fileUploadMessage;
     private long maxFileSize = 1024 * 1024 * 5; // 5 MB
     private string[] permittedImageTypes = { "image/jpeg", "image/png", "image/gif", "image/bmp" };
 
+
     protected override async Task OnInitializedAsync()
     {
+        var cultureString = Configuration["SiteCulture"];
+        if (!string.IsNullOrEmpty(cultureString))
+        {
+            try { cultureInfo = new CultureInfo(cultureString); }
+            catch (CultureNotFoundException) { cultureInfo = new CultureInfo("es-CR"); }
+        }
+
         var authState = await authenticationStateTask!;
         user = authState.User;
 
@@ -151,20 +210,40 @@ else
 
         try
         {
-            var allOrders = await orderService.GetAllOrders();
+            var allOrdersTask = orderService.GetAllOrders();
+            var allClientsTask = clientService.GetAllClient();
+            await Task.WhenAll(allOrdersTask, allClientsTask);
+
+            var allOrders = await allOrdersTask;
             activeOrders = allOrders
                 .Where(o => o.State != "Finalizada")
                 .OrderByDescending(o => o.Id)
                 .ToList();
+
+            var allClientsFromDb = (await allClientsTask).ToList();
+
+            var activeClientIds = activeOrders
+                .Where(o => o.ClientId.HasValue)
+                .Select(o => o.ClientId.Value)
+                .Distinct()
+                .ToHashSet();
+
+            allClients = allClientsFromDb
+                .Where(c => activeClientIds.Contains(c.Id))
+                .OrderBy(c => c.Name)
+                .ToList();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error cargando órdenes activas: {ex.Message}");
-            ToastService.Notify(new(ToastType.Danger, "Error", "No se pudieron cargar las órdenes."));
+            Console.WriteLine($"Error cargando datos: {ex.Message}");
+            ToastService.Notify(new(ToastType.Danger, "Error", "No se pudieron cargar clientes u órdenes."));
             activeOrders = new List<Order>();
+            allClients = new List<Client>();
         }
     }
 
+
+    // LoadFile
     private void LoadFile(InputFileChangeEventArgs e)
     {
         selectedFile = null;
@@ -190,6 +269,7 @@ else
         fileUploadMessage = $"Archivo seleccionado: {selectedFile.Name} ({selectedFile.Size / 1024} KB)";
     }
 
+    // HandleValidSubmit
     private async Task HandleValidSubmit()
     {
         if (!HasPermission("Clients_Payments", DemexClaims.Create))
