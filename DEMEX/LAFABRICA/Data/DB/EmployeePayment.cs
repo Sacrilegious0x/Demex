@@ -6,7 +6,7 @@ namespace LAFABRICA.Data.DB;
 
 public partial class EmployeePayment
 {
-    
+
     public int Id { get; set; }
     [Required(ErrorMessage = "Debe seleccionar un empleado.")]
     public int EmployeeId { get; set; }
