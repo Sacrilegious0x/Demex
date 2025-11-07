@@ -1,0 +1,55 @@
+﻿@using LAFABRICA.Data.DB
+@using LAFABRICA.Models.Interface
+@inject IPayEmployeeProductService payProductService
+
+<div class="p-3">
+    @if (products == null)
+    {
+        <div class="d-flex justify-content-center">
+            <Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
+        </div>
+    }
+    else if (!products.Any())
+    {
+        <Alert Color="AlertColor.Info">
+            <Icon Name="IconName.InfoCircleFill" class="me-2" />
+            No hay productos asociados a este pago.
+        </Alert>
+    }
+    else
+    {
+        <table class="table table-striped text-center">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio Unitario</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in products.Select((p, index) => new { p, index }))
+                {
+                    <tr>
+                        <td>@(item.index + 1)</td>
+                        <td>@item.p.Product?.Name</td>
+                        <td>@item.p.Quantity</td>
+                        <td>₡@item.p.UnitPrice.ToString("N2")</td>
+                        <td>₡@item.p.Subtotal.ToString("N2")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    [Parameter] public int PaymentId { get; set; }
+    private List<PayEmployeeProduct>? products;
+
+    protected override async Task OnInitializedAsync()
+    {
+        products = (await payProductService.GetByEmployeePaymentIdAsync(PaymentId)).ToList();
+    }
+}

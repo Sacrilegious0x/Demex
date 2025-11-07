@@ -1,0 +1,111 @@
+﻿@using LAFABRICA.Data.DB
+@using LAFABRICA.Models.Interface
+@inject IRolePermissonService permService
+
+<div class="container mt-3">
+    <h5 class="mb-3 text-center">Permisos del rol <strong>@Rol.Name</strong></h5>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="alert @alertClass text-center">@message</div>
+    }
+
+    @if (Rol.RolePermissions == null || !Rol.RolePermissions.Any())
+    {
+        <p class="text-muted text-center">No hay permisos configurados para este rol.</p>
+    }
+    else
+    {
+        <table class="table table-bordered text-center align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Módulo</th>
+                    <th>Ver</th>
+                    <th>Crear</th>
+                    <th>Editar</th>
+                    <th>Eliminar</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var perm in Rol.RolePermissions)
+                {
+                    <tr>
+                        <td>@TranslateRoleName(perm.Module)</td>
+                        <td>
+                            <input type="checkbox" checked="@perm.Canview" @onchange='() => TogglePermission(perm, "view")' />
+                        </td>
+                        <td>
+                            <input type="checkbox" checked="@perm.Cancreate" @onchange='() => TogglePermission(perm, "create")' />
+                        </td>
+                        <td>
+                            <input type="checkbox" checked="@perm.Canedit" @onchange='() => TogglePermission(perm, "edit")' />
+                        </td>
+                        <td>
+                            <input type="checkbox" checked="@perm.Candelete" @onchange='() => TogglePermission(perm, "delete")' />
+                        </td>
+                    </tr>
+                }
+            </tbody>
+
+        </table>
+    }
+</div>
+
+@code {
+    [Parameter] public Rol Rol { get; set; } = default!;
+    private string? message;
+    private string alertClass = "alert-info";
+
+    private async Task TogglePermission(RolePermission permission, string field)
+    {
+        try
+        {
+            switch (field)
+            {
+                case "view":
+                    permission.Canview = !permission.Canview;
+                    break;
+                case "create":
+                    permission.Cancreate = !permission.Cancreate;
+                    break;
+                case "edit":
+                    permission.Canedit = !permission.Canedit;
+                    break;
+                case "delete":
+                    permission.Candelete = !permission.Candelete;
+                    break;
+            }
+
+            await permService.Update(permission.RoleId, permission);
+
+            message = $"Permiso actualizado correctamente para {TranslateRoleName( permission.Module)}.";
+            alertClass = "alert-success";
+        }
+        catch (Exception ex)
+        {
+            message = ex.Message;
+            alertClass = "alert-danger";
+        }
+    }
+
+    private string TranslateRoleName(string name)
+    {
+        return name.ToUpper() switch
+        {
+            "CLIENTS" => "Clientes",
+            "CLIENTS_PAYMENTS" => "Pagos de Clientes",
+            "INVENTORY" => "Inventario",
+            "MATERIAL" => "Materiales",
+            "ORDERS" => "Órdenes",
+            "PRODUCTS" => "Productos",
+            "REPORTS" => "Reportes",
+            "ROLS" => "Roles",
+            "SUPPLIERS" => "Proveedores",
+            "USERS" => "Usuarios",
+            "WORKERS_PAYMENTS" => "Pagos de Empleados",
+            "ADMIN" => "Administrador",
+            "TOURS" => "Giras",
+            _ => name
+        };
+    }
+}

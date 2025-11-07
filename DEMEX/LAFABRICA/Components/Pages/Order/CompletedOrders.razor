@@ -1,0 +1,272 @@
+﻿@page "/ordenes/completadas"
+@attribute [Authorize]
+@using LAFABRICA.Data.DB
+@using LAFABRICA.Models.Interface
+@using LAFABRICA.Models
+@using LAFABRICA.Components.Pages.Product
+@using LAFABRICA.Components.Pages.Order
+@using LAFABRICA.Services.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject IOrderService orderService
+@inject ToastService ToastService
+@inject NavigationManager nav
+
+<PageTitle>Órdenes Completadas</PageTitle>
+
+<Toasts class="p-3" Autohide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+<ConfirmDialog @ref="dialog" />
+<OrderDetailsModal @ref="detailsModal" />
+
+@if (user == null)
+{
+    <div class="text-center p-5">
+        <Spinner Color="SpinnerColor.Primary" />
+        <p>Cargando autenticación...</p>
+    </div>
+}
+else if (!HasPermission("Orders", DemexClaims.View))
+{
+    <Alert Color="AlertColor.Warning" class="mt-4">
+        <strong>No tienes permiso</strong> para ver las órdenes completadas.
+    </Alert>
+}
+else if (orders == null)
+{
+    <div class="d-flex justify-content-center">
+        <Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
+    </div>
+}
+else if (!orders.Any())
+{
+    <div>
+        <Alert Color="AlertColor.Primary" class="d-flex justify-content-between align-items-center">
+            <div>
+                <Icon Name="IconName.InfoCircleFill" class="me-2" />
+                <strong>No hay órdenes completadas registradas</strong>
+            </div>
+            <a class="btn btn-outline-secondary" href="/ordenes"><Icon Name="IconName.ArrowLeft" /> Volver a Órdenes</a>
+        </Alert>
+    </div>
+}
+else
+{
+    <div class="container mt-2">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <h3><Icon Name="IconName.CheckCircleFill"></Icon> Órdenes Completadas</h3>
+                    <a class="btn btn-outline-secondary" href="/ordenes">
+                        <Icon Name="IconName.ArrowLeft" /> 
+                    </a>
+                </div>
+
+                <div class="d-flex flex-wrap justify-content-sm-start align-items-center gap-3 mt-3">
+                    <!-- Filtro de Texto -->
+                    <div class="d-flex align-items-center border rounded px-2">
+                        <Icon Name="IconName.Search" class="text-secondary me-2" />
+                        <input type="text" class="form-control border-0" @bind="searchText" @bind:event="oninput" placeholder="Buscar por Cliente, ID..." style="box-shadow:none;" />
+                    </div>
+
+                    <!-- Filtro de Provincia -->
+                    <div class="d-flex align-items-center gap-2">
+                        <Icon Name="IconName.Funnel" class="text-secondary" />
+                        <InputSelect class="form-select form-select-sm" @bind-Value="selectedLocation">
+                            <option value="">Todas las Provincias</option>
+                            @foreach (var location in locations)
+                            {
+                                <option value="@location">@location</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <!-- Filtro de Fechas -->
+                    <div class="d-flex align-items-center gap-2">
+                        <Icon Name="IconName.Calendar" class="text-secondary" />
+                        <label class="form-label small mb-0">Desde:</label>
+                        <InputDate @bind-Value="filterStartDate" class="form-control form-control-sm" />
+                        <label class="form-label small mb-0 ms-2">Hasta:</label>
+                        <InputDate @bind-Value="filterEndDate" class="form-control form-control-sm" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body text-center">
+                <div class="row">
+                    <div class="col-12 table-responsive" style="max-height: 370px; overflow-y: auto;">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Cliente</th>
+                                    <th>Fecha Creación</th>
+                                    <th>Ubicación</th>
+                                    <th>Estado</th>
+                                    <th>Prioridad</th>
+                                    <th>Total</th>
+                                    <th>Adelanto</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var (ord, index) in filteredOrders.Select((o, i) => (o, i)))
+                                {
+                                    <tr>
+                                        <td>@(index + 1)</td>
+                                        <td>
+                                            @ord.Client?.Name
+                                            @if (ord.Client?.IsFrequent == 1)
+                                            {
+                                                <Badge Color="BadgeColor.Success" class="d-block mt-1">Cliente Frecuente</Badge>
+                                            }
+                                        </td>
+                                        <td>@ord.CreationDate.ToShortDateString()</td>
+                                        <td>@ord.Client?.Location</td>
+                                        <td><Badge Color="@GetStateBadgeColor(ord.State)">@ord.State</Badge></td>
+                                        <td><Badge Color="@GetPriorityBadgeColor(ord.Priority)">@ord.Priority</Badge></td>
+                                        <td>@ord.TotalAmount.ToString("C", new System.Globalization.CultureInfo("es-CR"))</td>
+                                        <td>@ord.Advancement.ToString("C", new System.Globalization.CultureInfo("es-CR"))</td>
+                                        <td>
+                                            @if (HasPermission("Orders", DemexClaims.View))
+                                            {
+                                                <button class="btn btn-show" @onclick="() => detailsModal.ShowAsync(ord.Id)" title="Ver Detalles">
+                                                    <Icon Name="IconName.Eye" Color="IconColor.Primary" />
+                                                </button>
+                                            }
+
+                                            @if (HasPermission("Orders", DemexClaims.Delete))
+                                            {
+                                                <button class="btn btn-delete" @onclick="() => DeleteOrder(ord)" title="Eliminar">
+                                                    <Icon Name="IconName.Trash" Color="IconColor.Danger"></Icon>
+                                                </button>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <Icon Name="IconName.FileEarmarkText" /> Total de órdenes completadas: @filteredOrders.Count()
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    // Autenticación y Claims
+    [CascadingParameter] private Task<AuthenticationState>? authenticationStateTask { get; set; }
+    private ClaimsPrincipal? user;
+
+    private bool HasPermission(string module, string action)
+        => user?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
+
+    private List<Order>? orders;
+    private ConfirmDialog dialog = default!;
+    private OrderDetailsModal detailsModal = default!;
+
+    
+    private string searchText = string.Empty;
+    private string selectedLocation = "";
+    private DateTime? filterStartDate;
+    private DateTime? filterEndDate;
+    private List<string> locations = new();
+
+   
+    private IEnumerable<Order> filteredOrders =>
+        orders?
+            .Where(o => string.IsNullOrEmpty(selectedLocation) || o.Client?.Location == selectedLocation)
+            .Where(o => !filterStartDate.HasValue || o.CreationDate >= DateOnly.FromDateTime(filterStartDate.Value))
+            .Where(o => !filterEndDate.HasValue || o.CreationDate <= DateOnly.FromDateTime(filterEndDate.Value))
+            .Where(o => string.IsNullOrEmpty(searchText) ||
+                        (o.Client?.Name?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                        o.Id.ToString().Contains(searchText))
+        ?? Enumerable.Empty<Order>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationStateTask!;
+        user = authState.User;
+        await LoadOrders();
+    }
+
+    private async Task LoadOrders()
+    {
+        var allOrders = (await orderService.GetAllOrders()).ToList();
+        if (allOrders != null)
+        {
+            orders = allOrders.Where(o => o.State == "Finalizada").ToList();
+
+            if (orders != null)
+            {
+                locations = orders
+                    .Select(o => o.Client?.Location)
+                    .Where(l => !string.IsNullOrEmpty(l))
+                    .Distinct()
+                    .OrderBy(l => l)
+                    .ToList()!;
+            }
+        }
+    }
+
+    private async Task DeleteOrder(Order order)
+    {
+        var options = new ConfirmDialogOptions
+        {
+            YesButtonText = "Eliminar",
+            YesButtonColor = ButtonColor.Danger,
+            NoButtonText = "Cancelar",
+            NoButtonColor = ButtonColor.Secondary
+        };
+
+        var confirmation = await dialog.ShowAsync(
+            title: "Eliminar Orden",
+            message1: $"¿Estás seguro de eliminar la orden #{order.Id}?",
+            message2: "Esta acción marcará la orden como inactiva.",
+            confirmDialogOptions: options);
+
+        if (confirmation)
+        {
+            try
+            {
+                await orderService.Delete(order.Id);
+                await LoadOrders();
+                ToastService.Notify(new(ToastType.Success, $"Se eliminó correctamente la orden #{order.Id}"));
+            }
+            catch (Exception e)
+            {
+                ToastService.Notify(new(ToastType.Danger, $"Ocurrió un error al tratar de eliminar la orden: {e.Message}"));
+            }
+        }
+    }
+
+    private BadgeColor GetStateBadgeColor(string state)
+    {
+        return state.ToLower() switch
+        {
+            "diseño" => BadgeColor.Primary,
+            "cotizando" => BadgeColor.Info,
+            "entregable" => BadgeColor.Success,
+            "corte" => BadgeColor.Dark,
+            "acabados" => BadgeColor.Warning,
+            "finalizada" => BadgeColor.Secondary,
+            _ => BadgeColor.Secondary
+        };
+    }
+
+    private BadgeColor GetPriorityBadgeColor(string priority)
+    {
+        return priority.ToLower() switch
+        {
+            "alta" => BadgeColor.Danger,
+            "media" => BadgeColor.Warning,
+            "baja" => BadgeColor.Info,
+            _ => BadgeColor.Secondary
+        };
+    }
+}
+
+

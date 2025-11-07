@@ -1,5 +1,5 @@
 ﻿using LAFABRICA.Data.DB;
-using LAFABRICA.Models;
+using LAFABRICA.Models.AuxiliarDTOS;
 using LAFABRICA.Models.Interface;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -10,21 +10,21 @@ namespace LAFABRICA.Services
     public class SupplierService : ISupplierService
     {
 
-        private readonly AppDbContext _context;
+        private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
 
-        public SupplierService(AppDbContext context)
+        public SupplierService(IDbContextFactory<AppDbContext> context)
         {
-            _context = context;
+            _contextFactory = context;
         }
 
         public async Task<List<SupplierDto>> GetSuppliersAsync()
         {
             try
             {
-
-                var suppliers = await _context.Suppliers
-                .Where(s => s.IsActive) // FILTRO
+                using var context = _contextFactory.CreateDbContext();
+                var suppliers = await context.Suppliers
+                .Where(s => s.IsActive) 
                 .ToListAsync();
 
                 // Mapea la entidad a la DTO (Si el modelo Supplier no es igual a SupplierDto)
@@ -62,7 +62,7 @@ namespace LAFABRICA.Services
         public async Task<SupplierDto> AddSupplierAsync(SupplierDto newSupplierDto)
         {
             // Mapear DTO a la Entidad de EF Core (Supplier)
-
+            using var context = _contextFactory.CreateDbContext();
             var supplierEntity = new Supplier
             {
                 // El Id debe ser 0 o ignorarse ya que es autoincremental
@@ -72,24 +72,29 @@ namespace LAFABRICA.Services
                 Email = newSupplierDto.Email,
                 DateLastPurchase = newSupplierDto.DateLastPurchase,
                 Notes = newSupplierDto.Notes,
-                IsActive = newSupplierDto.IsActive
+                IsActive = true
+
 
             };
 
-            bool existEmail = await _context.Suppliers.AnyAsync(s =>  s.Email == supplierEntity.Email);
+            bool existEmail = await context.Suppliers
+                           .AnyAsync(s => s.Email == supplierEntity.Email && s.IsActive == true);
             if (existEmail)
             {
-                throw new InvalidOperationException("El correo ya esta registrado");
+                throw new InvalidOperationException("El correo ya está registrado por un proveedor activo");
             }
-            bool existPhone = await _context.Suppliers.AnyAsync(s =>  s.Phone == supplierEntity.Phone);
+
+            bool existPhone = await context.Suppliers
+                           .AnyAsync(s => s.Phone == supplierEntity.Phone && s.IsActive == true);
             if (existPhone)
             {
-                throw new InvalidOperationException("El contacto del proveedor ya esta registrado");
+                throw new InvalidOperationException("El contacto del proveedor ya está registrado por un proveedor activo");
             }
-            _context.Suppliers.Add(supplierEntity);
+
+            context.Suppliers.Add(supplierEntity);
 
             //  Guardar los cambios en la base de datos
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
 
 
             return new SupplierDto
@@ -106,8 +111,9 @@ namespace LAFABRICA.Services
 
         public async Task<SupplierDto?> GetSupplierByIdAsync(int id)
         {
-            // 1. Buscar la entidad en la base de datos
-            var supplierEntity = await _context.Suppliers
+            using var context = _contextFactory.CreateDbContext();
+            // se buscar la entidad en la base de datos
+            var supplierEntity = await context.Suppliers
                                                .AsNoTracking() // Es un método de lectura, no necesitamos seguimiento porque si lo seguimos explota todo
                                                .FirstOrDefaultAsync(s => s.Id == id);
 
@@ -132,21 +138,36 @@ namespace LAFABRICA.Services
 
         public async Task<bool> UpdateSupplierAsync(SupplierDto updatedSupplierDto)
         {
+            using var context = _contextFactory.CreateDbContext();
 
-            var supplier = await _context.Suppliers.FindAsync(updatedSupplierDto.Id);
+            var supplier = await context.Suppliers.FindAsync(updatedSupplierDto.Id);
             if (supplier == null) return false;
 
-            bool existEmail = await _context.Suppliers.AnyAsync(s => s.Id != supplier.Id && s.Email == updatedSupplierDto.Email);
+            bool existEmail = await context.Suppliers
+                            .AnyAsync(s=> s.Id != updatedSupplierDto.Id &&  s.Email == updatedSupplierDto.Email && s.IsActive == true);
             if (existEmail)
             {
-                throw new InvalidOperationException("El correo ya esta registrado");
+                throw new InvalidOperationException("El correo ya está registrado por un proveedor activo");
             }
-            bool existPhone = await _context.Suppliers.AnyAsync(s => s.Id != supplier.Id && s.Phone == updatedSupplierDto.Phone);
+
+            bool existPhone = await context.Suppliers
+                            .AnyAsync(s => s.Id != updatedSupplierDto.Id && s.Phone == updatedSupplierDto.Phone && s.IsActive == true);
             if (existPhone)
             {
-                throw new InvalidOperationException("El contacto del proveedor ya esta registrado");
+                throw new InvalidOperationException("El contacto del proveedor ya está registrado por un proveedor activo");
             }
-            
+
+            bool dataChanged =
+                supplier.Name != updatedSupplierDto.Name ||
+                supplier.Phone != updatedSupplierDto.Phone ||
+                supplier.Email != updatedSupplierDto.Email ||
+                supplier.Address != updatedSupplierDto.Address ||
+                supplier.Notes != updatedSupplierDto.Notes ||
+                supplier.IsActive != updatedSupplierDto.IsActive;
+
+            if (!dataChanged)
+                return false;
+
             supplier.Name = updatedSupplierDto.Name;
             supplier.Address = updatedSupplierDto.Address;
             supplier.Phone = updatedSupplierDto.Phone;
@@ -158,13 +179,13 @@ namespace LAFABRICA.Services
             try
             {
                 // Guardar los cambios. Retorna el número de filas afectadas (debe ser 1) para que funque
-                var result = await _context.SaveChangesAsync();
+                var result = await context.SaveChangesAsync();
                 return result > 0;
             }
             catch (DbUpdateConcurrencyException)
             {
 
-                if (!_context.Suppliers.Any(e => e.Id == updatedSupplierDto.Id))
+                if (!context.Suppliers.Any(e => e.Id == updatedSupplierDto.Id))
                 {
                     return false; // No encontrado
                 }
@@ -179,7 +200,8 @@ namespace LAFABRICA.Services
 
         public async Task<bool> DeleteSupplierAsync(int id)
         {
-            var supplier = await _context.Suppliers.FindAsync(id);
+            using var context = _contextFactory.CreateDbContext();
+            var supplier = await context.Suppliers.FindAsync(id);
 
             if (supplier == null) return false;
 
@@ -188,13 +210,13 @@ namespace LAFABRICA.Services
             try
             {
 
-                var result = await _context.SaveChangesAsync();
+                var result = await context.SaveChangesAsync();
                 return result > 0;
             }
             catch (DbUpdateConcurrencyException)
             {
 
-                if (!_context.Suppliers.Any(e => e.Id == id))
+                if (!context.Suppliers.Any(e => e.Id == id))
                 {
                     return false; 
                 }

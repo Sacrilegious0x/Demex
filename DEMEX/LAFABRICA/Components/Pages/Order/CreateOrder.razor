@@ -1,16 +1,39 @@
 ﻿@page "/ordenes/crear"
+@attribute [Authorize]
 @using LAFABRICA.Data.DB
 @using LAFABRICA.Models.Interface
+@using LAFABRICA.Services.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.ComponentModel.DataAnnotations
+@using System.Security.Claims
+@using LAFABRICA.Models
 @inject IOrderService orderService
 @inject IClientService clientService
 @inject IProductService productService
 @inject NavigationManager NavigationManager
-@inject ToastService ToastService
 @inject IJSRuntime JSRuntime
 @inject IWebHostEnvironment WebHostEnvironment
+@inject ToastService ToastService
+
+
 <PageTitle>Crear Nueva Orden</PageTitle>
 
-@if (allClients == null || allProducts == null)
+<Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+
+@if (user == null)
+{
+    <div class="text-center p-5">
+        <Spinner Color="SpinnerColor.Primary" />
+        <p>Cargando autenticación...</p>
+    </div>
+}
+else if (!HasPermission("Orders", DemexClaims.Create))
+{
+    <Alert Color="AlertColor.Warning" class="mt-4">
+        <strong>No tienes permiso</strong> para crear órdenes.
+    </Alert>
+}
+else if (allClients == null || allProducts == null)
 {
     <div class="text-center p-4">
         <Spinner Color="SpinnerColor.Primary" />
@@ -19,16 +42,24 @@
 }
 else
 {
-    <EditForm Model="@newOrder" OnValidSubmit="() => SaveOrder(true)">
+    <EditForm EditContext="@editContext" OnValidSubmit="HandleValidSubmit">
         <DataAnnotationsValidator />
         <Card>
-            <CardHeader>
-                <CardTitle Size="HeadingSize.H5">Crear Nueva Orden / Cotización</CardTitle>
+            <CardHeader Class="d-flex justify-content-between align-items-center mt-3">
+                <CardTitle Size="HeadingSize.H2"><Icon Name="IconName.CartPlusFill"/> Crear Nueva Orden / Cotización</CardTitle>
+                <a class="btn btn-outline-secondary" href="/ordenes">
+                    <Icon Name="IconName.ArrowLeft" />
+                </a>
             </CardHeader>
             <CardBody>
-                <ValidationSummary class="alert alert-danger mb-3" />
+
+                @* @if (!string.IsNullOrEmpty(cartErrorMessage))
+                {
+                    <div class="alert alert-warning">@cartErrorMessage</div>
+                } *@
 
                 <div class="row">
+                    <!-- CLIENTE -->
                     <div class="col-md-4">
                         <h5>1. Información del Cliente</h5>
                         <div class="mb-3">
@@ -40,7 +71,9 @@ else
                                     <option value="@client.Id">@client.Name</option>
                                 }
                             </InputSelect>
+                            <ValidationMessage For="@(() => newOrder.ClientId)" />
                         </div>
+
                         <div class="mb-3">
                             <label class="form-label">Prioridad de la Orden</label>
                             <InputSelect @bind-Value="newOrder.Priority" class="form-select">
@@ -51,19 +84,25 @@ else
                         </div>
                     </div>
 
+                    <!-- PRODUCTOS -->
                     <div class="col-md-8">
-                        <h5>2. Productos de la Orden</h5>
+                        <h5>2. Productos de la Orden *</h5>
                         <div class="input-group mb-3">
                             <select @bind="selectedProductId" class="form-select" style="max-width: 60%;">
-                                <option value="0">-- Seleccione un producto para añadir --</option>
+                                <option value="0">-- Seleccione un producto --</option>
                                 @foreach (var product in allProducts)
                                 {
                                     <option value="@product.Id">@product.Name (@product.PriceBase.ToString("C"))</option>
                                 }
                             </select>
-                            <InputNumber @bind-Value="selectedProductQuantity" class="form-control" placeholder="Cant." />
+                            <InputNumber @bind-Value="selectedProductQuantity" class="form-control" placeholder="Cant."  />
                             <Button Color="ButtonColor.Success" @onclick="AddProductToCart">Añadir</Button>
                         </div>
+                        @if (!string.IsNullOrEmpty(cartErrorMessage))
+                        {
+                            <div class="text-danger fw-bold mb-2">@cartErrorMessage</div>
+                        }
+
 
                         @if (cartItems.Any())
                         {
@@ -82,7 +121,7 @@ else
                                     </li>
                                 }
                                 <li class="list-group-item d-flex justify-content-between align-items-center bg-light">
-                                    <span class="fw-bold">Subtotal (base)</span>
+                                    <span class="fw-bold">Subtotal</span>
                                     <span class="fw-bold">@cartItems.Sum(i => i.Quantity * i.PriceBase).ToString("C")</span>
                                 </li>
                             </ul>
@@ -99,15 +138,23 @@ else
                 <h5>3. Resumen y Pago</h5>
                 <div class="row">
                     <div class="col-md-4">
-                        <label class="form-label">Total Acordado (₡)</label>
-                        <InputNumber @bind-Value="newOrder.TotalAmount" class="form-control" />
+                        <label class="form-label">Total Acordado (₡) *</label>
+                        <InputNumber Value="@newOrder.TotalAmount"
+                                     ValueChanged="@((decimal v) => OnTotalAmountChanged(v))"
+                                     ValueExpression="@(() => newOrder.TotalAmount)"
+                                     class="form-control" />
+                        <ValidationMessage For="@(() => newOrder.TotalAmount)" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Descuento (%)</label>
-                        <InputNumber @bind-Value="newOrder.Discount" class="form-control" />
-                        @if (!string.IsNullOrEmpty(discountSuggestion))
+                        <InputNumber @bind-Value="newOrder.Discount" class="form-control" readonly />
+                        @if (!string.IsNullOrEmpty(discountSuggestion) && newOrder.Discount == 0)
                         {
                             <div class="form-text text-success">@discountSuggestion</div>
+                        }
+                        else if (newOrder.Discount > 0)
+                        {
+                            <div class="form-text text-primary">Descuento calculado.</div>
                         }
                     </div>
                     <div class="col-md-4">
@@ -119,18 +166,22 @@ else
                         }
                     </div>
                 </div>
-
             </CardBody>
+
             <CardFooter>
                 <div class="d-flex justify-content-end gap-2">
+                    <a href="/ordenes" class="btn btn-light border">Cancelar</a>
+
                     <Button Color="ButtonColor.Secondary" @onclick="() => SaveOrder(false)">Guardar como Cotización</Button>
 
-                    @* --- BOTÓN MODIFICADO --- *@
-                    <Button Color="ButtonColor.Info" IsOutlined="true"
-                            @onclick="GeneratePdfPreview"
-                            disabled="@(!cartItems.Any() || newOrder.ClientId == null)">
-                        <Icon Name="IconName.FileEarmarkPdf" /> Generar Resumen
-                    </Button>
+                    @if (HasPermission("Orders", DemexClaims.View))
+                    {
+                        <Button Color="ButtonColor.Info" IsOutlined="true"
+                                @onclick="GeneratePdfPreview"
+                                disabled="@(!cartItems.Any() || newOrder.ClientId == null)">
+                            <Icon Name="IconName.FileEarmarkPdf" /> Generar Resumen
+                        </Button>
+                    }
 
                     <button type="submit" class="btn btn-primary">Comenzar Orden</button>
                 </div>
@@ -140,7 +191,25 @@ else
 }
 
 @code {
-    // Clase auxiliar para manejar los ítems del carrito
+    //  Autenticación y Claims 
+    [CascadingParameter] private Task<AuthenticationState>? authenticationStateTask { get; set; }
+    private ClaimsPrincipal? user;
+
+    private bool HasPermission(string module, string action)
+        => user?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
+
+    // Modelo y servicios 
+    private Order newOrder = new() { Priority = "Media", Discount = 0 };
+    private List<Client>? allClients;
+    private List<Product>? allProducts;
+    private List<CartItem> cartItems = new();
+    private EditContext editContext = default!;
+    private string? cartErrorMessage;
+    private string discountSuggestion = "";
+    private int selectedProductId;
+    private int selectedProductQuantity = 1;
+
+    //  Modelo auxiliar para productos 
     public class CartItem
     {
         public int ProductId { get; set; }
@@ -149,42 +218,45 @@ else
         public decimal PriceBase { get; set; }
     }
 
-    private Order newOrder = new() { Priority = "Media", Discount = 0 };
-    private List<Client>? allClients;
-    private List<Product>? allProducts;
-    private List<CartItem> cartItems = new();
-
-    private int selectedProductId;
-    private int selectedProductQuantity = 1;
-
-    private string discountSuggestion = "";
-
+    // Ciclo de vida 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await authenticationStateTask!;
+        user = authState.User;
+
+        editContext = new EditContext(newOrder);
         allClients = (await clientService.GetAllClient()).ToList();
         allProducts = (await productService.GetAllProducts()).ToList();
     }
 
+    //  Lógica interna 
     private void ClientSelectionChanged(ChangeEventArgs e)
     {
         var clientId = int.Parse(e.Value?.ToString() ?? "0");
         newOrder.ClientId = clientId > 0 ? clientId : null;
         UpdateDiscountSuggestion();
+        editContext?.NotifyFieldChanged(FieldIdentifier.Create(() => newOrder.ClientId));
     }
 
     private void AddProductToCart()
     {
+        cartErrorMessage = null;
+
+        if (selectedProductQuantity <= 0)
+        {
+            cartErrorMessage = "La cantidad debe ser mayor a 0.";
+            StateHasChanged();
+            return;
+        }
+
         if (selectedProductId == 0 || selectedProductQuantity <= 0) return;
         var product = allProducts?.FirstOrDefault(p => p.Id == selectedProductId);
         if (product == null) return;
 
         var existingItem = cartItems.FirstOrDefault(i => i.ProductId == selectedProductId);
         if (existingItem != null)
-        {
             existingItem.Quantity += selectedProductQuantity;
-        }
         else
-        {
             cartItems.Add(new CartItem
             {
                 ProductId = product.Id,
@@ -192,25 +264,25 @@ else
                 Quantity = selectedProductQuantity,
                 PriceBase = product.PriceBase
             });
-        }
 
-        // Reseteamos los selectores
         selectedProductId = 0;
         selectedProductQuantity = 1;
+        cartErrorMessage = null;
         UpdateDiscountSuggestion();
+        CalculateDiscount();
     }
 
     private void RemoveProductFromCart(int productId)
     {
         cartItems.RemoveAll(i => i.ProductId == productId);
         UpdateDiscountSuggestion();
+        CalculateDiscount();
     }
 
     private void UpdateDiscountSuggestion()
     {
         discountSuggestion = "";
         var client = allClients?.FirstOrDefault(c => c.Id == newOrder.ClientId);
-
         bool isFrequent = client?.IsFrequent == 1;
         bool hasVolume = cartItems.Sum(i => i.Quantity) > 5;
 
@@ -222,24 +294,66 @@ else
             discountSuggestion = "Sugerencia: 5% (más de 5 artículos).";
     }
 
+    private void OnTotalAmountChanged(decimal newValue)
+    {
+        newOrder.TotalAmount = newValue;
+        CalculateDiscount();
+        editContext?.NotifyFieldChanged(FieldIdentifier.Create(() => newOrder.TotalAmount));
+    }
+
+    private void CalculateDiscount()
+    {
+        decimal subtotal = cartItems.Sum(i => i.Quantity * i.PriceBase);
+        decimal totalAcordado = newOrder.TotalAmount;
+        newOrder.Discount = (subtotal > 0 && totalAcordado < subtotal)
+            ? Math.Round(((subtotal - totalAcordado) / subtotal) * 100, 2)
+            : 0;
+        StateHasChanged();
+    }
+
+    //  Guardar Orden 
     private async Task SaveOrder(bool beginOrder)
     {
+        cartErrorMessage = null;
+        bool validForm = editContext.Validate();
+        bool hasProducts = cartItems.Any();
+
+        if (!validForm || !hasProducts)
+        {
+            if (!validForm)
+                ToastService.Notify(new(ToastType.Warning, "Datos incompletos", "Revise los campos marcados."));
+            if (!hasProducts)
+            {
+                cartErrorMessage = "Debe añadir al menos un producto.";
+                ToastService.Notify(new(ToastType.Warning, "Faltan Productos", cartErrorMessage));
+            }
+            StateHasChanged();
+            return;
+        }
+
         try
         {
+            var userIdClaim = user?.FindFirst("UserId");
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+            {
+                ToastService.Notify(new(ToastType.Warning, "Sesión inválida", "No se pudo obtener el usuario autenticado."));
+                return;
+            }
+
+            newOrder.AdminId = userId;
             newOrder.CreationDate = DateOnly.FromDateTime(DateTime.Now);
-            newOrder.DaliveryDate = DateOnly.FromDateTime(DateTime.Now.AddDays(15)); // Fecha de entrega por defecto (ej. 15 días)
-            newOrder.AdminId = 1; // Valor quemado como solicitaste
+            newOrder.DaliveryDate = DateOnly.FromDateTime(DateTime.Now.AddDays(15));
             newOrder.State = beginOrder ? "Diseño" : "Cotizando";
 
             newOrder.ProductOrders = cartItems.Select(item => new ProductOrder
             {
                 IdProduct = item.ProductId,
-                Quantity = item.Quantity
+                Quantity = item.Quantity,
+                IdOrderNavigation = newOrder
             }).ToList();
 
             await orderService.Create(newOrder);
-
-            ToastService.Notify(new(ToastType.Success, "Orden Guardada", $"La orden ha sido guardada exitosamente como '{newOrder.State}'."));
+            ToastService.Notify(new(ToastType.Success, "Orden Guardada", $"Guardada como '{newOrder.State}'."));
             NavigationManager.NavigateTo("/ordenes");
         }
         catch (Exception ex)
@@ -248,44 +362,46 @@ else
         }
     }
 
-    // Este método se activa con el botón principal "Comenzar Orden"
-    private async Task HandleValidSubmit()
-    {
-        await SaveOrder(true);
-    }
+    private async Task HandleValidSubmit() => await SaveOrder(true);
 
+    //  PDF 
     private async Task GeneratePdfPreview()
     {
         if (!cartItems.Any() || newOrder.ClientId == null)
         {
-            ToastService.Notify(new(ToastType.Warning, "Faltan datos", "Debe seleccionar un cliente y añadir al menos un producto."));
+            ToastService.Notify(new(ToastType.Warning, "Faltan datos", "Seleccione un cliente y productos."));
             return;
         }
 
-        // Poblamos el objeto de la orden con los datos actuales del formulario
-        newOrder.ProductOrders = cartItems.Select(item => new ProductOrder
+        if (allProducts == null)
         {
-            IdProductNavigation = allProducts.First(p => p.Id == item.ProductId),
-            Quantity = item.Quantity,
-            IdProduct = item.ProductId
+            ToastService.Notify(new(ToastType.Danger, "Error interno", "No se cargaron los productos."));
+            return;
+        }
+
+        newOrder.ProductOrders = cartItems.Select(item =>
+        {
+            var product = allProducts.FirstOrDefault(p => p.Id == item.ProductId);
+            return new ProductOrder
+            {
+                IdProductNavigation = product,
+                Quantity = item.Quantity,
+                IdProduct = item.ProductId
+            };
         }).ToList();
 
-        var client = allClients.FirstOrDefault(c => c.Id == newOrder.ClientId);
-
-        // Creamos el modelo de datos para el PDF
-        var pdfModel = new OrderPdfModel
+        var client = allClients?.FirstOrDefault(c => c.Id == newOrder.ClientId);
+        if (client == null)
         {
-            Order = newOrder,
-            Client = client
-        };
+            ToastService.Notify(new(ToastType.Warning, "Cliente no encontrado", "El cliente seleccionado no existe."));
+            return;
+        }
 
-        // Instanciamos el generador y creamos el PDF
+        var pdfModel = new OrderPdfModel { Order = newOrder, Client = client };
         var generator = new OrderPdfGenerator(pdfModel);
         var pdfBytes = generator.GenerateDocument();
 
-        // Usamos JS Interop para descargar el archivo
-        var fileName = $"Cotizacion_{client.Name.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd}.pdf";
-        var base64 = Convert.ToBase64String(pdfBytes);
-        await JSRuntime.InvokeVoidAsync("saveAsFile", fileName, base64);
+        var fileName = $"Cotizacion_{client.Name?.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd}.pdf";
+        await JSRuntime.InvokeVoidAsync("saveAsFile", fileName, Convert.ToBase64String(pdfBytes));
     }
 }

@@ -1,4 +1,5 @@
 ﻿using LAFABRICA.Data.DB;
+using LAFABRICA.Models.AuxiliarDTOS;
 
 namespace LAFABRICA.Models.Interface
 {
@@ -9,6 +10,7 @@ namespace LAFABRICA.Models.Interface
         Task<Client> Create(Client client);
         Task<Client> Update(int id, Client client);
         Task Delete(int id);
-
+       Task<ClientOrdersDTO?> GetClientWithCompletedOrders(int id);
+        Task UpdateFrequentStatus(int clientId);
     }
 }

@@ -9,9 +9,8 @@ public partial class Rol
 
     public string Name { get; set; } = null!;
 
-    public virtual ICollection<Administrator> Administrators { get; set; } = new List<Administrator>();
-
-    public virtual ICollection<Employee> Employees { get; set; } = new List<Employee>();
-
+    public byte IsActive { get; set; }  
     public virtual ICollection<RolePermission> RolePermissions { get; set; } = new List<RolePermission>();
+
+    public virtual ICollection<User> Users { get; set; } = new List<User>();
 }

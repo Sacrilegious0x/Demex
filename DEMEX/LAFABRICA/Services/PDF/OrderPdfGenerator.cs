@@ -53,7 +53,7 @@ public class OrderPdfGenerator
     {
         container.Column(column =>
         {
-            // 1. Fila principal que contiene todo el contenido del encabezado (texto y logo)
+            //  Fila principal que contiene todo el contenido del encabezado (texto y logo)
             column.Item().Row(row =>
             {
                 // Columna izquierda: Agrupa TODO el texto aquí
@@ -77,7 +77,7 @@ public class OrderPdfGenerator
                 row.ConstantItem(150).Image("wwwroot/images/demex_logo.jpg");
             });
 
-            // 2. Línea divisoria al final del encabezado
+            //  Línea divisoria al final del encabezado
             column.Item().PaddingTop(10).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
         });
     }
@@ -107,11 +107,11 @@ public class OrderPdfGenerator
             col.Item().Text(_model.Client.Name);
             col.Item().Text(_model.Client.Email);
 
-            // CAMBIO 3: Añadir número de contacto
+            //  Añadir número de contacto
             if (!string.IsNullOrEmpty(_model.Client.PhoneNumber))
                 col.Item().Text("Teléfono: " + _model.Client.PhoneNumber);
 
-            // CAMBIO 4: Dirección y Dirección Específica en la misma línea
+            //  Dirección y Dirección Específica en la misma línea
             var location = _model.Client.Location;
             var specificLocation = _model.Client.SpecificLocation;
             string fullLocation = string.Empty;

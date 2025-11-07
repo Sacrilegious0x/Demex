@@ -15,7 +15,5 @@ public partial class Inventory
 
     public int? MaterialId { get; set; }
 
-
     public virtual Material? Material { get; set; }
-
 }

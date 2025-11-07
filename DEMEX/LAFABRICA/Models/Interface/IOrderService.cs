@@ -9,5 +9,9 @@ namespace LAFABRICA.Models.Interface
         Task<Order> Create(Order order);
         Task<Order> Update(int id, Order order);
         Task<bool> Delete(int id);
+         Task<IEnumerable<Order>> GetOrdersByClientId(int clientId);
+        Task<bool> HasPendingPaymentAsync(int clientId);
+
+
     }
 }

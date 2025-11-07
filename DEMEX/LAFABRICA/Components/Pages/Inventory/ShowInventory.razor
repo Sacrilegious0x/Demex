@@ -1,0 +1,322 @@
+﻿@page "/inventario"
+@attribute [Authorize]
+@using LAFABRICA.Models
+@using LAFABRICA.Models.AuxiliarDTOS
+@using LAFABRICA.Models.Interface
+@using LAFABRICA.Services.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject NavigationManager NavigationManager
+@inject IMaterialService materialService
+@inject ToastService toastService
+
+<PageTitle>Inventario</PageTitle>
+
+<Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+<ConfirmDialog @ref="dialog" />
+
+<style>
+    .material-img-thumbnail {
+        width: 60px; /* Tamaño fijo para la miniatura */
+        height: 60px;
+        object-fit: cover; /* la imagen cubra el espacio sin distorsionarse */
+        border-radius: 4px;
+        border: 1px solid #ddd;
+    }
+
+    .status-sold_out {
+        color: #dc3545; /* Rojo de Bootstrap (Danger) */
+        font-weight: bold;
+    }
+
+    .status-insuficient {
+        color: #FF7B45; /* Rojo de Bootstrap (Danger) */
+        font-weight: bold;
+    }
+
+    .status-little {
+        color: #ffc107; /* Amarillo/Naranja de Bootstrap (Warning) */
+        font-weight: bold;
+    }
+
+    .status-aceptable {
+        color: #28a745; /* Verde de Bootstrap (Success) */
+    }
+</style>
+
+
+@if (user == null)
+{
+    <div class="text-center p-5">
+        <Spinner Color="SpinnerColor.Primary" />
+        <p class="mt-2">Cargando autenticación...</p>
+    </div>
+}
+else if (!HasPermission("Inventory", DemexClaims.View))
+{
+    <div class="text-center mt-5">
+        <i class="bi bi-shield-lock fs-1 text-warning"></i>
+        <h4 class="mt-3">Acceso denegado</h4>
+        <p>No tienes permiso para visualizar el inventario.</p>
+    </div>
+}
+else if (materialDetails == null)
+{
+    <div class="d-flex justify-content-center">
+        <Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
+    </div>
+}
+else if (!materialDetails.Any())
+{
+    <div>
+        <Alert Color="AlertColor.Primary" class="d-flex justify-content-between align-items-center">
+            <div>
+                <Icon Name="IconName.InfoCircleFill" class="me-2" />
+                <strong>No hay materiales registrados en el inventario.</strong>
+            </div>
+
+            @if (HasPermission("Inventory", DemexClaims.Create))
+            {
+                <a class="btn btn-outline-primary" href="/inventario/crear">
+                    <Icon Name="IconName.PlusLg" /> Nuevo Material
+                </a>
+            }
+        </Alert>
+    </div>
+}
+else
+{
+    <div class="container mt-2">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <h3><Icon Name="IconName.Box" /> Gestión de Inventario</h3>
+
+                    @if (HasPermission("Inventory", DemexClaims.Create))
+                    {
+                        <a class="btn text-white" href="/inventario/crear" style="background-color: #0f54a1;">
+                            <Icon Name="IconName.PlusLg" /> Nuevo Material
+                        </a>
+                    }
+                </div>
+
+                <div class="d-flex flex-wrap align-items-center gap-3 mt-3">
+                    <div class="d-flex align-items-center border rounded px-2" style="flex-grow: 1; max-width: 400px;">
+                        <Icon Name="IconName.Search" class="text-secondary me-2" />
+                        <input type="text" class="form-control border-0" placeholder="Buscar por Nombre o Proveedor..."
+                               @bind-value="searchTerm" @bind-value:event="oninput" style="box-shadow:none;" />
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <label for="status-filter" class="me-2 text-secondary"><Icon Name="IconName.Funnel" class="text-secondary" /></label>
+                        <InputSelect id="status-filter" class="form-select" @bind-Value="statusFilter">
+                            <option value="">Todos los estados</option>
+                            <option value="Agotado">Agotado</option>
+                            <option value="Insuficiente">Insuficiente</option>
+                            <option value="Queda poco">Queda poco</option>
+                            <option value="Aceptable">Aceptable</option>
+                        </InputSelect>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body text-center">
+                @if (!FilteredMaterials.Any())
+                {
+                    <Alert Color="AlertColor.Warning">
+                        <Icon Name="IconName.ExclamationTriangleFill" class="me-2" />
+                        No se encontraron materiales que coincidan con los filtros aplicados.
+                    </Alert>
+                }
+                else
+                {
+                    <div class="row">
+                        <div class="col-12 table-responsive" style="max-height: 370px; overflow-y: auto;">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Material</th>
+                                        <th>Unidad</th>
+                                        <th>Proveedor</th>
+                                        <th>Stock Actual</th>
+                                        <th>Stock Mínimo</th>
+                                        <th>Estado</th>
+                                        <th>Precio Compra</th>
+                                        <th>Foto</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var detail in FilteredMaterials)
+                                    {
+                                        var (statusText, statusClass) = GetStockStatus((int)detail.Quantity, (int)detail.MinimumQuantity);
+                                        <tr>
+                                            <td>@detail.MaterialName</td>
+                                            <td>@detail.Unit</td>
+                                            <td>@detail.SupplierName</td>
+                                            <td>@detail.Quantity</td>
+                                            <td>@detail.MinimumQuantity</td>
+                                            <td><span class="@statusClass">@statusText</span></td>
+                                            <td>@detail.PricePurchase</td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(detail.photoUrl))
+                                                {
+                                                    <Image src="@detail.photoUrl" alt="@detail.MaterialName" Class="material-img-thumbnail" />
+                                                }
+                                                else
+                                                {
+                                                    <Icon Name="IconName.ImageFill" Color="IconColor.Secondary" />
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (HasPermission("Inventory", DemexClaims.Edit))
+                                                {
+                                                    <button class="btn btn-edit" @onclick="() => EditMaterial(detail.MaterialId, detail.SupplierId)">
+                                                        <Icon class="icon-edit" Name="IconName.PencilSquare" />
+                                                    </button>
+                                                }
+
+                                                @if (HasPermission("Inventory", DemexClaims.Delete))
+                                                {
+                                                    <button class="btn btn-delete" @onclick="() => ConfirmDelete(detail.MaterialId)">
+                                                        <Icon Name="IconName.Trash" Color="IconColor.Danger" />
+                                                    </button>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="card-footer">
+                <Icon Name="IconName.Box" /> Cantidad de distintos materiales: @FilteredMaterials.Count()
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
+    private ClaimsPrincipal? user;
+
+    private List<MaterialSupplierInventoryDto>? materialDetails;
+    private ConfirmDialog dialog = default!;
+    private string searchTerm = string.Empty;
+    private string statusFilter = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateTask;
+        user = authState.User;
+
+        if (HasPermission("Inventory", DemexClaims.View))
+            await LoadMaterials();
+    }
+
+    private async Task LoadMaterials()
+    {
+        materialDetails = (await materialService.GetMaterialDetails()).ToList();
+    }
+
+    private IEnumerable<MaterialSupplierInventoryDto> FilteredMaterials
+    {
+        get
+        {
+            if (materialDetails == null)
+                return Enumerable.Empty<MaterialSupplierInventoryDto>();
+
+            var filtered = materialDetails.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var term = searchTerm.Trim().ToLowerInvariant();
+                filtered = filtered.Where(d =>
+                    d.MaterialName.ToLowerInvariant().Contains(term) ||
+                    d.SupplierName.ToLowerInvariant().Contains(term));
+            }
+
+            if (!string.IsNullOrWhiteSpace(statusFilter))
+            {
+                filtered = filtered.Where(d =>
+                {
+                    var (statusText, _) = GetStockStatus((int)d.Quantity, (int)d.MinimumQuantity);
+                    return statusText == statusFilter;
+                });
+            }
+
+            return filtered;
+        }
+    }
+
+    private (string statusText, string statusClass) GetStockStatus(int currentStock, int minStock)
+    {
+        if (currentStock == 0)
+            return ("Agotado", "status-sold_out");
+        if (currentStock <= minStock)
+            return ("Insuficiente", "status-insuficient");
+        if (currentStock <= (int)(minStock * 1.5))
+            return ("Queda poco", "status-little");
+        return ("Aceptable", "status-aceptable");
+    }
+
+    private void EditMaterial(int materialId, int supplierId)
+    {
+        NavigationManager.NavigateTo($"/inventario/editar/{materialId}/{supplierId}");
+    }
+
+    private async Task ConfirmDelete(int materialId)
+    {
+        var options = new ConfirmDialogOptions
+        {
+            YesButtonText = "Eliminar",
+            YesButtonColor = ButtonColor.Danger,
+            NoButtonText = "Cancelar",
+            NoButtonColor = ButtonColor.Secondary
+        };
+
+        var confirm = await dialog.ShowAsync(
+            title: "¿Seguro que desea eliminar este material?",
+            message1: "Esta acción es irreversible.",
+            confirmDialogOptions: options);
+
+        if (confirm)
+        {
+            try
+            {
+                await DeleteMaterial(materialId);
+                
+            }
+            catch (Exception e)
+            {
+                toastService.Notify(new(ToastType.Danger, $"Ha ocurrido un error inesperado {e.Message}"));
+            }
+
+            
+        }
+       
+    }
+
+    private async Task DeleteMaterial(int materialId)
+    {
+        if (!HasPermission("Inventory", DemexClaims.Delete))
+        {
+            toastService.Notify(new(ToastType.Warning, "No tienes permiso para eliminar materiales."));
+            return;
+        }
+
+        await materialService.DeleteMaterial(materialId);
+        await LoadMaterials();
+        StateHasChanged();
+        toastService.Notify(new(ToastType.Success, "Material eliminado correctamente."));
+
+        await Task.Delay(1000);
+        // NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+    }
+
+    private bool HasPermission(string module, string action)
+        => user?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
+}

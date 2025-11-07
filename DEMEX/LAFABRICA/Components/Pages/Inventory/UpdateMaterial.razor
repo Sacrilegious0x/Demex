@@ -1,0 +1,379 @@
+﻿@page "/inventario/editar/{MaterialId:int}/{SupplierId:int}"
+@attribute [Authorize]
+@using BlazorBootstrap
+@using LAFABRICA.Data.DB
+@using LAFABRICA.Models
+@using LAFABRICA.Models.AuxiliarDTOS
+@using LAFABRICA.Models.Interface
+@using LAFABRICA.Services.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject IMaterialService MaterialService
+@inject ISupplierService SupplierService
+@inject NavigationManager NavigationManager
+@inject IWebHostEnvironment WebHostEnvironment
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Editar Material</PageTitle>
+
+<Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+<ConfirmDialog @ref="dialog" />
+
+@if (user == null)
+{
+	<div class="text-center p-5">
+		<Spinner Color="SpinnerColor.Primary" />
+		<p class="mt-2">Cargando autenticación...</p>
+	</div>
+}
+else if (!HasPermission("Inventory", DemexClaims.Edit))
+{
+	<div class="text-center mt-5">
+		<i class="bi bi-shield-lock fs-1 text-warning"></i>
+		<h4 class="mt-3">Acceso denegado</h4>
+		<p>No tienes permiso para editar materiales.</p>
+	</div>
+}
+else
+{
+	<div class="container mt-2">
+		<div class="card">
+			<div class="card-header">
+				<div class="d-flex justify-content-between align-items-center mt-3">
+					<h2>
+						<Icon Name="IconName.PencilSquare" />
+						<text>Editar Material de Inventario</text>
+					</h2>
+					<a class="btn btn-outline-secondary" href="/inventario">
+						<Icon Name="IconName.ArrowLeft"></Icon>
+					</a>
+				</div>
+			</div>
+
+			<div class="card-body">
+				@if (editModel != null && !isLoading)
+				{
+					<EditForm Model="@editModel" OnValidSubmit="@HandleValidSubmit" FormName="EditMaterialForm" enctype="multipart/form-data">
+						<DataAnnotationsValidator />
+
+						<div class="d-flex justify-content-between">
+							<div class="container-sm">
+								<h3>Información del Material</h3>
+
+							@* Material Name - Habilitao *@
+							<div class="form-group row mb-3">
+								<label class="col-md-5 col-form-label">Nombre del Material: <span class="text-danger">*</span></label>
+								<div class="col-md-8">
+									<TextInput class="border-1" @bind-Value="editModel.MaterialName"  placeholder="Ej: Tubo PVC 1/2 pulgada" required />
+									<ValidationMessage For="@(() => editModel.MaterialName)" />
+								</div>
+							</div>
+
+								<div class="form-group row mb-3">
+									<label class="col-md-5 col-form-label">Unidad:</label>
+									<div class="col-md-8">
+										<TextInput class="border-1" @bind-Value="editModel.Unit" required />
+										<ValidationMessage For="@(() => editModel.Unit)" />
+									</div>
+								</div>
+
+								<div class="form-group row mb-3">
+									<label class="col-md-5 col-form-label">Precio de Compra:</label>
+									<div class="col-md-8">
+										<NumberInput class="border-1" @bind-Value="editModel.PricePurchase" type="number" step="0.01" required />
+										<ValidationMessage For="@(() => editModel.PricePurchase)" />
+									</div>
+								</div>
+
+								<div class="form-group row mb-3">
+									<label class="col-md-5 col-form-label">Foto Actual:</label>
+									<div class="col-md-8">
+										@if (!string.IsNullOrEmpty(editModel.photoUrl))
+										{
+											<img src="@editModel.photoUrl" alt="Foto" class="rounded" style="width: 100px; height: 100px; object-fit: cover;" />
+										}
+										else
+										{
+											<p class="text-muted">No hay foto.</p>
+										}
+										<InputFile class="form-control mt-2" OnChange="@HandleFileSelected" />
+										@if (selectedImage != null)
+										{
+											<small class="text-muted">Nueva: @selectedImage.Name</small>
+										}
+									</div>
+								</div>
+							</div>
+
+							<div class="container-sm">
+								<h3>Inventario</h3>
+
+								<div class="form-group row mb-3">
+									<label class="col-md-5 col-form-label">Proveedor:</label>
+									<div class="col-md-8">
+										<TextInput class="border-1" @bind-Value="editModel.SupplierName" disabled />
+									</div>
+								</div>
+
+							@* Stock Actual - Se edita en la tabla Material_Supplier.Quantity *@
+							<div class="form-group row mb-3">
+								<label class="col-md-5 col-form-label">Stock Actual: <span class="text-danger">*</span></label>
+								<div class="col-md-8">
+									<NumberInput class="border-1" @bind-Value="editModel.Quantity" type="number" placeholder="Ej: 100" required />
+									<ValidationMessage For="@(() => editModel.Quantity)" />
+								</div>
+								<div>
+									<p class="text-black-50">Cantidad física actual en el inventario.</p>
+								</div>
+							</div>
+
+								<div class="form-group row mb-3">
+									<label class="col-md-5 col-form-label">Stock Mínimo:</label>
+									<div class="col-md-8">
+										<NumberInput class="border-1" @bind-Value="editModel.MinimumQuantity" required />
+										<ValidationMessage For="@(() => editModel.MinimumQuantity)" />
+									</div>
+								</div>
+							</div>
+						</div>
+
+						@if (showAlert)
+						{
+							<Alert Color="AlertColor.Warning">
+								<strong>@alertMessage</strong>
+							</Alert>
+						}
+
+						<div class="d-flex justify-content-end mt-3">
+							<button type="button" class="btn btn-outline-secondary me-2" @onclick="HandleCancel">
+								Cancelar
+							</button>
+							<button type="submit" class="btn btn-primary" disabled="@isSaving">
+								@if (isSaving)
+								{
+									<Spinner Type="SpinnerType.Border" Size="SpinnerSize.Small" class="me-1" />
+									<span>Guardando...</span>
+								}
+								else
+								{
+									<span>Guardar</span>
+								}
+							</button>
+						</div>
+					</EditForm>
+				}
+				else
+				{
+					<div class="text-center">
+						<Spinner Type="SpinnerType.Border" Size="SpinnerSize.Large" />
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+}
+
+@code {
+	[CascadingParameter] private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
+	private ClaimsPrincipal? user;
+
+	[Parameter] public int MaterialId { get; set; }
+	[Parameter] public int SupplierId { get; set; }
+
+	bool showAlert;
+	string alertMessage = "";
+	private ConfirmDialog dialog = default!;
+	[Inject] public ToastService toastService { get; set; } = default!;
+
+	private MaterialSupplierInventoryDto? editModel;
+	private bool isLoading = true;
+	private bool isSaving = false;
+
+	private IBrowserFile? selectedImage;
+	private long maxFileSize = 1024 * 1024 * 5;
+
+	protected override async Task OnInitializedAsync()
+	{
+		var auth = await AuthenticationStateTask;
+		user = auth.User;
+
+		if (!HasPermission("Inventory", DemexClaims.Edit))
+			return;
+
+		try
+		{
+			editModel = await MaterialService.GetMaterialDetailByIds(MaterialId, SupplierId);
+
+			if (editModel == null)
+			{
+				toastService.Notify(new(ToastType.Danger, "Error al cargar el material."));
+				NavigationManager.NavigateTo("/inventario");
+			}
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Error: {ex.Message}");
+			toastService.Notify(new(ToastType.Danger, "No se pudo cargar el material."));
+			NavigationManager.NavigateTo("/inventario");
+		}
+		finally
+		{
+			isLoading = false;
+		}
+	}
+
+	private bool HasPermission(string module, string action)
+		=> user?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
+
+
+	// Método que se ejecuta al enviar el formulario
+	private async Task HandleValidSubmit()
+	{
+		var options = new ConfirmDialogOptions
+		{
+			YesButtonText = "Confirmar",
+			YesButtonColor = ButtonColor.Success,
+			NoButtonText = "Cancelar",
+			NoButtonColor = ButtonColor.Danger
+		};
+
+		var confirmation = await dialog.ShowAsync(
+			title: "Deseas aplicar estos cambios?",
+			message1: "Una vez editado se pierde la informacion anterior",
+			confirmDialogOptions: options);
+
+		if (confirmation)
+		{
+			
+			if (editModel == null) return;
+			isSaving = true;
+			showAlert = false;
+
+			try
+			{
+				//  Manejar la foto (subir si se seleccionó una nueva)
+				string? newPhotoUrl = await UploadFileAsync();
+
+				// Si la subida falló (y no fue porque no se seleccionó nada), detener.
+				if (showAlert && selectedImage != null)
+				{
+					isSaving = false;
+					return;
+				}
+
+				// Si se subió una nueva foto, actualiza el DTO
+				if (!string.IsNullOrEmpty(newPhotoUrl))
+				{
+					editModel.photoUrl = newPhotoUrl;
+				}
+
+				
+				await MaterialService.UpdateMaterial(editModel);
+				await Task.Delay(600);
+
+				toastService.Notify(new(ToastType.Success, $"Se actualizó correctamente el material: {editModel.MaterialName}"));
+
+
+				NavigationManager.NavigateTo("/inventario");
+			}
+			catch (InvalidOperationException ex)
+			{
+				showAlert = true;
+				alertMessage = ex.Message;
+			}
+			catch (Exception ex)
+			{
+				toastService.Notify(new(ToastType.Danger, $"Ocurrió un error al guardar el material."));
+				Console.WriteLine($"Error al editar material: {ex.Message}");
+			}
+			finally
+			{
+				isSaving = false;
+			}
+
+		}
+
+
+		
+	}
+
+	private void HandleFileSelected(InputFileChangeEventArgs e)
+	{
+		showAlert = false;
+		alertMessage = "";
+		selectedImage = null; // Reset
+
+		var file = e.File;
+		var fileExtension = Path.GetExtension(file.Name).ToLowerInvariant();
+
+		// Validación de Extensión
+		var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+		if (!allowedExtensions.Contains(fileExtension))
+		{
+			showAlert = true;
+			alertMessage = "Formato de archivo no permitido. Solo se aceptan archivos .jpg, .jpeg y .png.";
+			return;
+		}
+
+		// Validación de Tamaño
+		if (file.Size > maxFileSize)
+		{
+			showAlert = true;
+			alertMessage = $"El archivo es demasiado grande. El límite es {maxFileSize / 1024 / 1024} MB.";
+			return;
+		}
+
+		selectedImage = file;
+	}
+
+	// Método para subir el archivo al servidor (mismo que en Crear)
+	private async Task<string?> UploadFileAsync()
+	{
+		if (selectedImage == null)
+		{
+			return null; // No se seleccionó archivo nuevo
+		}
+
+		try
+		{
+			// Definir la carpeta de destino relativa a wwwroot
+			string relativeFolderPath = Path.Combine("images", "materials");
+			// Obtener la ruta absoluta del servidor
+			string absoluteFolderPath = Path.Combine(WebHostEnvironment.WebRootPath, relativeFolderPath);
+
+
+			if (!Directory.Exists(absoluteFolderPath))
+			{
+				Directory.CreateDirectory(absoluteFolderPath);
+			}
+
+			// Crear un nombre de archivo único para evitar colisiones
+			string fileExtension = Path.GetExtension(selectedImage.Name);
+			string uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+			string absoluteFilePath = Path.Combine(absoluteFolderPath, uniqueFileName);
+
+			// Guardar el archivo en el servidor
+			await using (var fileStream = new FileStream(absoluteFilePath, FileMode.Create))
+			{
+				await selectedImage.OpenReadStream(maxFileSize).CopyToAsync(fileStream);
+			}
+
+			// Devolver la RUTA RELATIVA que se guardará en la BD
+			string relativePath = Path.Combine(relativeFolderPath, uniqueFileName).Replace("\\", "/");
+
+			return $"/{relativePath}"; 
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Error al subir el archivo: {ex.Message}");
+			showAlert = true;
+			alertMessage = "Error al procesar la imagen.";
+			return null;
+		}
+	}
+
+	private void HandleCancel()
+	{
+		NavigationManager.NavigateTo("/inventario");
+	}
+}

@@ -1,63 +1,64 @@
 ﻿using LAFABRICA.Data.DB;
 using LAFABRICA.Models.Interface;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace LAFABRICA.Services
 {
     public class ProductService : IProductService
     {
-        private readonly AppDbContext _context; // Conexion a la db
-        // Nota: readonly = Final en java 
+        private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
-        public ProductService(AppDbContext context)
+        public ProductService(IDbContextFactory<AppDbContext> context)
         {
-            _context = context;
+            _contextFactory = context;
         }
 
-        // Nota: IEnmerable es similar a un List<T> pero no se puede editar la lista 
-        public async Task<IEnumerable<Product>> GetAllProducts()   // Nota: Task = Future<T> en java, basicamente un promesa de lo que se va a enviar al finalizar 
+        public async Task<IEnumerable<Product>> GetAllProducts()
         {
-            return await _context.Products   // Nota: Debido a este async y await se permite manejar esas pausas sin bloquear el programa
-                .Where(p => p.IsActive == 1) // Filtrar sólo activos
+            using var context = _contextFactory.CreateDbContext();
+            return await context.Products
+                .Where(p => p.IsActive == 1)
                 .Include(p => p.ProductMaterials)
-                .ThenInclude(pm => pm.Material)
+                    .ThenInclude(pm => pm.Material) 
                 .ToListAsync();
         }
 
-        public async Task<Product?> GetById(int id)   // Nota: "?" = Significa que se puede devolver un producto a como se puede devolver un NULL
+        
+        public async Task<Product?> GetById(int id)
         {
-            return await _context.Products
-                .Include(p => p.ProductMaterials)   // Nota: "Include" = sirve para traer informacion de tablas relacionadas a la identidad
-                .FirstOrDefaultAsync(p => p.Id == id);   // Nota: "FirstOrDefaultAsync" = Devuelve el primero en cumplir con la condicion
-            
-            // Nota: Esa: "p" solo es el nombre del elemento, puede ser cualquier caracter o palabra, solo es una forma de referirse a los elementos de la coleccion
-        }       
+            using var context = _contextFactory.CreateDbContext();
+            return await context.Products
+                .Include(p => p.ProductMaterials)
+                    .ThenInclude(pm => pm.Material) 
+                .FirstOrDefaultAsync(p => p.Id == id && p.IsActive == 1); 
+        }
+       
 
         public async Task<Product> Create(Product product)
         {
-            var materialIds = product.ProductMaterials?   // Nta: Var = "Deja que el compilador averigüe el tipo de dato por mí"
+            using var context = _contextFactory.CreateDbContext();
+            var materialIds = product.ProductMaterials?
                                 .Select(pm => pm.MaterialId)
                                 .Where(id => id != 0)
                                 .Distinct()
                                 .ToList()
-                              ?? new List<int>();
+                               ?? new List<int>();
 
+            // Limpiar la lista original y re-crearla solo con IDs antes de añadir
+            product.ProductMaterials.Clear();
             product.ProductMaterials = materialIds
                 .Select(mid => new ProductMaterial { MaterialId = mid })
                 .ToList();
 
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
+            context.Products.Add(product);
+            await context.SaveChangesAsync();
             return product;
         }
 
         public async Task Update(int id, Product updatedProduct)
         {
-            var existing = await _context.Products
+            using var context = _contextFactory.CreateDbContext();
+            var existing = await context.Products
                 .Include(p => p.ProductMaterials)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
@@ -65,54 +66,51 @@ namespace LAFABRICA.Services
                 throw new KeyNotFoundException($"Producto con id {id} no encontrado.");
 
             // Actualizar campos escalares
-            existing.Name = updatedProduct.Name;
-            existing.Category = updatedProduct.Category;
-            existing.Description = updatedProduct.Description;
-            existing.PriceBase = updatedProduct.PriceBase;
-            existing.IsCustom = updatedProduct.IsCustom;
-            existing.Complexity = updatedProduct.Complexity;
-            existing.PhotoUrl = updatedProduct.PhotoUrl;
-            existing.IsActive = updatedProduct.IsActive;
+            context.Entry(existing).CurrentValues.SetValues(updatedProduct);
+            // Reasegurar que el ID no cambie por SetValues
+            existing.Id = id;
 
-            // Sincronizar la tabla intermedia ProductMaterials
+            // Sincronizar ProductMaterials
             var incomingIds = (updatedProduct.ProductMaterials ?? Enumerable.Empty<ProductMaterial>())
                                 .Select(pm => pm.MaterialId)
                                 .Where(mid => mid != 0)
                                 .ToHashSet();
 
-            var existingList = existing.ProductMaterials.ToList();
-            var existingIds = existingList.Select(pm => pm.MaterialId).ToHashSet();
+            var existingList = existing.ProductMaterials.ToList(); // Materializar
 
-            // Remover relaciones que ya no existen
+            // Remover
             var toRemove = existingList.Where(pm => !incomingIds.Contains(pm.MaterialId)).ToList();
             if (toRemove.Any())
             {
-                _context.ProductMaterials.RemoveRange(toRemove);
+                context.ProductMaterials.RemoveRange(toRemove); 
             }
 
-            // Añadir nuevas relaciones
+            // Añadir
+            var existingIds = existingList.Select(pm => pm.MaterialId).ToHashSet();
             var toAddIds = incomingIds.Except(existingIds);
             foreach (var mid in toAddIds)
             {
-                existing.ProductMaterials.Add(new ProductMaterial
+                // Añadir directamente al contexto es más seguro que a la colección
+                context.ProductMaterials.Add(new ProductMaterial
                 {
-                    ProductId = existing.Id,
+                    ProductId = existing.Id, // Usar el ID del producto existente
                     MaterialId = mid
                 });
             }
 
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
 
         public async Task<bool> Delete(int id)
         {
-            var product = await _context.Products.FindAsync(id);
+            using var context = _contextFactory.CreateDbContext();
+            var product = await context.Products.FindAsync(id);
             if (product == null)
                 return false;
 
-            product.IsActive = 0;
-            _context.Products.Update(product);
-            await _context.SaveChangesAsync();
+            product.IsActive = 0; // Borrado lógico
+            context.Products.Update(product);
+            await context.SaveChangesAsync();
             return true;
         }
     }
