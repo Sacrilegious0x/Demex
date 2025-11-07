@@ -474,8 +474,9 @@ public partial class AppDbContext : DbContext
                 .HasColumnType("decimal(10,2)")
                 .HasColumnName("TOTAL_AMOUNT");
             entity.Property(e => e.IsActive)
-     .HasDefaultValue(true)
-     .HasColumnName("IS_ACTIVE");
+                .HasDefaultValue(true)
+                .HasColumnName("IS_ACTIVE");
+
             entity.HasOne(d => d.Employee)
                 .WithMany(p => p.EmployeePayments)
                 .HasForeignKey(d => d.EmployeeId)
