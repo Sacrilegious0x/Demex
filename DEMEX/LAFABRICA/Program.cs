@@ -64,7 +64,7 @@ builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredServ
 builder.Services.AddAuthentication("Identity.Application")
     .AddCookie("Identity.Application", options =>
     {
-        options.LoginPath = "/login"; 
+        options.LoginPath = "/login";
     });
 
 builder.Logging.AddFilter("Microsoft.AspNetCore.SignalR", LogLevel.Debug);

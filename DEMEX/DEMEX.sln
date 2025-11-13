@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LAFABRICA", "LAFABRICA\LAFA
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LAFABRICA.Tests", "LAFABRICA.Tests\LAFABRICA.Tests.csproj", "{B00B4222-71FF-42A0-8FEC-12287DE3F9AA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LAFABRICA.UI.Test", "LAFABRICA.UI.Test\LAFABRICA.UI.Test.csproj", "{1D14654A-9323-4D9D-B7BB-3D6EA54F19E5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{B00B4222-71FF-42A0-8FEC-12287DE3F9AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B00B4222-71FF-42A0-8FEC-12287DE3F9AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B00B4222-71FF-42A0-8FEC-12287DE3F9AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D14654A-9323-4D9D-B7BB-3D6EA54F19E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D14654A-9323-4D9D-B7BB-3D6EA54F19E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D14654A-9323-4D9D-B7BB-3D6EA54F19E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D14654A-9323-4D9D-B7BB-3D6EA54F19E5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

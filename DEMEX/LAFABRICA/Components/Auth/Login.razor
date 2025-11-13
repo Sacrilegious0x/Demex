@@ -24,11 +24,11 @@
             <ValidationMessage For="@(() => loginModel.Password)" />
         </div>
 
-        <button type="submit" class="btn w-100 text-white" style="background-color: #0f54a1;">Ingresar</button>
+        <button id="loginBtn" type="submit" class="btn w-100 text-white" style="background-color: #0f54a1;">Ingresar</button>
 
         @if (!string.IsNullOrEmpty(errorMessage))
         {
-            <div class="alert alert-danger mt-3">@errorMessage</div>
+            <div id="loginError" class="alert alert-danger mt-3">@errorMessage</div>
         }
     </EditForm>
     <div class="text-center mt-3">

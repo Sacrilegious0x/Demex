@@ -178,11 +178,6 @@ else
                     .Where(o => o.ClientId == _boundClientId)
                     .ToList();
             }
-
-            // =========================================================================
-            //     CORRECCIÓN 2: Se elimina esta línea para evitar la validación prematura.
-            // =========================================================================
-            // editContext.NotifyFieldChanged(FieldIdentifier.Create(() => newPayment.OrderId));
         }
     }
 
