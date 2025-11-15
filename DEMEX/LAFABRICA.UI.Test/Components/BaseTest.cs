@@ -12,9 +12,13 @@ namespace LAFABRICA.Tests.Components
         {
             var options = new EdgeOptions();
             options.AddArguments("--start-maximized"); //tamanho de la ventana en edge
-             // PARA JENKINS LUEGO (invisible)
-            // options.AddArgument("--headless");
-           // options.AddArgument("--disable-gpu");
+                                                       // PARA JENKINS LUEGO (invisible)
+                                                       // options.AddArgument("--headless");
+                                                       // options.AddArgument("--disable-gpu");
+            options.AddArgument("--headless");
+            options.AddArgument("--disable-gpu");
+            options.AddArgument("--no-sandbox");
+            options.AddArgument("--window-size=1920,1080");
 
             Driver = new EdgeDriver(options);
         }
