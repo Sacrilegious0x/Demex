@@ -40,12 +40,17 @@ pipeline {
         }
 
         stage('Test') {
-            steps {
-                dir('DEMEX') {
-                     bat 'dotnet test LAFABRICA.Tests/LAFABRICA.Tests.csproj'
-                }
-            }
+    steps {
+        dir('DEMEX') {
+            // 1. Ejecuta las pruebas unitarias (estas siguen igual)
+            bat 'dotnet test LAFABRICA.Tests/LAFABRICA.Tests.csproj'
+
+            // 2. Ejecuta SOLO TUS pruebas de Selenium
+            // El filtro buscará cualquier prueba dentro de una clase que termine en ".OrderTests"
+            bat 'dotnet test LAFABRICA.UI.Test/LAFABRICA.UI.Test.csproj --filter "FullyQualifiedName~.OrderTests"'
         }
+    }
+}
     }
 
     post {
