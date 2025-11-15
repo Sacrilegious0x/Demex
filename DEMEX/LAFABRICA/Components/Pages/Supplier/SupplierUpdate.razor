@@ -15,7 +15,7 @@
 
 
 <PageTitle>Editar Proveedor</PageTitle>
-<Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+<Toasts id="toastContainer" class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 <ConfirmDialog @ref="dialog" />
 @if (user == null)
 {
@@ -123,10 +123,10 @@ else
                     }
 
                     <div class="d-flex justify-content-end mt-3 border-top pt-3">
-                        <button type="button" class="btn btn-outline-secondary me-2" @onclick="HandleCancel">
+                        <button type="button" id="cancelSupplierBtn" class="btn btn-outline-secondary me-2" @onclick="HandleCancel">
                             Cancelar
                         </button>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" id="saveSupplierBtn" class="btn btn-primary">
                             Guardar
                         </button>
                     </div>

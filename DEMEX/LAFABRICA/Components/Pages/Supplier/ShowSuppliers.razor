@@ -14,8 +14,8 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ToastService toastService
 
-<Toasts Class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight"></Toasts>
-<ConfirmDialog @ref="dialog" />
+<Toasts id="toastContainer" Class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight"></Toasts>
+<ConfirmDialog Id="confirmDialogComponent" YesButtonId="confirmYes" NoButtonId="confirmNo" @ref="dialog" />
 
 @if (user == null)
 {
@@ -65,7 +65,7 @@ else
 
                 @if (HasPermission("Suppliers", DemexClaims.Create))
                 {
-                    <button class="btn text-white" style="background-color: #0f54a1;" @onclick="NavigateToCreate">
+                    <button id="newSupplierBtn" class="btn text-white" style="background-color: #0f54a1;" @onclick="NavigateToCreate">
                         <i class="bi bi-plus-lg me-2"></i> Nuevo Proveedor
                     </button>
                 }
@@ -77,6 +77,7 @@ else
                         <i class="bi bi-search text-gray-400"></i>
                     </span>
                     <input type="text"
+                           id="searchInput"
                            class="form-control border-start-0"
                            placeholder="Buscar proveedores..."
                            value="@searchTerm"
@@ -113,7 +114,7 @@ else
 
                                     @if (HasPermission("Suppliers", DemexClaims.Edit))
                                     {
-                                        <button class="btn btn-edit text-primary"
+                                        <button class="btn btn-edit text-primary" data-testid="edit-@supplier.c.Id"
                                                 @onclick="() => HandleEdit(supplier.c)">
                                             <Icon Class="icon-edit" Name="IconName.PencilSquare"></Icon>
                                         </button>
@@ -121,7 +122,7 @@ else
 
                                     @if (HasPermission("Suppliers", DemexClaims.Delete))
                                     {
-                                        <button class="btn btn-delete text-danger"
+                                        <button class="btn btn-delete text-danger" data-testid="delete-@supplier.c.Id"
                                                 @onclick="() => ShowDeleteConfirmationAsync(supplier.c.Id)">
                                             <Icon Name="IconName.Trash" Color="IconColor.Danger"></Icon>
                                         </button>
