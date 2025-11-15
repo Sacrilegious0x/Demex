@@ -42,7 +42,7 @@ pipeline {
         stage('Test') {
             steps {
                 dir('DEMEX') {
-                    bat 'dotnet test'
+                     bat 'dotnet test LAFABRICA.Tests/LAFABRICA.Tests.csproj'
                 }
             }
         }
