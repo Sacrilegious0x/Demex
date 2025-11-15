@@ -11,14 +11,13 @@ namespace LAFABRICA.UI.Test.pages.Order
         {
             try
             {
-                // Ruta real del listado de órdenes
                 _driver.Navigate().GoToUrl($"{_appUrl}/ordenes");
-                Thread.Sleep(2000);
+                Thread.Sleep(2000); // Blazor tarda un poquito
 
-                // El título REAL en tu página es un <h3>, no un <h1>
+                // Tu página usa <h3>
                 var pageTitleElement = _driver.FindElement(By.TagName("h3"));
 
-                // Verificamos que el texto mostrado sea el correcto
+                // Texto REAL de tu página
                 Assert.Contains("Gestión de Órdenes", pageTitleElement.Text);
             }
             catch (Exception ex)
@@ -27,6 +26,6 @@ namespace LAFABRICA.UI.Test.pages.Order
             }
         }
 
-        // Aquí pondrás tus otras 4 pruebas para "Órdenes"
+        // Aquí van las otras pruebas de Órdenes
     }
 }

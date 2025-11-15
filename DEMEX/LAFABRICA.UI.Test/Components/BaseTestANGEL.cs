@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Threading;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Edge;
+using OpenQA.Selenium.Support.UI;
 
 namespace LAFABRICA.UI.Test.Components
 {
@@ -8,17 +10,17 @@ namespace LAFABRICA.UI.Test.Components
     {
         protected readonly IWebDriver _driver;
 
-        // URL de tu IIS
+        // URL de tu IIS (ajusta si usas otro puerto)
         protected readonly string _appUrl = "http://localhost:8080";
 
         public BaseTestANGEL()
         {
             var options = new EdgeOptions();
 
-            // HEADLESS CORRECTO PARA EDGE MODERNO
+            // HEADLESS NUEVO (Edge moderno)
             options.AddArgument("headless=new");
 
-            // NECESARIO PARA SERVICIOS SIN ESCRITORIO
+            // Recomendados para Jenkins / servidores
             options.AddArgument("--disable-gpu");
             options.AddArgument("--no-sandbox");
             options.AddArgument("--disable-dev-shm-usage");
@@ -28,15 +30,35 @@ namespace LAFABRICA.UI.Test.Components
             options.AddArgument("--disable-extensions");
             options.AddArgument("--disable-infobars");
 
-
-
             var service = EdgeDriverService.CreateDefaultService();
             service.HideCommandPromptWindow = true;
-          
-
 
             _driver = new EdgeDriver(service, options);
 
+            // 🔥 LOGIN AUTOMÁTICO
+            PerformLogin();
+        }
+
+        private void PerformLogin()
+        {
+            _driver.Navigate().GoToUrl($"{_appUrl}/login");
+            Thread.Sleep(1500);
+
+            // Email
+            var emailInput = _driver.FindElement(By.Id("email"));
+            emailInput.Clear();
+            emailInput.SendKeys("Angelbarbozareyes29@gmail.com"); // <-- CAMBIAR SI TU USUARIO ES OTRO
+
+            // Password
+            var passInput = _driver.FindElement(By.Id("password"));
+            passInput.Clear();
+            passInput.SendKeys("An1105667"); // <-- CAMBIAR SI TU CONTRASEÑA ES OTRA
+
+            // Botón
+            var loginBtn = _driver.FindElement(By.Id("loginBtn"));
+            loginBtn.Click();
+
+            Thread.Sleep(2000); // Espera mínima para Blazor auth
         }
 
         public void Dispose()
