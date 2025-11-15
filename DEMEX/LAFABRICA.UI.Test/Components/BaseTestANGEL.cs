@@ -15,23 +15,25 @@ namespace LAFABRICA.UI.Test.Components
         {
             var options = new EdgeOptions();
 
-            // 👇 MODO HEADLESS ESTABLE PARA CI / JENKINS
-            options.AddArgument("headless=new");  // Reemplaza el viejo "--headless"
+            // HEADLESS CORRECTO PARA EDGE MODERNO
+            options.AddArgument("headless=new");
+
+            // NECESARIO PARA SERVICIOS SIN ESCRITORIO
             options.AddArgument("--disable-gpu");
             options.AddArgument("--no-sandbox");
             options.AddArgument("--disable-dev-shm-usage");
-            options.AddArgument("--remote-debugging-port=0");
             options.AddArgument("--disable-software-rasterizer");
             options.AddArgument("--window-size=1920,1080");
+            options.AddArgument("--remote-debugging-port=0");
             options.AddArgument("--disable-extensions");
             options.AddArgument("--disable-infobars");
 
-            // 👇 IMPORTANTE EN JENKINS: usar driver del PATH o bin carpeta
             var service = EdgeDriverService.CreateDefaultService();
-            service.EnableVerboseLogging = false;
             service.HideCommandPromptWindow = true;
+            service.EnableVerboseLogging = false;
 
             _driver = new EdgeDriver(service, options);
+
         }
 
         public void Dispose()
