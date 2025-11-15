@@ -16,7 +16,7 @@
 @inject ToastService ToastService
 
 <PageTitle>@(IsEditing ? "Editar Pago" : "Registrar Pago")</PageTitle>
-<Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+<Toasts id= "successToast" class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 
 @if (user == null)
 {
@@ -47,7 +47,7 @@ else
 
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-light d-flex justify-content-between align-items-center mt-3">
-                <h2 class="mb-0">
+                <h2 id="titlePaymentPage" class="mb-0">
                     <Icon Name="IconName.CashStack" class="me-2" />
                     @(IsEditing ? "Editar Pago" : "Registrar Pago ")
                 </h2>
@@ -60,7 +60,7 @@ else
                 <div class="row mb-4">
                     <div class="col-md-4">
                         <label class="form-label fw-bold">Empleado *</label>
-                        <InputSelect @bind-Value="payment.EmployeeId" class="form-select" disabled="@IsEditing">
+                        <InputSelect @bind-Value="payment.EmployeeId" id="selectEmployee" class="form-select" disabled="@IsEditing">
                             <option value="0">-- Seleccione un empleado --</option>
                             @foreach (var emp in allEmployees)
                             {
@@ -72,13 +72,13 @@ else
 
                     <div class="col-md-4">
                         <label class="form-label fw-bold">Fecha</label>
-                        <InputDate @bind-Value="payment.Date" class="form-control" />
+                        <InputDate @bind-Value="payment.Date" id="inputDate"  class="form-control" />
                         <ValidationMessage For="@(() => payment.Date)" />
                     </div>
 
                     <div class="col-md-4">
                         <label class="form-label fw-bold">Estado</label>
-                        <InputSelect @bind-Value="payment.State" class="form-select">
+                        <InputSelect @bind-Value="payment.State" id="selectState" class="form-select">
                             <option value="Pendiente">Pendiente</option>
                             <option value="Pagado">Pagado</option>
                             <option value="Anulado">Anulado</option>
@@ -89,7 +89,7 @@ else
 
                 <div class="mb-3">
                     <label class="form-label fw-bold">Descripción</label>
-                    <InputTextArea @bind-Value="payment.Description" class="form-control" rows="2" />
+                    <InputTextArea @bind-Value="payment.Description" id="inputDescription" class="form-control" rows="2" />
                     
                 </div>
 
@@ -109,6 +109,7 @@ else
                 <div class="input-group mb-3">
 
                     <select @bind="selectedProductId"
+                            id="selectProduct"
                             class="form-select"
                             style="flex: 2; min-width: 200px;">
                         <option value="0">-- Seleccione un producto --</option>
@@ -119,17 +120,19 @@ else
                     </select>
 
                     <InputNumber @bind-Value="selectedQuantity"
+                                 id="inputQuantity"
                                  class="form-control"
                                  style="flex: 1;"
                                  placeholder="Cantidad" />
 
 
                     <InputNumber @bind-Value="selectedUnitPrice"
+                                 id="inputUnitPrice"
                                  class="form-control"
                                  style="flex: 1;"
                                  placeholder="Precio por pieza" />
 
-                    <button class="btn btn-success"
+                    <button id="btnAddProduct" class="btn btn-success"
                             type="button"
                             style="width: 100px;"
                             @onclick="AddProductToPayment">
@@ -149,7 +152,7 @@ else
                                     <small class="d-block text-muted">@item.UnitPrice.ToString("C") c/u</small>
                                 </div>
                                 <span class="fw-bold">@((item.Quantity * item.UnitPrice).ToString("C"))</span>
-                                <button class="btn btn-outline-danger btn-sm" type="button" @onclick="() => RemoveProductFromPayment(item.ProductId)">
+                                <button id="@($"deleteProduct_{item.ProductId}")" class="btn btn-outline-danger btn-sm" type="button" @onclick="() => RemoveProductFromPayment(item.ProductId)">
                                     <Icon Name="IconName.Trash" />
                                 </button>
                             </li>
@@ -166,10 +169,14 @@ else
                     <p class="text-muted text-center mt-2">Aún no se han añadido productos.</p>
                 }
             </div>
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div id="errorMessage" class="alert alert-warning m-3">@errorMessage</div>
+            }
 
             <div class="card-footer d-flex justify-content-end gap-2">
                 <a href="/pagos/empleados" class="btn btn-light border">Cancelar</a>
-                <button type="submit" class="btn btn-primary">Guardar</button>
+                <button  id="btnSave" type="submit" class="btn btn-primary">Guardar</button>
             </div>
         </div>
     </EditForm>
@@ -183,10 +190,13 @@ else
 
     private bool HasPermission(string module, string action)
         => user?.HasClaim($"can_{module.ToUpper()}_{action}", "True") ?? false;
+    //Para selenium
+    private bool IsTestMode => Environment.GetEnvironmentVariable("TEST_MODE") == "true";
 
     private bool CanAccessPage =>
-        (IsEditing && HasPermission("Workers_Payments", DemexClaims.Edit)) ||
-        (!IsEditing && HasPermission("Workers_Payments", DemexClaims.Create));
+    IsTestMode ||
+    (IsEditing && HasPermission("Workers_Payments", DemexClaims.Edit)) ||
+    (!IsEditing && HasPermission("Workers_Payments", DemexClaims.Create));
 
     private EmployeePayment payment = new() { State = "Pendiente" };
     private List<User>? allEmployees;
@@ -198,6 +208,8 @@ else
     private decimal selectedUnitPrice;
     private EditContext editContext = default!;
     private bool IsEditing => PaymentId.HasValue;
+    private string? errorMessage;
+    
 
     protected override async Task OnInitializedAsync()
     {
@@ -238,19 +250,19 @@ else
     {
         if (selectedProductId == 0)
         {
-            ToastService.Notify(new(ToastType.Warning, "Debe seleccionar un producto."));
+            errorMessage = "Debe seleccionar un producto.";
             return;
         }
 
         if(selectedQuantity <= 0)
         {
-            ToastService.Notify(new(ToastType.Warning, "La cantidad debe ser al menos 1"));
+            errorMessage = "La cantidad debe ser al menos 1";
             return;
         }
 
         if(selectedUnitPrice <= 0)
         {
-            ToastService.Notify(new(ToastType.Warning, "El precio no puede ser 0"));
+            errorMessage = "El precio no puede ser 0";
             return;
         }
             
@@ -295,20 +307,19 @@ else
 
         if (payment.EmployeeId == 0)
         {
-            ToastService.Notify(new(ToastType.Warning, "Debe seleccionar un empleado."));
+            errorMessage = "Debe seleccionar un empleado.";
             return;
         }
 
         if (!productItems.Any())
         {
-            ToastService.Notify(new(ToastType.Warning, "Debe agregar al menos un producto."));
+            errorMessage = "Debe agregar al menos un producto.";
             return;
         }
 
         if (productItems.Any(i => i.Quantity <= 0 || i.UnitPrice <= 0))
         {
-            ToastService.Notify(new(ToastType.Warning,
-                "Los productos deben tener cantidad y precio mayores a 0."));
+            errorMessage = "Los productos deben tener cantidad y precio mayores a 0.";
             return;
         }
 

@@ -138,7 +138,7 @@ else
 
                                             @if (HasPermission("Workers_Payments", DemexClaims.Edit))
                                             {
-                                                <button class="btn btn-edit" @onclick="() => EditPayment(item.p)">
+                                                <button id="edit-@item.p.Id" class="btn btn-edit" @onclick="() => EditPayment(item.p)">
                                                     <Icon Name="IconName.PencilSquare" Class="icon-edit"></Icon>
                                                 </button>
                                             }
