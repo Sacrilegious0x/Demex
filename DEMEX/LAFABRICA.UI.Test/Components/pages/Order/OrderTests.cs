@@ -1,6 +1,8 @@
 ﻿using Xunit;
 using OpenQA.Selenium;
 using LAFABRICA.UI.Test.Components;
+using SeleniumExtras.WaitHelpers;
+using OpenQA.Selenium.Support.UI;
 
 namespace LAFABRICA.UI.Test.pages.Order
 {
@@ -11,14 +13,15 @@ namespace LAFABRICA.UI.Test.pages.Order
         {
             try
             {
-                // Navegar ya autenticado
-                _driver.Navigate().GoToUrl($"{_appUrl}/ordenes");
-                Thread.Sleep(2000);
+                // Navegar de forma segura
+                SafeNavigate("/ordenes");
 
-                // El título es un <h3>
-                var pageTitleElement = _driver.FindElement(By.TagName("h3"));
+                // Esperar que renderice el título correcto
+                var title = _wait.Until(
+                    ExpectedConditions.ElementExists(By.TagName("h3"))
+                );
 
-                Assert.Contains("Gestión de Órdenes", pageTitleElement.Text);
+                Assert.Contains("Gestión de Órdenes", title.Text);
             }
             catch (Exception ex)
             {

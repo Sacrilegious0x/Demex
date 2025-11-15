@@ -2,65 +2,95 @@
 using OpenQA.Selenium;
 using OpenQA.Selenium.Edge;
 using OpenQA.Selenium.Support.UI;
+using SeleniumExtras.WaitHelpers;
 
 namespace LAFABRICA.UI.Test.Components
 {
     public abstract class BaseTestANGEL : IDisposable
     {
         protected readonly IWebDriver _driver;
-
-        // URL DE TU APLICACIÓN
+        protected WebDriverWait _wait;
         protected readonly string _appUrl = "http://localhost:8080";
 
         public BaseTestANGEL()
         {
             var options = new EdgeOptions();
-
-            // HEADLESS
             options.AddArgument("headless=new");
-
-            // NECESARIO PARA JENKINS / SERVIDOR
             options.AddArgument("--disable-gpu");
             options.AddArgument("--no-sandbox");
             options.AddArgument("--disable-dev-shm-usage");
-            options.AddArgument("--disable-software-rasterizer");
             options.AddArgument("--window-size=1920,1080");
-            options.AddArgument("--disable-extensions");
-            options.AddArgument("--disable-infobars");
 
             var service = EdgeDriverService.CreateDefaultService();
             service.HideCommandPromptWindow = true;
 
             _driver = new EdgeDriver(service, options);
+            _wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(12));
 
-            AutenticarUsuario(); // 👈 SE AGREGA LOGIN AUTOMÁTICO
+            AutenticarUsuario();
         }
 
         private void AutenticarUsuario()
         {
-            _driver.Navigate().GoToUrl($"{_appUrl}/login");
+            // Fuerza a IIS a redirigirnos a /login
+            _driver.Navigate().GoToUrl($"{_appUrl}/ordenes");
 
-            // Email
-            var emailInput = _driver.FindElement(By.Id("email"));
-            emailInput.SendKeys("angelbarbozareyes29@gmail.com");
+            // Si aparece el login, lo llenamos
+            if (IsElementPresent(By.Id("email")))
+            {
+                var email = _wait.Until(ExpectedConditions.ElementIsVisible(By.Id("email")));
+                var pass = _driver.FindElement(By.Id("password"));
+                var btn = _driver.FindElement(By.Id("loginBtn"));
 
-            // Password
-            var passInput = _driver.FindElement(By.Id("password"));
-            passInput.SendKeys("An1105667");
+                email.Clear();
+                email.SendKeys("angelbarbozareyes29@gmail.com");
 
-            // Botón login
-            var loginBtn = _driver.FindElement(By.Id("loginBtn"));
-            loginBtn.Click();
+                pass.Clear();
+                pass.SendKeys("An1105667");
 
-            // Esperamos hasta que deje de estar en login
-            WebDriverWait wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(5));
-            wait.Until(driver => !driver.Url.Contains("login"));
+                btn.Click();
+            }
+
+            // Validar que ahora estamos en el home
+            _wait.Until(ExpectedConditions.ElementExists(By.Id("welcomeUser")));
+        }
+
+        /// <summary>
+        /// Navega a una página y si redirige al login, se vuelve a loguear.
+        /// </summary>
+        protected void SafeNavigate(string relativeUrl)
+        {
+            _driver.Navigate().GoToUrl($"{_appUrl}{relativeUrl}");
+
+            // Si en esa ruta te pide login → loguear
+            if (IsElementPresent(By.Id("email")))
+            {
+                AutenticarUsuario();
+                _driver.Navigate().GoToUrl($"{_appUrl}{relativeUrl}");
+            }
+        }
+
+        protected bool IsElementPresent(By by)
+        {
+            try
+            {
+                _driver.FindElement(by);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         public void Dispose()
         {
-            _driver.Quit();
-            _driver.Dispose();
+            try
+            {
+                _driver.Quit();
+                _driver.Dispose();
+            }
+            catch { }
         }
     }
 }
