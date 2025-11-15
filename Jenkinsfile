@@ -1,9 +1,34 @@
 pipeline {
     agent any
     
+   pipeline {
+    agent any
+
     tools {
-    'dotnet-sdk' 'dotnet8' // <-- ¡Con comillas en 'dotnet-sdk'!
+        dotnetsdk 'dotnet8'   // nombre EXACTO como aparece en Global Tool Configuration
+    }
+
+    stages {
+        stage('Restore') {
+            steps {
+                sh 'dotnet restore'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'dotnet build --configuration Release'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'dotnet test'
+            }
+        }
+    }
 }
+
 
     stages {
         stage('Checkout') {
