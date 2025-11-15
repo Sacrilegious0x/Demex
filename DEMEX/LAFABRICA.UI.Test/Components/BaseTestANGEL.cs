@@ -14,6 +14,8 @@ namespace LAFABRICA.UI.Test.Components
 
         // Selectores comunes
         private readonly By _emailLocator = By.Id("email");
+        private readonly By _passwordLocator = By.Id("password");
+        private readonly By _loginBtnLocator = By.Id("loginBtn");
         private readonly By _successLocator = By.Id("welcomeUser");
         private readonly By _errorLocator = By.Id("loginError");
 
@@ -32,11 +34,11 @@ namespace LAFABRICA.UI.Test.Components
             _driver = new EdgeDriver(service, options);
             _wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(15));
 
-            AutenticarUsuario();
+            AutenticarUsuario(); // Esta es tu línea 35
         }
 
         /// <summary>
-        /// Lógica de autenticación robusta (V3)
+        /// Lógica de autenticación robusta (V4)
         /// </summary>
         private void AutenticarUsuario()
         {
@@ -55,7 +57,7 @@ namespace LAFABRICA.UI.Test.Components
                     {
                         return emailInput[0]; // Estamos en /login
                     }
-                    
+
                     if (welcomeHeader.Count > 0 && welcomeHeader[0].Displayed)
                     {
                         return welcomeHeader[0]; // Ya estábamos logueados
@@ -67,9 +69,14 @@ namespace LAFABRICA.UI.Test.Components
                 if (element.GetAttribute("id") == "email")
                 {
                     // Estamos en la página de Login. Llenamos los campos.
-                    var email = element;
-                    var pass = _driver.FindElement(By.Id("password"));
-                    var btn = _driver.FindElement(By.Id("loginBtn"));
+                    var email = element; // Ya sabemos que 'email' existe y es visible.
+
+                    // --- INICIO DE LA MODIFICACIÓN (V4) ---
+                    // Usamos _wait.Until para asegurarnos de que estos elementos
+                    // también estén listos antes de interactuar con ellos.
+                    var pass = _wait.Until(ExpectedConditions.ElementIsVisible(_passwordLocator));
+                    var btn = _wait.Until(ExpectedConditions.ElementIsVisible(_loginBtnLocator));
+                    // --- FIN DE LA MODIFICACIÓN (V4) ---
 
                     email.Clear();
                     email.SendKeys("angelbarbozareyes29@gmail.com");
@@ -86,7 +93,7 @@ namespace LAFABRICA.UI.Test.Components
                         {
                             return successEl[0]; // Éxito
                         }
-                        
+
                         if (errorEl.Count > 0 && errorEl[0].Displayed)
                         {
                             throw new Exception($"El login falló. Error: '{errorEl[0].Text}'");
@@ -95,7 +102,6 @@ namespace LAFABRICA.UI.Test.Components
                     });
                 }
                 // 5. Si el elemento que apareció fue "welcomeUser", no hacemos nada.
-                //    Ya estamos logueados y en el home.
             }
             catch (WebDriverTimeoutException)
             {
@@ -117,22 +123,17 @@ namespace LAFABRICA.UI.Test.Components
                 shortWait.Until(ExpectedConditions.ElementIsVisible(_emailLocator));
 
                 // Si no se lanzó la excepción, significa que SÍ apareció el login.
-                // La sesión expiró.
-                AutenticarUsuario(); 
-                
+                AutenticarUsuario();
+
                 // Reintentamos la navegación original
                 _driver.Navigate().GoToUrl($"{_appUrl}{relativeUrl}");
             }
             catch (WebDriverTimeoutException)
             {
                 // No apareció el login en 3s. Asumimos que la navegación fue exitosa.
-                // No hacemos nada, el test puede continuar.
             }
         }
 
-        /// <summary>
-        /// Método auxiliar para comprobaciones rápidas
-        /// </summary>
         protected bool IsElementPresent(By by)
         {
             try
