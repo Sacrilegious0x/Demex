@@ -15,7 +15,7 @@ namespace LAFABRICA.Tests.Components.pages.EmployeePayments
             _driver = test.Driver;
         }
         [Fact]
-        public void AgregarPagoTest()
+        public void AddPaymentTest()
         {
 
             string successText = "Pago registrado correctamente";
@@ -94,7 +94,7 @@ namespace LAFABRICA.Tests.Components.pages.EmployeePayments
         }
 
         [Fact]
-        public void AgregarPagoFalloPorValidacionTest()
+        public void AddInvalidPaymentTestWithOutProduct()
         {
 
             string expectedError = "Debe agregar al menos un producto.";
@@ -147,7 +147,7 @@ namespace LAFABRICA.Tests.Components.pages.EmployeePayments
         }
 
         [Fact]
-        public void AgregarPagoFalloPorEmpleadoTest()
+        public void AddInvalidPaymentTestWithoutEmployee()
         {
 
             string expectedError = "Debe seleccionar un empleado.";
@@ -197,7 +197,7 @@ namespace LAFABRICA.Tests.Components.pages.EmployeePayments
             Assert.Contains("/pagos/empleados/crear", _driver.Url);
         }
         [Fact]
-        public void EditarPagoPagado()
+        public void EditPaymentTestPay()
         {
 
             string successText = "Pago actualizado correctamente.";
@@ -235,7 +235,7 @@ namespace LAFABRICA.Tests.Components.pages.EmployeePayments
         }
 
         [Fact]
-        public void EditarPagoAnulado()
+        public void EditPaymentTestCancel()
         {
 
             string successText = "Pago actualizado correctamente.";
@@ -272,7 +272,7 @@ namespace LAFABRICA.Tests.Components.pages.EmployeePayments
         }
 
         [Fact]
-        public void EditarPagoEliminarProducto()
+        public void EditPaymentTestDeleteProduct()
         {
             string successText = "Pago actualizado correctamente.";
             var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
