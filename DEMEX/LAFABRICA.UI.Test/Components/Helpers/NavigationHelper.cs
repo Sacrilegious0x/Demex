@@ -31,5 +31,15 @@ namespace LAFABRICA.Tests.Components.Helpers
             //Espera a que cargue el boton que contiene la tabla
             wait.Until(d => d.Url.Contains("/pagos/empleados"));
         }
+
+        public static void NavigateToSuppliers(IWebDriver driver)
+        {
+            var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+            var list = wait.Until(ExpectedConditions.ElementToBeClickable(By.Id("suppliersList")));
+            list.Click();
+            wait.Until(d => d.Url.Contains("/proveedor"));
+        }
+
+
     }
 }

@@ -15,7 +15,7 @@
 @inject ToastService ToastService
 
 <PageTitle>Nuevo Proveedor</PageTitle>
-<Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+<Toasts id="toastContainer" class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 
 @if (user == null)
 {
@@ -59,7 +59,7 @@ else
 								<div class="form-group row mb-3">
 									<label class="col-md-5 col-form-label">Nombre de la empresa: *</label>
 									<div class="col-md-8">
-										<TextInput class="border-1" @bind-Value="supplier.Name" required />
+										<TextInput class="border-1" id="supplierName" data-testid="supplier-name" @bind-Value="supplier.Name" required />
 										<ValidationMessage For="@(() => supplier.Name)" />
 									</div>
 								</div>
@@ -67,7 +67,7 @@ else
 								<div class="form-group row mb-3">
 									<label class="col-md-5 col-form-label">Correo electrónico:</label>
 									<div class="col-md-8">
-										<TextInput class="border-1" @bind-Value="supplier.Email" type="email" />
+										<TextInput class="border-1" id="supplierEmail" data-testid="supplier-email" @bind-Value="supplier.Email" type="email" />
 										<ValidationMessage For="@(() => supplier.Email)" />
 									</div>
 								</div>
@@ -75,7 +75,7 @@ else
 								<div class="form-group row mb-3">
 									<label class="col-md-5 col-form-label">Teléfono: *</label>
 									<div class="col-md-8">
-										<TextInput class="border-1" @bind-Value="supplier.Phone" required />
+										<TextInput class="border-1" id="supplierPhone" data-testid="supplier-phone" @bind-Value="supplier.Phone" required />
 										<ValidationMessage For="@(() => supplier.Phone)" />
 									</div>
 									<div><p class="text-black-50">Formato admitido: xxxx-xxxx</p></div>
@@ -89,7 +89,7 @@ else
 								<div class="form-group row mb-3">
 									<label class="col-md-5 col-form-label">Dirección:</label>
 									<div class="col-md-8">
-										<TextInput class="border-1" @bind-Value="supplier.Address" />
+										<TextInput id="supplierAddress" data-testid="supplier-address" class="border-1" @bind-Value="supplier.Address" />
 										<ValidationMessage For="@(() => supplier.Address)" />
 									</div>
 								</div>
@@ -97,7 +97,7 @@ else
 								<div class="form-group row mb-3">
 									<label class="col-md-5 col-form-label">Notas adicionales:</label>
 									<div class="col-md-8">
-										<InputTextArea @bind-Value="supplier.Notes" class="form-control border-1" rows="3" />
+										<InputTextArea id="supplierNotes" data-testid="supplier-notes" @bind-Value="supplier.Notes" class="form-control border-1" rows="3" />
 									</div>
 								</div>
 							</div>
@@ -112,8 +112,8 @@ else
 						}
 
 						<div class="d-flex justify-content-end mt-3">
-							<button type="button" class="btn btn-outline-secondary me-2" @onclick="HandleCancel">Cancelar</button>
-							<button type="submit" class="btn btn-primary">Guardar</button>
+							<button type="button" id="cancelSupplierBtn" class="btn btn-outline-secondary me-2" @onclick="HandleCancel">Cancelar</button>
+							<button type="submit" id="saveSupplierBtn" class="btn btn-primary">Guardar</button>
 						</div>
 					</EditForm>
 				}
