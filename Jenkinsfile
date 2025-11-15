@@ -2,9 +2,8 @@ pipeline {
     agent any
     
     tools {
-        // El nombre de .NET que configuramos en Jenkins
-        dotnet 'dotnet8'
-    }
+    dotnet-sdk 'dotnet8' // <-- ¡Solo agregamos "-sdk"!
+}
 
     stages {
         stage('Checkout') {
