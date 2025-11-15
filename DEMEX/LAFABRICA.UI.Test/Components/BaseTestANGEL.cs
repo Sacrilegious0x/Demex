@@ -9,7 +9,7 @@ namespace LAFABRICA.UI.Test.Components
         protected readonly IWebDriver _driver;
 
         // URL de tu IIS
-        protected readonly string _appUrl = "http://localhost:5290";
+        protected readonly string _appUrl = "http://localhost:8080";
 
         public BaseTestANGEL()
         {
@@ -27,6 +27,8 @@ namespace LAFABRICA.UI.Test.Components
             options.AddArgument("--remote-debugging-port=0");
             options.AddArgument("--disable-extensions");
             options.AddArgument("--disable-infobars");
+
+
 
             var service = EdgeDriverService.CreateDefaultService();
             service.HideCommandPromptWindow = true;
