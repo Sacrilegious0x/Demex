@@ -271,5 +271,46 @@ namespace LAFABRICA.Tests.Components.pages.EmployeePayments
             Assert.Contains("/pagos/empleados", _driver.Url);
         }
 
+        [Fact]
+        public void EditarPagoEliminarProducto()
+        {
+            string successText = "Pago actualizado correctamente.";
+            var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+
+            // 1. Login y navegación
+            NavigationHelper.Login(_driver, _baseUrl, "itsgamc@gmail.com", "1234todo");
+            NavigationHelper.NavigatetoEmployeePayments(_driver);
+
+            // 2. Abrir Edición del pago 23
+            var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-23")));
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", editElement);
+
+            // 3. Esperar la carga de un producto 
+            var productItemToDeleteId = "deleteProduct_1";
+            var productItemToDelete = wait.Until(ExpectedConditions.ElementIsVisible(By.Id(productItemToDeleteId)));
+
+            // ELIMINAR
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", productItemToDelete);
+
+            // Valida que el producto desapareció 
+            wait.Until(ExpectedConditions.InvisibilityOfElementLocated(By.Id(productItemToDeleteId)));
+           
+            var inputDescription = _driver.FindElement(By.Id("inputDescription"));
+            inputDescription.Clear();
+            inputDescription.SendKeys("Eliminado un producto del 23");
+            inputDescription.SendKeys(Keys.Tab);
+
+            var saveBtn = _driver.FindElement(By.Id("btnSave"));
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", saveBtn);
+
+            // busca en el div del toast el texto
+            var successToastBody = wait.Until(ExpectedConditions.ElementIsVisible(
+              By.XPath($"//div[@id='successToast']//div[@class='toast-body' and contains(text(), '{successText}')]")
+          ));
+            Assert.Contains(successText, successToastBody.Text);
+            wait.Until(d => d.Url.Contains("/pagos/empleados"));
+            Assert.Contains("/pagos/empleados", _driver.Url);
+        }
+
     }
 }
