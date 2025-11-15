@@ -30,7 +30,8 @@ namespace LAFABRICA.UI.Test.Components
 
             var service = EdgeDriverService.CreateDefaultService();
             service.HideCommandPromptWindow = true;
-            service.EnableVerboseLogging = false;
+          
+
 
             _driver = new EdgeDriver(service, options);
 
