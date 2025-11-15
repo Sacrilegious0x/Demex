@@ -1,32 +1,28 @@
-﻿using LAFABRICA.Tests.Components;
+﻿using Xunit;
 using OpenQA.Selenium;
-using Xunit;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using LAFABRICA.UI.Test.Components; // <-- Asegúrate de incluir el namespace de tu BaseTestANGEL
 
-namespace LAFABRICA.UI.Test.Components.pages.Order
+namespace LAFABRICA.UI.Test.pages.Order
 {
-    // ¡Importante! Heredamos de BaseTest
-    public class OrderTests : BaseTest
+    // ¡LA MAGIA! Heredamos de BaseTestANGEL en lugar de BaseTest
+    public class OrderTests : BaseTestANGEL
     {
-        // 🔴 ¡OJO 1! CAMBIA ESTO por la URL de tu app en IIS
-        private readonly string _appUrl = "http://localhost:8080";
+        // Ya no necesitamos definir _driver ni _appUrl aquí,
+        // los heredamos de BaseTestANGEL.
 
         [Fact]
-        // PRUEBA 1: Verificar que la página de "Mostrar Órdenes" carga
         public void LoadShowOrdersPage_ShouldDisplayCorrectTitle()
         {
             try
             {
-                // 🔴 ¡OJO 2! CAMBIA ESTA RUTA si la URL es diferente
-                Driver.Navigate().GoToUrl($"{_appUrl}/Order/ShowOrders");
+                // 🔴 ¡OJO 2! 
+                // Asegúrate de que esta RUTA sea correcta.
+                _driver.Navigate().GoToUrl($"{_appUrl}/Order/ShowOrders");
                 Thread.Sleep(2000);
 
-                // 🔴 ¡OJO 3! CAMBIA ESTO por un ID o Texto real de tu página
-                var pageTitleElement = Driver.FindElement(By.TagName("h1"));
+                // 🔴 ¡OJO 3! 
+                // Asegúrate de que este ELEMENTO exista en tu página.
+                var pageTitleElement = _driver.FindElement(By.TagName("h1"));
                 Assert.Equal("Lista de Órdenes", pageTitleElement.Text);
             }
             catch (Exception ex)
@@ -34,5 +30,7 @@ namespace LAFABRICA.UI.Test.Components.pages.Order
                 Assert.Fail($"La prueba falló: {ex.Message}");
             }
         }
+
+        // Aquí pondrás tus otras 4 pruebas para "Órdenes"
     }
 }
