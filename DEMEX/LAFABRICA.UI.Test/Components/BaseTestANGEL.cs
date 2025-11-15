@@ -9,8 +9,13 @@ namespace LAFABRICA.UI.Test.Components
     public abstract class BaseTestANGEL : IDisposable
     {
         protected readonly IWebDriver _driver;
-        protected WebDriverWait _wait;
+        protected WebDriverWait _wait; // Espera principal (larga)
         protected readonly string _appUrl = "http://localhost:8080";
+
+        // Selectores comunes
+        private readonly By _emailLocator = By.Id("email");
+        private readonly By _successLocator = By.Id("welcomeUser");
+        private readonly By _errorLocator = By.Id("loginError");
 
         public BaseTestANGEL()
         {
@@ -25,104 +30,109 @@ namespace LAFABRICA.UI.Test.Components
             service.HideCommandPromptWindow = true;
 
             _driver = new EdgeDriver(service, options);
-            // Incrementamos un poco el tiempo de espera para CI
             _wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(15));
 
             AutenticarUsuario();
         }
 
         /// <summary>
-        /// Este es el método corregido.
-        /// Ahora espera por el éxito O por el fracaso.
+        /// Lógica de autenticación robusta (V3)
         /// </summary>
         private void AutenticarUsuario()
         {
-            // Fuerza a IIS a redirigirnos a /login
+            // 1. Navegamos a una ruta protegida.
             _driver.Navigate().GoToUrl($"{_appUrl}/ordenes");
 
-            // Si aparece el login, lo llenamos
-            if (IsElementPresent(By.Id("email")))
+            try
             {
-                var email = _wait.Until(ExpectedConditions.ElementIsVisible(By.Id("email")));
-                var pass = _driver.FindElement(By.Id("password"));
-                var btn = _driver.FindElement(By.Id("loginBtn"));
+                // 2. Esperamos a que aparezca el email (estamos en /login) O
+                //    la bienvenida (ya estábamos logueados y nos mandó a /)
+                var element = _wait.Until(driver => {
+                    var emailInput = driver.FindElements(_emailLocator);
+                    var welcomeHeader = driver.FindElements(_successLocator);
 
-                email.Clear();
-                email.SendKeys("angelbarbozareyes29@gmail.com");
+                    if (emailInput.Count > 0 && emailInput[0].Displayed)
+                    {
+                        return emailInput[0]; // Estamos en /login
+                    }
+                    
+                    if (welcomeHeader.Count > 0 && welcomeHeader[0].Displayed)
+                    {
+                        return welcomeHeader[0]; // Ya estábamos logueados
+                    }
+                    return null; // Sigue esperando...
+                });
 
-                pass.Clear();
-                pass.SendKeys("An1105667");
-
-                btn.Click();
-
-                // --- INICIO DE LA MODIFICACIÓN ---
-                // Espera inteligente: Espera a que aparezca
-                // el elemento de bienvenida (éxito) O el de error (fracaso).
-
-                By successLocator = By.Id("welcomeUser"); // De Home.razor
-                By errorLocator = By.Id("loginError");   // De Login.razor
-
-                try
+                // 3. Si el elemento que apareció es el email, llenamos el login.
+                if (element.GetAttribute("id") == "email")
                 {
+                    // Estamos en la página de Login. Llenamos los campos.
+                    var email = element;
+                    var pass = _driver.FindElement(By.Id("password"));
+                    var btn = _driver.FindElement(By.Id("loginBtn"));
+
+                    email.Clear();
+                    email.SendKeys("angelbarbozareyes29@gmail.com");
+                    pass.Clear();
+                    pass.SendKeys("An1105667");
+                    btn.Click();
+
+                    // 4. Ahora, esperamos el resultado del login (éxito o fracaso)
                     _wait.Until(driver => {
-                        // Usamos FindElements (plural) para no lanzar excepción
-                        var successElement = driver.FindElements(successLocator);
-                        var errorElement = driver.FindElements(errorLocator);
+                        var successEl = driver.FindElements(_successLocator);
+                        var errorEl = driver.FindElements(_errorLocator);
 
-                        // CASO 1: Éxito
-                        if (successElement.Count > 0 && successElement[0].Displayed)
+                        if (successEl.Count > 0 && successEl[0].Displayed)
                         {
-                            return successElement[0]; // ¡Éxito!
+                            return successEl[0]; // Éxito
                         }
-
-                        // CASO 2: Fracaso
-                        if (errorElement.Count > 0 && errorElement[0].Displayed)
+                        
+                        if (errorEl.Count > 0 && errorEl[0].Displayed)
                         {
-                            // ¡Fracaso! Lanza una excepción clara.
-                            throw new Exception($"El login falló en Selenium. La aplicación mostró: '{errorElement[0].Text}'");
+                            throw new Exception($"El login falló. Error: '{errorEl[0].Text}'");
                         }
-
-                        // Si no se encontró ninguno, sigue esperando...
                         return null;
                     });
                 }
-                catch (WebDriverTimeoutException)
-                {
-                    // CASO 3: Timeout
-                    throw new Exception($"Timeout: Ni {successLocator} ni {errorLocator} aparecieron en 15 segundos.");
-                }
-                catch (Exception)
-                {
-                    // Relanza la excepción del "CASO 2"
-                    throw;
-                }
-                // --- FIN DE LA MODIFICACIÓN ---
+                // 5. Si el elemento que apareció fue "welcomeUser", no hacemos nada.
+                //    Ya estamos logueados y en el home.
             }
-            // Si no encontramos "email", asumimos que ya estábamos logueados.
-            // Validamos por si acaso
-            else
+            catch (WebDriverTimeoutException)
             {
-                _wait.Until(ExpectedConditions.ElementExists(By.Id("welcomeUser")));
+                throw new Exception($"Timeout: Ni {_emailLocator} (Login) ni {_successLocator} (Home) aparecieron en 15s después de navegar a /ordenes.");
             }
         }
 
-
         /// <summary>
-        /// Navega a una página y si redirige al login, se vuelve a loguear.
+        /// Navega a una página y si la sesión expiró, se vuelve a loguear.
         /// </summary>
         protected void SafeNavigate(string relativeUrl)
         {
             _driver.Navigate().GoToUrl($"{_appUrl}{relativeUrl}");
 
-            // Si en esa ruta te pide login → loguear
-            // (La nueva AutenticarUsuario() manejará el login)
-            if (IsElementPresent(By.Id("email")))
+            try
             {
-                AutenticarUsuario();
+                // Usamos una espera CORTA (3s) para ver si aparece el login
+                var shortWait = new WebDriverWait(_driver, TimeSpan.FromSeconds(3));
+                shortWait.Until(ExpectedConditions.ElementIsVisible(_emailLocator));
+
+                // Si no se lanzó la excepción, significa que SÍ apareció el login.
+                // La sesión expiró.
+                AutenticarUsuario(); 
+                
+                // Reintentamos la navegación original
                 _driver.Navigate().GoToUrl($"{_appUrl}{relativeUrl}");
+            }
+            catch (WebDriverTimeoutException)
+            {
+                // No apareció el login en 3s. Asumimos que la navegación fue exitosa.
+                // No hacemos nada, el test puede continuar.
             }
         }
 
+        /// <summary>
+        /// Método auxiliar para comprobaciones rápidas
+        /// </summary>
         protected bool IsElementPresent(By by)
         {
             try
