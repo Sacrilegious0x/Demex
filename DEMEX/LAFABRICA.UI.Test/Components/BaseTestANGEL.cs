@@ -8,18 +8,23 @@ namespace LAFABRICA.UI.Test.Components
     public abstract class BaseTestANGEL : IDisposable
     {
         protected readonly IWebDriver _driver;
+
+        // URL DE TU APLICACIÓN
         protected readonly string _appUrl = "http://localhost:8080";
 
         public BaseTestANGEL()
         {
             var options = new EdgeOptions();
+
+            // HEADLESS
             options.AddArgument("headless=new");
+
+            // NECESARIO PARA JENKINS / SERVIDOR
             options.AddArgument("--disable-gpu");
             options.AddArgument("--no-sandbox");
             options.AddArgument("--disable-dev-shm-usage");
             options.AddArgument("--disable-software-rasterizer");
             options.AddArgument("--window-size=1920,1080");
-            options.AddArgument("--remote-debugging-port=0");
             options.AddArgument("--disable-extensions");
             options.AddArgument("--disable-infobars");
 
@@ -28,33 +33,28 @@ namespace LAFABRICA.UI.Test.Components
 
             _driver = new EdgeDriver(service, options);
 
-            PerformLogin();
+            AutenticarUsuario(); // 👈 SE AGREGA LOGIN AUTOMÁTICO
         }
 
-        private void PerformLogin()
+        private void AutenticarUsuario()
         {
             _driver.Navigate().GoToUrl($"{_appUrl}/login");
 
-            var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
-
-            // Esperar el botón de login
-            var loginButton = wait.Until(d => d.FindElement(By.Id("loginBtn")));
-
-            // Llenar email
+            // Email
             var emailInput = _driver.FindElement(By.Id("email"));
-            emailInput.Clear();
             emailInput.SendKeys("angelbarbozareyes29@gmail.com");
 
-            // Llenar contraseña
-            var passwordInput = _driver.FindElement(By.Id("password"));
-            passwordInput.Clear();
-            passwordInput.SendKeys("An1105667");
+            // Password
+            var passInput = _driver.FindElement(By.Id("password"));
+            passInput.SendKeys("An1105667");
 
-            // Click en login
-            loginButton.Click();
+            // Botón login
+            var loginBtn = _driver.FindElement(By.Id("loginBtn"));
+            loginBtn.Click();
 
-            // Esperar a que desaparezca pantalla login (súper robusto)
-            wait.Until(driver => driver.Url != $"{_appUrl}/login");
+            // Esperamos hasta que deje de estar en login
+            WebDriverWait wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(5));
+            wait.Until(driver => !driver.Url.Contains("login"));
         }
 
         public void Dispose()

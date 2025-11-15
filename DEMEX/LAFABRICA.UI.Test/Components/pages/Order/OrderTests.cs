@@ -11,13 +11,13 @@ namespace LAFABRICA.UI.Test.pages.Order
         {
             try
             {
+                // Navegar ya autenticado
                 _driver.Navigate().GoToUrl($"{_appUrl}/ordenes");
-                Thread.Sleep(2000); // Blazor tarda un poquito
+                Thread.Sleep(2000);
 
-                // Tu página usa <h3>
+                // El título es un <h3>
                 var pageTitleElement = _driver.FindElement(By.TagName("h3"));
 
-                // Texto REAL de tu página
                 Assert.Contains("Gestión de Órdenes", pageTitleElement.Text);
             }
             catch (Exception ex)
@@ -25,7 +25,5 @@ namespace LAFABRICA.UI.Test.pages.Order
                 Assert.Fail($"La prueba falló: {ex.Message}");
             }
         }
-
-        // Aquí van las otras pruebas de Órdenes
     }
 }
