@@ -17,7 +17,7 @@ namespace LAFABRICA.UI.Test.pages.Order
             {
                 // 🔴 ¡OJO 2! 
                 // Asegúrate de que esta RUTA sea correcta.
-                _driver.Navigate().GoToUrl($"{_appUrl}/Order/ShowOrders");
+                _driver.Navigate().GoToUrl($"{_appUrl}/ordenes");
                 Thread.Sleep(2000);
 
                 // 🔴 ¡OJO 3! 
