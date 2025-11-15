@@ -1,29 +1,25 @@
 ﻿using Xunit;
 using OpenQA.Selenium;
-using LAFABRICA.UI.Test.Components; // <-- Asegúrate de incluir el namespace de tu BaseTestANGEL
+using LAFABRICA.UI.Test.Components;
 
 namespace LAFABRICA.UI.Test.pages.Order
 {
-    // ¡LA MAGIA! Heredamos de BaseTestANGEL en lugar de BaseTest
     public class OrderTests : BaseTestANGEL
     {
-        // Ya no necesitamos definir _driver ni _appUrl aquí,
-        // los heredamos de BaseTestANGEL.
-
         [Fact]
         public void LoadShowOrdersPage_ShouldDisplayCorrectTitle()
         {
             try
             {
-                // 🔴 ¡OJO 2! 
-                // Asegúrate de que esta RUTA sea correcta.
+                // Ruta real del listado de órdenes
                 _driver.Navigate().GoToUrl($"{_appUrl}/ordenes");
                 Thread.Sleep(2000);
 
-                // 🔴 ¡OJO 3! 
-                // Asegúrate de que este ELEMENTO exista en tu página.
-                var pageTitleElement = _driver.FindElement(By.TagName("h1"));
-                Assert.Equal("Lista de Órdenes", pageTitleElement.Text);
+                // El título REAL en tu página es un <h3>, no un <h1>
+                var pageTitleElement = _driver.FindElement(By.TagName("h3"));
+
+                // Verificamos que el texto mostrado sea el correcto
+                Assert.Contains("Gestión de Órdenes", pageTitleElement.Text);
             }
             catch (Exception ex)
             {
