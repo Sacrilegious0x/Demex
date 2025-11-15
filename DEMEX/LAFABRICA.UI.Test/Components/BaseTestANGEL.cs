@@ -25,11 +25,16 @@ namespace LAFABRICA.UI.Test.Components
             service.HideCommandPromptWindow = true;
 
             _driver = new EdgeDriver(service, options);
-            _wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(12));
+            // Incrementamos un poco el tiempo de espera para CI
+            _wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(15));
 
             AutenticarUsuario();
         }
 
+        /// <summary>
+        /// Este es el método corregido.
+        /// Ahora espera por el éxito O por el fracaso.
+        /// </summary>
         private void AutenticarUsuario()
         {
             // Fuerza a IIS a redirigirnos a /login
@@ -49,11 +54,58 @@ namespace LAFABRICA.UI.Test.Components
                 pass.SendKeys("An1105667");
 
                 btn.Click();
-            }
 
-            // Validar que ahora estamos en el home
-            _wait.Until(ExpectedConditions.ElementExists(By.Id("welcomeUser")));
+                // --- INICIO DE LA MODIFICACIÓN ---
+                // Espera inteligente: Espera a que aparezca
+                // el elemento de bienvenida (éxito) O el de error (fracaso).
+
+                By successLocator = By.Id("welcomeUser"); // De Home.razor
+                By errorLocator = By.Id("loginError");   // De Login.razor
+
+                try
+                {
+                    _wait.Until(driver => {
+                        // Usamos FindElements (plural) para no lanzar excepción
+                        var successElement = driver.FindElements(successLocator);
+                        var errorElement = driver.FindElements(errorLocator);
+
+                        // CASO 1: Éxito
+                        if (successElement.Count > 0 && successElement[0].Displayed)
+                        {
+                            return successElement[0]; // ¡Éxito!
+                        }
+
+                        // CASO 2: Fracaso
+                        if (errorElement.Count > 0 && errorElement[0].Displayed)
+                        {
+                            // ¡Fracaso! Lanza una excepción clara.
+                            throw new Exception($"El login falló en Selenium. La aplicación mostró: '{errorElement[0].Text}'");
+                        }
+
+                        // Si no se encontró ninguno, sigue esperando...
+                        return null;
+                    });
+                }
+                catch (WebDriverTimeoutException)
+                {
+                    // CASO 3: Timeout
+                    throw new Exception($"Timeout: Ni {successLocator} ni {errorLocator} aparecieron en 15 segundos.");
+                }
+                catch (Exception)
+                {
+                    // Relanza la excepción del "CASO 2"
+                    throw;
+                }
+                // --- FIN DE LA MODIFICACIÓN ---
+            }
+            // Si no encontramos "email", asumimos que ya estábamos logueados.
+            // Validamos por si acaso
+            else
+            {
+                _wait.Until(ExpectedConditions.ElementExists(By.Id("welcomeUser")));
+            }
         }
+
 
         /// <summary>
         /// Navega a una página y si redirige al login, se vuelve a loguear.
@@ -63,6 +115,7 @@ namespace LAFABRICA.UI.Test.Components
             _driver.Navigate().GoToUrl($"{_appUrl}{relativeUrl}");
 
             // Si en esa ruta te pide login → loguear
+            // (La nueva AutenticarUsuario() manejará el login)
             if (IsElementPresent(By.Id("email")))
             {
                 AutenticarUsuario();
@@ -77,7 +130,7 @@ namespace LAFABRICA.UI.Test.Components
                 _driver.FindElement(by);
                 return true;
             }
-            catch
+            catch (NoSuchElementException)
             {
                 return false;
             }
