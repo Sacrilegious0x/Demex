@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     tools {
-    dotnet-sdk 'dotnet8' // <-- ¡Solo agregamos "-sdk"!
+    'dotnet-sdk' 'dotnet8' // <-- ¡Con comillas en 'dotnet-sdk'!
 }
 
     stages {
