@@ -11,10 +11,12 @@ namespace LAFABRICA.Tests.Components
         public BaseTest()
         {
             var options = new EdgeOptions();
-            options.AddArguments("--start-maximized"); //tamanho de la ventana en edge
-             // PARA JENKINS LUEGO (invisible)
-            // options.AddArgument("--headless");
-           // options.AddArgument("--disable-gpu");
+            //options.AddArguments("--start-maximized"); //tamanho de la ventana en edge
+            // PARA JENKINS LUEGO (invisible)
+            options.AddArgument("--headless=new");
+            options.AddArgument("--no-sandbox");
+            options.AddArgument("--disable-gpu");
+            options.AddArgument("--disable-dev-shm-usage");
 
             Driver = new EdgeDriver(options);
         }
@@ -22,6 +24,7 @@ namespace LAFABRICA.Tests.Components
         public void Dispose()
         {
             Driver.Quit();
+            Driver.Dispose();
         }
     }
 }

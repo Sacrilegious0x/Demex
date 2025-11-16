@@ -26,7 +26,7 @@ namespace LAFABRICA.UI.Test.Components.pages.SupplierUITest
         [Fact]
         public void CreateSupplier_FromCreatePage_Works()
         {
-            NavigationHelper.Login(_driver, _baseUrl, "pablo.ramirezugalde@ucr.ac.cr", "1234qwer");
+            NavigationHelper.Login(_driver, _baseUrl, "itsgamc@gmail.com", "1234todo");
             NavigationHelper.NavigateToSuppliers(_driver);
 
             var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(15));
