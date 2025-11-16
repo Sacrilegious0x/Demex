@@ -1,13 +1,8 @@
-﻿using LAFABRICA.UI.Test.Components;
+﻿
 using LAFABRICA.UI.Test.Components.Helpers;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LAFABRICA.UI.Test.Components.pages.SupplierUITest
 {
@@ -27,7 +22,7 @@ namespace LAFABRICA.UI.Test.Components.pages.SupplierUITest
         [Fact]
         public void EditSupplier_Success_UpdatesAndNavigatesToList()
         {
-            NavigationHelper.Login(_driver, _baseUrl, "pablo.ramirezugalde@ucr.ac.cr", "1234qwer");
+            NavigationHelper.Login(_driver, _baseUrl, "itsgamc@gmail.com", "1234todo");
             NavigationHelper.NavigateToSuppliers(_driver);
 
             var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));

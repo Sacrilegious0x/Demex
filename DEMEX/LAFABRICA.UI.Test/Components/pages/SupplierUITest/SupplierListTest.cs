@@ -20,7 +20,7 @@ namespace LAFABRICA.UI.Test.Components.pages.SupplierUITest
         [Fact]
         public void NavigateToSupplierList()
         {
-            NavigationHelper.Login(_driver, _baseUrl, "pablo.ramirezugalde@ucr.ac.cr", "1234qwer");
+            NavigationHelper.Login(_driver, _baseUrl, "itsgamc@gmail.com", "1234todo");
             NavigationHelper.NavigateToSuppliers(_driver);
             var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
             var button = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("newSupplierBtn")));
@@ -30,7 +30,7 @@ namespace LAFABRICA.UI.Test.Components.pages.SupplierUITest
         [Fact]
         public void NewButton_NavigatesToCreate()
         {
-            NavigationHelper.Login(_driver, _baseUrl, "pablo.ramirezugalde@ucr.ac.cr", "1234qwer");
+            NavigationHelper.Login(_driver, _baseUrl, "itsgamc@gmail.com", "1234todo");
             NavigationHelper.NavigateToSuppliers(_driver);
 
             var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
@@ -45,7 +45,7 @@ namespace LAFABRICA.UI.Test.Components.pages.SupplierUITest
         [Fact]
         public void Search_FiltersSupplierList()
         {
-            NavigationHelper.Login(_driver, _baseUrl, "pablo.ramirezugalde@ucr.ac.cr", "1234qwer");
+            NavigationHelper.Login(_driver, _baseUrl, "itsgamc@gmail.com", "1234todo");
             NavigationHelper.NavigateToSuppliers(_driver);
 
             var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
@@ -66,7 +66,7 @@ namespace LAFABRICA.UI.Test.Components.pages.SupplierUITest
         [Fact]
         public void DeleteSupplier_ShowsConfirmation_AndRemovesRow()
         {
-            NavigationHelper.Login(_driver, _baseUrl, "pablo.ramirezugalde@ucr.ac.cr", "1234qwer");
+            NavigationHelper.Login(_driver, _baseUrl, "itsgamc@gmail.com", "1234todo");
             NavigationHelper.NavigateToSuppliers(_driver);
 
             var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
@@ -128,7 +128,7 @@ namespace LAFABRICA.UI.Test.Components.pages.SupplierUITest
         [Fact]
         public void EditSupplier_Cancel_NavigatesToList()
         {
-            NavigationHelper.Login(_driver, _baseUrl, "pablo.ramirezugalde@ucr.ac.cr", "1234qwer");
+            NavigationHelper.Login(_driver, _baseUrl, "itsgamc@gmail.com", "1234todo");
             NavigationHelper.NavigateToSuppliers(_driver); 
 
             var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
