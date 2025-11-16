@@ -12,15 +12,15 @@ using System;
             public BaseTest()
             {
                 var options = new EdgeOptions();
-            options.AddArguments("--start-maximized"); //tamanho de la ventana en edge
+            //options.AddArguments("--start-maximized"); //tamanho de la ventana en edge
                                                        // PARA JENKINS LUEGO (invisible)
-                                                       //options.AddArgument("--headless=new");
-                                                       //options.AddArgument("--no-sandbox");
-                                                       //options.AddArgument("--disable-gpu");
-                                                       //options.AddArgument("--disable-dev-shm-usage");
-                                                       //options.AddArgument("--window-size=1920,1080"); //importante
-                                                       //options.AddArgument("--disable-web-security");
-                                                       //options.AddArgument("--allow-running-insecure-content");
+            options.AddArgument("--headless=new");
+
+            // Estas opciones ayudan a evitar problemas de permisos y memoria en servidores CI
+            options.AddArgument("--no-sandbox");
+            options.AddArgument("--disable-gpu");
+            options.AddArgument("--disable-dev-shm-usage");
+            options.AddArgument("--window-size=1920,1080");
 
             Driver = new EdgeDriver(options);
             }
