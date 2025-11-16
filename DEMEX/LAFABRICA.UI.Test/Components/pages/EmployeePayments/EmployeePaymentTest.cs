@@ -1,9 +1,9 @@
-﻿using LAFABRICA.UI.Tests.Components.Helpers;
+﻿using LAFABRICA.UI.Test.Components.Helpers;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
 
-namespace LAFABRICA.UI.Tests.Components.pages.EmployeePayments
+namespace LAFABRICA.UI.Test.Components.pages.EmployeePayments
 {
     public class EmployeePaymentTest :IClassFixture<BaseTest>
     {
@@ -13,7 +13,7 @@ namespace LAFABRICA.UI.Tests.Components.pages.EmployeePayments
         {
             _baseUrl = test.BaseUrl;
             _driver = test.Driver;
-            //prueba
+           
         }
         [Fact]
         public void AddPaymentTest()

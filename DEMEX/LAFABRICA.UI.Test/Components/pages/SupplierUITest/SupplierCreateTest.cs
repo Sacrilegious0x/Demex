@@ -1,5 +1,5 @@
-﻿using LAFABRICA.UI.Tests.Components;
-using LAFABRICA.UI.Tests.Components.Helpers;
+﻿using LAFABRICA.UI.Test.Components;
+using LAFABRICA.UI.Test.Components.Helpers;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
@@ -15,7 +15,7 @@ namespace LAFABRICA.UI.Test.Components.pages.SupplierUITest
     {
         private readonly IWebDriver _driver;
         private readonly string _baseUrl;
-        //prueba
+        
 
         public SupplierCreateTest(BaseTest test)
         {
