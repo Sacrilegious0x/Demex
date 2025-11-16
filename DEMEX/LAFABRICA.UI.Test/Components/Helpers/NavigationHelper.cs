@@ -1,7 +1,7 @@
 ﻿using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
-namespace LAFABRICA.Tests.Components.Helpers
+namespace LAFABRICA.UI.Tests.Components.Helpers
 {
     public static class NavigationHelper
     {
@@ -18,7 +18,7 @@ namespace LAFABRICA.Tests.Components.Helpers
             //var loginBtn = wait.Until(ExpectedConditions.ElementToBeClickable(By.Id("loginBtn")));
             //((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].scrollIntoView(true);", loginBtn);
 
-
+            //prueba
             wait.Until(d => d.FindElement(By.Id("welcomeUser")));
         }
 

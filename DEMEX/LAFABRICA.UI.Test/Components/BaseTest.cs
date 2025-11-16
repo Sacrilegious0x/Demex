@@ -3,7 +3,7 @@ using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Edge;
 using System;
 
-    namespace LAFABRICA.Tests.Components
+    namespace LAFABRICA.UI.Tests.Components
     {
         public class BaseTest : IDisposable
         {
@@ -14,13 +14,13 @@ using System;
                 var options = new EdgeOptions();
             //options.AddArguments("--start-maximized"); //tamanho de la ventana en edge
                                                        // PARA JENKINS LUEGO (invisible)
-            options.AddArgument("--headless=new");
-
-            // Estas opciones ayudan a evitar problemas de permisos y memoria en servidores CI
-            options.AddArgument("--no-sandbox");
-            options.AddArgument("--disable-gpu");
-            options.AddArgument("--disable-dev-shm-usage");
-            options.AddArgument("--window-size=1920,1080");
+                options.AddArgument("--headless=new");
+           //prueha jenkins
+                // Estas opciones ayudan a evitar problemas de permisos y memoria en servidores CI
+                options.AddArgument("--no-sandbox");
+                options.AddArgument("--disable-gpu");
+                options.AddArgument("--disable-dev-shm-usage");
+                options.AddArgument("--window-size=1920,1080");
 
             Driver = new EdgeDriver(options);
             }
