@@ -3,7 +3,7 @@ using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Edge;
 using System;
 
-    namespace LAFABRICA.UI.Tests.Components
+    namespace LAFABRICA.UI.Test.Components
     {
         public class BaseTest : IDisposable
         {
