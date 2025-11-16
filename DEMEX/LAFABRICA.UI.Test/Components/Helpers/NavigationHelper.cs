@@ -15,8 +15,10 @@ namespace LAFABRICA.Tests.Components.Helpers
             var passInput = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("password")));
             passInput.SendKeys(password);
             driver.FindElement(By.Id("loginBtn")).Click();
+            //var loginBtn = wait.Until(ExpectedConditions.ElementToBeClickable(By.Id("loginBtn")));
+            //((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].scrollIntoView(true);", loginBtn);
 
-            
+
             wait.Until(d => d.FindElement(By.Id("welcomeUser")));
         }
 
