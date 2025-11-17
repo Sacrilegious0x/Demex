@@ -209,7 +209,7 @@ namespace LAFABRICA.UI.Test.Components.pages.EmployeePayments
             NavigationHelper.NavigatetoEmployeePayments(_driver);
 
 
-            var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-55")));
+            var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-56")));
             ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", editElement);
           
             wait.Until(ExpectedConditions.ElementIsVisible(By.Id("selectState")));
@@ -220,7 +220,7 @@ namespace LAFABRICA.UI.Test.Components.pages.EmployeePayments
             // Descripción
             var inputDescription = _driver.FindElement(By.Id("inputDescription"));
             inputDescription.Clear();
-            inputDescription.SendKeys("Pago editar 55 Selenium - Pagado");
+            inputDescription.SendKeys("Pago editar 56 Selenium - Pagado");
             inputDescription.SendKeys(Keys.Tab);
 
             var saveBtn = _driver.FindElement(By.Id("btnSave"));
