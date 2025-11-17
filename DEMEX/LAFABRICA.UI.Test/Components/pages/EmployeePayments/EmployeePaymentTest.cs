@@ -6,15 +6,15 @@ using SeleniumExtras.WaitHelpers;
 
 namespace LAFABRICA.UI.Test.Components.pages.EmployeePayments
 {
-    public class EmployeePaymentTest :IClassFixture<BaseTest>
+    public class EmployeePaymentTest : IClassFixture<BaseTest>
     {
         private readonly IWebDriver _driver;
         private readonly string _baseUrl;
-        public EmployeePaymentTest(BaseTest test) 
+        public EmployeePaymentTest(BaseTest test)
         {
             _baseUrl = test.BaseUrl;
             _driver = test.Driver;
-           
+
         }
         [Fact]
         public void AddPaymentTest()
@@ -88,7 +88,7 @@ namespace LAFABRICA.UI.Test.Components.pages.EmployeePayments
                 By.XPath($"//div[@id='successToast']//div[@class='toast-body' and contains(text(), '{successText}')]")
             ));
 
-            
+
             Assert.Contains(successText, successToastBody.Text);
 
             wait.Until(d => d.Url.Contains("/pagos/empleados"));
@@ -211,7 +211,7 @@ namespace LAFABRICA.UI.Test.Components.pages.EmployeePayments
 
             var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-34")));
             ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", editElement);
-          
+
             wait.Until(ExpectedConditions.ElementIsVisible(By.Id("selectState")));
             // Estado 
             var selectEstado = new SelectElement(_driver.FindElement(By.Id("selectState")));
@@ -249,7 +249,7 @@ namespace LAFABRICA.UI.Test.Components.pages.EmployeePayments
 
             var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-32")));
             ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", editElement);
-           
+
             wait.Until(ExpectedConditions.ElementIsVisible(By.Id("selectState")));
             // Estado 
             var selectEstado = new SelectElement(_driver.FindElement(By.Id("selectState")));
