@@ -39,7 +39,7 @@ namespace LAFABRICA.UI.Test.Components.pages.SupplierUITest
             // Generar datos únicos para evitar colisiones
             var uniqueName = "ProveedorTest-" + Guid.NewGuid().ToString("N").Substring(0, 8);
             var email = $"{uniqueName}@example.com";
-            var phone = "2094-6776";
+            var phone = "2094-5665";
 
             // Rellenar formulario
             var nameInput = _driver.FindElement(By.Id("supplierName"));
