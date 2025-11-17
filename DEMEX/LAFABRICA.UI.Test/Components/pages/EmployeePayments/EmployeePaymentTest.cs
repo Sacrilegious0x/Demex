@@ -268,7 +268,8 @@ namespace LAFABRICA.UI.Test.Components.pages.EmployeePayments
             var successToastBody = wait.Until(ExpectedConditions.ElementIsVisible(
               By.XPath($"//div[@id='successToast']//div[@class='toast-body' and contains(text(), '{successText}')]")
           ));
-            Assert.Contains(successText, successToastBody.Text);
+            string actualToastText = successToastBody.Text;
+            Assert.Contains(successText, actualToastText);
             wait.Until(d => d.Url.Contains("/pagos/empleados"));
             Assert.Contains("/pagos/empleados", _driver.Url);
         }
