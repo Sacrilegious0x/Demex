@@ -1,7 +1,6 @@
-﻿using Xunit;
-using OpenQA.Selenium;
+﻿
 using LAFABRICA.UI.Test.Components;
-using SeleniumExtras.WaitHelpers;
+
 
 namespace LAFABRICA.UI.Test.pages.Order
 {

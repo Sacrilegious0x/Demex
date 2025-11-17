@@ -1,9 +1,10 @@
-﻿using LAFABRICA.Tests.Components.Helpers;
+﻿using LAFABRICA.UI.Test.Components;
+using LAFABRICA.UI.Test.Components.Helpers;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
 
-namespace LAFABRICA.Tests.Components.pages.EmployeePayments
+namespace LAFABRICA.UI.Test.Components.pages.EmployeePayments
 {
     public class EmployeePaymentTest :IClassFixture<BaseTest>
     {
@@ -13,6 +14,7 @@ namespace LAFABRICA.Tests.Components.pages.EmployeePayments
         {
             _baseUrl = test.BaseUrl;
             _driver = test.Driver;
+           
         }
         [Fact]
         public void AddPaymentTest()
@@ -31,7 +33,7 @@ namespace LAFABRICA.Tests.Components.pages.EmployeePayments
 
             // Empleado 
             var selectEmpleado = new SelectElement(_driver.FindElement(By.Id("selectEmployee")));
-            selectEmpleado.SelectByValue("6"); //id del usuario carlos
+            selectEmpleado.SelectByValue("7"); //id del usuario Gabs
 
             // Fecha
             var dateInput = _driver.FindElement(By.Id("inputDate"));
@@ -114,7 +116,7 @@ namespace LAFABRICA.Tests.Components.pages.EmployeePayments
 
             // Empleado
             var selectEmpleado = new SelectElement(_driver.FindElement(By.Id("selectEmployee")));
-            selectEmpleado.SelectByValue("6"); // id del usuario carlos
+            selectEmpleado.SelectByValue("7"); // id del usuario Gabs
 
             // Fecha
             var dateInput = _driver.FindElement(By.Id("inputDate"));
@@ -207,7 +209,7 @@ namespace LAFABRICA.Tests.Components.pages.EmployeePayments
             NavigationHelper.NavigatetoEmployeePayments(_driver);
 
 
-            var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-26")));
+            var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-34")));
             ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", editElement);
           
             wait.Until(ExpectedConditions.ElementIsVisible(By.Id("selectState")));
@@ -218,7 +220,7 @@ namespace LAFABRICA.Tests.Components.pages.EmployeePayments
             // Descripción
             var inputDescription = _driver.FindElement(By.Id("inputDescription"));
             inputDescription.Clear();
-            inputDescription.SendKeys("Pago editar 26 Selenium - Pagado");
+            inputDescription.SendKeys("Pago editar 34 Selenium - Pagado");
             inputDescription.SendKeys(Keys.Tab);
 
             var saveBtn = _driver.FindElement(By.Id("btnSave"));
@@ -245,7 +247,7 @@ namespace LAFABRICA.Tests.Components.pages.EmployeePayments
             NavigationHelper.NavigatetoEmployeePayments(_driver);
 
 
-            var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-28")));
+            var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-32")));
             ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", editElement);
            
             wait.Until(ExpectedConditions.ElementIsVisible(By.Id("selectState")));
@@ -256,7 +258,7 @@ namespace LAFABRICA.Tests.Components.pages.EmployeePayments
             // Descripción
             var inputDescription = _driver.FindElement(By.Id("inputDescription"));
             inputDescription.Clear();
-            inputDescription.SendKeys("Pago editar 28 Selenium - anulado");
+            inputDescription.SendKeys("Pago editar 32 Selenium - anulado");
             inputDescription.SendKeys(Keys.Tab);
 
             var saveBtn = _driver.FindElement(By.Id("btnSave"));
@@ -266,51 +268,52 @@ namespace LAFABRICA.Tests.Components.pages.EmployeePayments
             var successToastBody = wait.Until(ExpectedConditions.ElementIsVisible(
               By.XPath($"//div[@id='successToast']//div[@class='toast-body' and contains(text(), '{successText}')]")
           ));
-            Assert.Contains(successText, successToastBody.Text);
+            string actualToastText = successToastBody.Text;
+            Assert.Contains(successText, actualToastText);
             wait.Until(d => d.Url.Contains("/pagos/empleados"));
             Assert.Contains("/pagos/empleados", _driver.Url);
         }
 
-        //[Fact]
-        //public void EditPaymentTestDeleteProduct()
-        //{
-        //    string successText = "Pago actualizado correctamente.";
-        //    var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        [Fact]
+        public void EditPaymentTestDeleteProduct()
+        {
+            string successText = "Pago actualizado correctamente.";
+            var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
 
-        //    // 1. Login y navegación
-        //    NavigationHelper.Login(_driver, _baseUrl, "itsgamc@gmail.com", "1234todo");
-        //    NavigationHelper.NavigatetoEmployeePayments(_driver);
+            // 1. Login y navegación
+            NavigationHelper.Login(_driver, _baseUrl, "itsgamc@gmail.com", "1234todo");
+            NavigationHelper.NavigatetoEmployeePayments(_driver);
 
-        //    // 2. Abrir Edición del pago 23
-        //    var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-23")));
-        //    ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", editElement);
+            // 2. Abrir Edición del pago 23
+            var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-33")));
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", editElement);
 
-        //    // 3. Esperar la carga de un producto 
-        //    var productItemToDeleteId = "deleteProduct_1";
-        //    var productItemToDelete = wait.Until(ExpectedConditions.ElementIsVisible(By.Id(productItemToDeleteId)));
+            // 3. Esperar la carga de un producto 
+            var productItemToDeleteId = "deleteProduct_1";
+            var productItemToDelete = wait.Until(ExpectedConditions.ElementIsVisible(By.Id(productItemToDeleteId)));
 
-        //    // ELIMINAR
-        //    ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", productItemToDelete);
+            // ELIMINAR
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", productItemToDelete);
 
-        //    // Valida que el producto desapareció 
-        //    wait.Until(ExpectedConditions.InvisibilityOfElementLocated(By.Id(productItemToDeleteId)));
-           
-        //    var inputDescription = _driver.FindElement(By.Id("inputDescription"));
-        //    inputDescription.Clear();
-        //    inputDescription.SendKeys("Eliminado un producto del 23");
-        //    inputDescription.SendKeys(Keys.Tab);
+            // Valida que el producto desapareció 
+            wait.Until(ExpectedConditions.InvisibilityOfElementLocated(By.Id(productItemToDeleteId)));
 
-        //    var saveBtn = _driver.FindElement(By.Id("btnSave"));
-        //    ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", saveBtn);
+            var inputDescription = _driver.FindElement(By.Id("inputDescription"));
+            inputDescription.Clear();
+            inputDescription.SendKeys("Eliminado un producto del 33");
+            inputDescription.SendKeys(Keys.Tab);
 
-        //    // busca en el div del toast el texto
-        //    var successToastBody = wait.Until(ExpectedConditions.ElementIsVisible(
-        //      By.XPath($"//div[@id='successToast']//div[@class='toast-body' and contains(text(), '{successText}')]")
-        //  ));
-        //    Assert.Contains(successText, successToastBody.Text);
-        //    wait.Until(d => d.Url.Contains("/pagos/empleados"));
-        //    Assert.Contains("/pagos/empleados", _driver.Url);
-        //}
+            var saveBtn = _driver.FindElement(By.Id("btnSave"));
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", saveBtn);
+
+            // busca en el div del toast el texto
+            var successToastBody = wait.Until(ExpectedConditions.ElementIsVisible(
+              By.XPath($"//div[@id='successToast']//div[@class='toast-body' and contains(text(), '{successText}')]")
+          ));
+            Assert.Contains(successText, successToastBody.Text);
+            wait.Until(d => d.Url.Contains("/pagos/empleados"));
+            Assert.Contains("/pagos/empleados", _driver.Url);
+        }
 
     }
 }
