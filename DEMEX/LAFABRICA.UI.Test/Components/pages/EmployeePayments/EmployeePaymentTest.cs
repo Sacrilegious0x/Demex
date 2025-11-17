@@ -1,9 +1,10 @@
-﻿using LAFABRICA.Tests.Components.Helpers;
+﻿using LAFABRICA.UI.Test.Components.Helpers;
+using LAFABRICA.UI.Test.Components;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
 
-namespace LAFABRICA.Tests.Components.pages.EmployeePayments
+namespace LAFABRICA.UI.Test.Components.pages.EmployeePayments
 {
     public class EmployeePaymentTest :IClassFixture<BaseTest>
     {

@@ -1,7 +1,7 @@
 ﻿using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
-namespace LAFABRICA.Tests.Components.Helpers
+namespace LAFABRICA.UI.Test.Components.Helpers
 {
     public static class NavigationHelper
     {
@@ -10,6 +10,9 @@ namespace LAFABRICA.Tests.Components.Helpers
             driver.Navigate().GoToUrl($"{baseUrl}/login");
             //Espera para blazor cargue 
             var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+            wait.Until(d => d.FindElements(By.CssSelector("script[src*='blazor.web']")).Count > 0);
+            wait.Until(ExpectedConditions.UrlContains("/login"));
+            wait.Until(d => d.FindElements(By.Id("email")).Count > 0);
             var emailInput = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("email")));
             emailInput.SendKeys(email);
             var passInput = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("password")));

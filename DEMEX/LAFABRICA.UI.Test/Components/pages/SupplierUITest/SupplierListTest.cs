@@ -1,5 +1,5 @@
-﻿using LAFABRICA.Tests.Components;
-using LAFABRICA.Tests.Components.Helpers;
+﻿using LAFABRICA.UI.Test.Components.Helpers;
+using LAFABRICA.UI.Test.Components;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;

@@ -1,5 +1,5 @@
-﻿using LAFABRICA.Tests.Components;
-using LAFABRICA.Tests.Components.Helpers;
+﻿using LAFABRICA.UI.Test.Components;
+using LAFABRICA.UI.Test.Components.Helpers;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
@@ -39,7 +39,7 @@ namespace LAFABRICA.UI.Test.Components.pages.SupplierUITest
             // Generar datos únicos para evitar colisiones
             var uniqueName = "ProveedorTest-" + Guid.NewGuid().ToString("N").Substring(0, 8);
             var email = $"{uniqueName}@example.com";
-            var phone = "2373-8989";
+            var phone = "1373-8989";
 
             // Rellenar formulario
             var nameInput = _driver.FindElement(By.Id("supplierName"));
