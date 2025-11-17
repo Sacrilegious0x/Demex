@@ -285,7 +285,7 @@ namespace LAFABRICA.UI.Test.Components.pages.EmployeePayments
             NavigationHelper.NavigatetoEmployeePayments(_driver);
 
             // 2. Abrir Edición del pago 23
-            var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-69")));
+            var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-42")));
             ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", editElement);
 
             // 3. Esperar la carga de un producto 
@@ -300,7 +300,7 @@ namespace LAFABRICA.UI.Test.Components.pages.EmployeePayments
 
             var inputDescription = _driver.FindElement(By.Id("inputDescription"));
             inputDescription.Clear();
-            inputDescription.SendKeys("Eliminado un producto del 69");
+            inputDescription.SendKeys("Eliminado un producto del 42");
             inputDescription.SendKeys(Keys.Tab);
 
             var saveBtn = _driver.FindElement(By.Id("btnSave"));
