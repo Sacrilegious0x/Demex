@@ -33,7 +33,7 @@ namespace LAFABRICA.UI.Test.Components.pages.EmployeePayments
 
             // Empleado 
             var selectEmpleado = new SelectElement(_driver.FindElement(By.Id("selectEmployee")));
-            selectEmpleado.SelectByValue("6"); //id del usuario carlos
+            selectEmpleado.SelectByValue("7"); //id del usuario Gabs
 
             // Fecha
             var dateInput = _driver.FindElement(By.Id("inputDate"));
@@ -209,7 +209,7 @@ namespace LAFABRICA.UI.Test.Components.pages.EmployeePayments
             NavigationHelper.NavigatetoEmployeePayments(_driver);
 
 
-            var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-70")));
+            var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-71")));
             ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", editElement);
           
             wait.Until(ExpectedConditions.ElementIsVisible(By.Id("selectState")));
@@ -220,7 +220,7 @@ namespace LAFABRICA.UI.Test.Components.pages.EmployeePayments
             // Descripción
             var inputDescription = _driver.FindElement(By.Id("inputDescription"));
             inputDescription.Clear();
-            inputDescription.SendKeys("Pago editar 70 Selenium - Pagado");
+            inputDescription.SendKeys("Pago editar 71 Selenium - Pagado");
             inputDescription.SendKeys(Keys.Tab);
 
             var saveBtn = _driver.FindElement(By.Id("btnSave"));
@@ -247,7 +247,7 @@ namespace LAFABRICA.UI.Test.Components.pages.EmployeePayments
             NavigationHelper.NavigatetoEmployeePayments(_driver);
 
 
-            var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-68")));
+            var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-72")));
             ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", editElement);
            
             wait.Until(ExpectedConditions.ElementIsVisible(By.Id("selectState")));
@@ -258,7 +258,7 @@ namespace LAFABRICA.UI.Test.Components.pages.EmployeePayments
             // Descripción
             var inputDescription = _driver.FindElement(By.Id("inputDescription"));
             inputDescription.Clear();
-            inputDescription.SendKeys("Pago editar 68 Selenium - anulado");
+            inputDescription.SendKeys("Pago editar 72 Selenium - anulado");
             inputDescription.SendKeys(Keys.Tab);
 
             var saveBtn = _driver.FindElement(By.Id("btnSave"));
@@ -285,7 +285,7 @@ namespace LAFABRICA.UI.Test.Components.pages.EmployeePayments
             NavigationHelper.NavigatetoEmployeePayments(_driver);
 
             // 2. Abrir Edición del pago 23
-            var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-42")));
+            var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-57")));
             ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", editElement);
 
             // 3. Esperar la carga de un producto 
@@ -300,7 +300,7 @@ namespace LAFABRICA.UI.Test.Components.pages.EmployeePayments
 
             var inputDescription = _driver.FindElement(By.Id("inputDescription"));
             inputDescription.Clear();
-            inputDescription.SendKeys("Eliminado un producto del 42");
+            inputDescription.SendKeys("Eliminado un producto del 57");
             inputDescription.SendKeys(Keys.Tab);
 
             var saveBtn = _driver.FindElement(By.Id("btnSave"));
