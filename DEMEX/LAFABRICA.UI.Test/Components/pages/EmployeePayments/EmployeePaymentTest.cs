@@ -1,317 +1,319 @@
-﻿using LAFABRICA.UI.Test.Components.Helpers;
-using LAFABRICA.UI.Test.Components;
+﻿using LAFABRICA.UI.Test.Components;
+using LAFABRICA.UI.Test.Components.Helpers;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
 
 namespace LAFABRICA.UI.Test.Components.pages.EmployeePayments
 {
-    public class EmployeePaymentTest :IClassFixture<BaseTest>
+    public class EmployeePaymentTest : IClassFixture<BaseTest>
     {
         private readonly IWebDriver _driver;
         private readonly string _baseUrl;
-        public EmployeePaymentTest(BaseTest test) 
+        public EmployeePaymentTest(BaseTest test)
         {
             _baseUrl = test.BaseUrl;
             _driver = test.Driver;
+
         }
-        //[Fact]
-        //public void AddPaymentTest()
-        //{
+        [Fact]
+        public void AddPaymentTest()
+        {
 
-        //    string successText = "Pago registrado correctamente";
-        //    var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+            string successText = "Pago registrado correctamente";
+            var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
 
-        //    NavigationHelper.Login(_driver, _baseUrl, "itsgamc@gmail.com", "1234todo");
-        //    NavigationHelper.NavigatetoEmployeePayments(_driver);
+            NavigationHelper.Login(_driver, _baseUrl, "itsgamc@gmail.com", "1234todo");
+            NavigationHelper.NavigatetoEmployeePayments(_driver);
 
-        //    var nuevoPagoBtn = wait.Until(ExpectedConditions.ElementToBeClickable(By.Id("nuevoPagoEmpleado")));
-        //    nuevoPagoBtn.Click();
+            var nuevoPagoBtn = wait.Until(ExpectedConditions.ElementToBeClickable(By.Id("nuevoPagoEmpleado")));
+            nuevoPagoBtn.Click();
 
-        //    wait.Until(ExpectedConditions.ElementIsVisible(By.Id("selectEmployee")));
+            wait.Until(ExpectedConditions.ElementIsVisible(By.Id("selectEmployee")));
 
-        //    // Empleado 
-        //    var selectEmpleado = new SelectElement(_driver.FindElement(By.Id("selectEmployee")));
-        //    selectEmpleado.SelectByValue("6"); //id del usuario carlos
+            // Empleado 
+            var selectEmpleado = new SelectElement(_driver.FindElement(By.Id("selectEmployee")));
+            selectEmpleado.SelectByValue("7"); //id del usuario Gabs
 
-        //    // Fecha
-        //    var dateInput = _driver.FindElement(By.Id("inputDate"));
-        //    string isoDate = DateTime.Now.ToString("yyyy-MM-dd");
+            // Fecha
+            var dateInput = _driver.FindElement(By.Id("inputDate"));
+            string isoDate = DateTime.Now.ToString("yyyy-MM-dd");
 
-        //    ((IJavaScriptExecutor)_driver).ExecuteScript(
-        //        "arguments[0].value = arguments[1];",
-        //        dateInput,
-        //        isoDate
-        //    );
+            ((IJavaScriptExecutor)_driver).ExecuteScript(
+                "arguments[0].value = arguments[1];",
+                dateInput,
+                isoDate
+            );
 
-        //    //Reemplaza el valor viejo por el nuevo
-        //    ((IJavaScriptExecutor)_driver).ExecuteScript(
-        //        "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
-        //        dateInput
-        //    );
-        //    // Estado 
-        //    var selectEstado = new SelectElement(_driver.FindElement(By.Id("selectState")));
-        //    selectEstado.SelectByText("Pendiente");
+            //Reemplaza el valor viejo por el nuevo
+            ((IJavaScriptExecutor)_driver).ExecuteScript(
+                "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
+                dateInput
+            );
+            // Estado 
+            var selectEstado = new SelectElement(_driver.FindElement(By.Id("selectState")));
+            selectEstado.SelectByText("Pendiente");
 
-        //    // Descripción
-        //    _driver.FindElement(By.Id("inputDescription")).SendKeys("Pago prueba Selenium");
+            // Descripción
+            _driver.FindElement(By.Id("inputDescription")).SendKeys("Pago prueba Selenium");
 
-        //    // Agregar Producto 1
-        //    var selectProducto = new SelectElement(_driver.FindElement(By.Id("selectProduct")));
-        //    selectProducto.SelectByValue("1"); // id del producto
+            // Agregar Producto 1
+            var selectProducto = new SelectElement(_driver.FindElement(By.Id("selectProduct")));
+            selectProducto.SelectByValue("1"); // id del producto
 
-        //    _driver.FindElement(By.Id("inputQuantity")).SendKeys("100");
-        //    _driver.FindElement(By.Id("inputUnitPrice")).SendKeys("500");
-        //    _driver.FindElement(By.Id("btnAddProduct")).Click();
+            _driver.FindElement(By.Id("inputQuantity")).SendKeys("100");
+            _driver.FindElement(By.Id("inputUnitPrice")).SendKeys("500");
+            _driver.FindElement(By.Id("btnAddProduct")).Click();
 
-        //    // Agregar Producto 2
+            // Agregar Producto 2
 
-        //    // Espera que se resetee el capo
-        //    wait.Until(ExpectedConditions.TextToBePresentInElementValue(_driver.FindElement(By.Id("inputQuantity")), ""));
+            // Espera que se resetee el capo
+            wait.Until(ExpectedConditions.TextToBePresentInElementValue(_driver.FindElement(By.Id("inputQuantity")), ""));
 
-        //    selectProducto = new SelectElement(_driver.FindElement(By.Id("selectProduct")));
-        //    selectProducto.SelectByValue("2");
+            selectProducto = new SelectElement(_driver.FindElement(By.Id("selectProduct")));
+            selectProducto.SelectByValue("2");
 
-        //    _driver.FindElement(By.Id("inputQuantity")).SendKeys("2");
-        //    _driver.FindElement(By.Id("inputUnitPrice")).SendKeys("700");
-        //    _driver.FindElement(By.Id("btnAddProduct")).Click();
+            _driver.FindElement(By.Id("inputQuantity")).SendKeys("2");
+            _driver.FindElement(By.Id("inputUnitPrice")).SendKeys("700");
+            _driver.FindElement(By.Id("btnAddProduct")).Click();
 
-        //    //  Guardar el pago
-        //    var saveBtn = _driver.FindElement(By.Id("btnSave"));
-        //    //click de js mas seguro
-        //    ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", saveBtn);
+            //  Guardar el pago
+            var saveBtn = _driver.FindElement(By.Id("btnSave"));
+            //click de js mas seguro
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", saveBtn);
 
 
-        //    // busca en el div del toast el texto
-        //    var successToastBody = wait.Until(ExpectedConditions.ElementIsVisible(
-        //        By.XPath($"//div[@id='successToast']//div[@class='toast-body' and contains(text(), '{successText}')]")
-        //    ));
+            // busca en el div del toast el texto
+            var successToastBody = wait.Until(ExpectedConditions.ElementIsVisible(
+                By.XPath($"//div[@id='successToast']//div[@class='toast-body' and contains(text(), '{successText}')]")
+            ));
 
-            
-        //    Assert.Contains(successText, successToastBody.Text);
 
-        //    wait.Until(d => d.Url.Contains("/pagos/empleados"));
-        //    Assert.Contains("/pagos/empleados", _driver.Url);
-        //}
+            Assert.Contains(successText, successToastBody.Text);
 
-        //[Fact]
-        //public void AddInvalidPaymentTestWithOutProduct()
-        //{
+            wait.Until(d => d.Url.Contains("/pagos/empleados"));
+            Assert.Contains("/pagos/empleados", _driver.Url);
+        }
 
-        //    string expectedError = "Debe agregar al menos un producto.";
-        //    var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        [Fact]
+        public void AddInvalidPaymentTestWithOutProduct()
+        {
 
+            string expectedError = "Debe agregar al menos un producto.";
+            var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
 
-        //    NavigationHelper.Login(_driver, _baseUrl, "itsgamc@gmail.com", "1234todo");
-        //    NavigationHelper.NavigatetoEmployeePayments(_driver);
 
+            NavigationHelper.Login(_driver, _baseUrl, "itsgamc@gmail.com", "1234todo");
+            NavigationHelper.NavigatetoEmployeePayments(_driver);
 
-        //    var nuevoPagoBtn = wait.Until(ExpectedConditions.ElementToBeClickable(By.Id("nuevoPagoEmpleado")));
-        //    nuevoPagoBtn.Click();
 
-        //    wait.Until(ExpectedConditions.ElementIsVisible(By.Id("selectEmployee")));
+            var nuevoPagoBtn = wait.Until(ExpectedConditions.ElementToBeClickable(By.Id("nuevoPagoEmpleado")));
+            nuevoPagoBtn.Click();
 
+            wait.Until(ExpectedConditions.ElementIsVisible(By.Id("selectEmployee")));
 
 
-        //    // Empleado
-        //    var selectEmpleado = new SelectElement(_driver.FindElement(By.Id("selectEmployee")));
-        //    selectEmpleado.SelectByValue("6"); // id del usuario carlos
 
-        //    // Fecha
-        //    var dateInput = _driver.FindElement(By.Id("inputDate"));
-        //    string isoDate = DateTime.Now.ToString("yyyy-MM-dd");
-        //    ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].value = arguments[1];", dateInput, isoDate);
-        //    ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].dispatchEvent(new Event('change', { bubbles: true }));", dateInput);
+            // Empleado
+            var selectEmpleado = new SelectElement(_driver.FindElement(By.Id("selectEmployee")));
+            selectEmpleado.SelectByValue("7"); // id del usuario Gabs
 
-        //    // Estado
-        //    var selectEstado = new SelectElement(_driver.FindElement(By.Id("selectState")));
-        //    selectEstado.SelectByText("Pendiente");
+            // Fecha
+            var dateInput = _driver.FindElement(By.Id("inputDate"));
+            string isoDate = DateTime.Now.ToString("yyyy-MM-dd");
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].value = arguments[1];", dateInput, isoDate);
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].dispatchEvent(new Event('change', { bubbles: true }));", dateInput);
 
-        //    // Descripción 
-        //    _driver.FindElement(By.Id("inputDescription")).SendKeys("Intento de pago fallido");
+            // Estado
+            var selectEstado = new SelectElement(_driver.FindElement(By.Id("selectState")));
+            selectEstado.SelectByText("Pendiente");
 
+            // Descripción 
+            _driver.FindElement(By.Id("inputDescription")).SendKeys("Intento de pago fallido");
 
 
-        //    // Guardar el pago 
-        //    var saveBtn = _driver.FindElement(By.Id("btnSave"));
-        //    ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", saveBtn);
 
+            // Guardar el pago 
+            var saveBtn = _driver.FindElement(By.Id("btnSave"));
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", saveBtn);
 
 
-        //    var errorElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("errorMessage")));
 
+            var errorElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("errorMessage")));
 
-        //    Assert.Contains(expectedError, errorElement.Text);
 
-        //    // Verifica que NO hubo redirección
-        //    Assert.Contains("/pagos/empleados/crear", _driver.Url);
-        //}
+            Assert.Contains(expectedError, errorElement.Text);
 
-        //[Fact]
-        //public void AddInvalidPaymentTestWithoutEmployee()
-        //{
+            // Verifica que NO hubo redirección
+            Assert.Contains("/pagos/empleados/crear", _driver.Url);
+        }
 
-        //    string expectedError = "Debe seleccionar un empleado.";
-        //    var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        [Fact]
+        public void AddInvalidPaymentTestWithoutEmployee()
+        {
 
+            string expectedError = "Debe seleccionar un empleado.";
+            var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
 
-        //    NavigationHelper.Login(_driver, _baseUrl, "itsgamc@gmail.com", "1234todo");
-        //    NavigationHelper.NavigatetoEmployeePayments(_driver);
 
-        //    var nuevoPagoBtn = wait.Until(ExpectedConditions.ElementToBeClickable(By.Id("nuevoPagoEmpleado")));
-        //    nuevoPagoBtn.Click();
+            NavigationHelper.Login(_driver, _baseUrl, "itsgamc@gmail.com", "1234todo");
+            NavigationHelper.NavigatetoEmployeePayments(_driver);
 
-        //    wait.Until(ExpectedConditions.ElementIsVisible(By.Id("selectEmployee")));
+            var nuevoPagoBtn = wait.Until(ExpectedConditions.ElementToBeClickable(By.Id("nuevoPagoEmpleado")));
+            nuevoPagoBtn.Click();
 
+            wait.Until(ExpectedConditions.ElementIsVisible(By.Id("selectEmployee")));
 
-        //    // Fecha 
-        //    var dateInput = _driver.FindElement(By.Id("inputDate"));
-        //    string isoDate = DateTime.Now.ToString("yyyy-MM-dd");
-        //    ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].value = arguments[1];", dateInput, isoDate);
-        //    ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].dispatchEvent(new Event('change', { bubbles: true }));", dateInput);
 
-        //    // Estado 
-        //    var selectEstado = new SelectElement(_driver.FindElement(By.Id("selectState")));
-        //    selectEstado.SelectByText("Pendiente");
+            // Fecha 
+            var dateInput = _driver.FindElement(By.Id("inputDate"));
+            string isoDate = DateTime.Now.ToString("yyyy-MM-dd");
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].value = arguments[1];", dateInput, isoDate);
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].dispatchEvent(new Event('change', { bubbles: true }));", dateInput);
 
-        //    // Descripción 
-        //    _driver.FindElement(By.Id("inputDescription")).SendKeys("Intento de pago fallido por falta de empleado.");
+            // Estado 
+            var selectEstado = new SelectElement(_driver.FindElement(By.Id("selectState")));
+            selectEstado.SelectByText("Pendiente");
 
-        //    // Agregar Producto 
-        //    var selectProducto = new SelectElement(_driver.FindElement(By.Id("selectProduct")));
-        //    selectProducto.SelectByValue("1"); // id del producto
-        //    _driver.FindElement(By.Id("inputQuantity")).SendKeys("10");
-        //    _driver.FindElement(By.Id("inputUnitPrice")).SendKeys("100");
-        //    _driver.FindElement(By.Id("btnAddProduct")).Click();
+            // Descripción 
+            _driver.FindElement(By.Id("inputDescription")).SendKeys("Intento de pago fallido por falta de empleado.");
 
-        //    //  Guardar el pago 
-        //    var saveBtn = _driver.FindElement(By.Id("btnSave"));
-        //    ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", saveBtn);
+            // Agregar Producto 
+            var selectProducto = new SelectElement(_driver.FindElement(By.Id("selectProduct")));
+            selectProducto.SelectByValue("1"); // id del producto
+            _driver.FindElement(By.Id("inputQuantity")).SendKeys("10");
+            _driver.FindElement(By.Id("inputUnitPrice")).SendKeys("100");
+            _driver.FindElement(By.Id("btnAddProduct")).Click();
 
+            //  Guardar el pago 
+            var saveBtn = _driver.FindElement(By.Id("btnSave"));
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", saveBtn);
 
-        //    var errorElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("errorMessage")));
 
+            var errorElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("errorMessage")));
 
-        //    Assert.Contains(expectedError, errorElement.Text);
 
-        //    // Verificar que NO hubo redirección
-        //    Assert.Contains("/pagos/empleados/crear", _driver.Url);
-        //}
-        //[Fact]
-        //public void EditPaymentTestPay()
-        //{
+            Assert.Contains(expectedError, errorElement.Text);
 
-        //    string successText = "Pago actualizado correctamente.";
-        //    var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+            // Verificar que NO hubo redirección
+            Assert.Contains("/pagos/empleados/crear", _driver.Url);
+        }
+        [Fact]
+        public void EditPaymentTestPay()
+        {
 
-        //    NavigationHelper.Login(_driver, _baseUrl, "itsgamc@gmail.com", "1234todo");
-        //    NavigationHelper.NavigatetoEmployeePayments(_driver);
+            string successText = "Pago actualizado correctamente.";
+            var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
 
+            NavigationHelper.Login(_driver, _baseUrl, "itsgamc@gmail.com", "1234todo");
+            NavigationHelper.NavigatetoEmployeePayments(_driver);
 
-        //    var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-26")));
-        //    ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", editElement);
-          
-        //    wait.Until(ExpectedConditions.ElementIsVisible(By.Id("selectState")));
-        //    // Estado 
-        //    var selectEstado = new SelectElement(_driver.FindElement(By.Id("selectState")));
-        //    selectEstado.SelectByText("Pagado");
 
-        //    // Descripción
-        //    var inputDescription = _driver.FindElement(By.Id("inputDescription"));
-        //    inputDescription.Clear();
-        //    inputDescription.SendKeys("Pago editar 26 Selenium - Pagado");
-        //    inputDescription.SendKeys(Keys.Tab);
+            var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-34")));
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", editElement);
 
-        //    var saveBtn = _driver.FindElement(By.Id("btnSave"));
-        //    ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", saveBtn);
+            wait.Until(ExpectedConditions.ElementIsVisible(By.Id("selectState")));
+            // Estado 
+            var selectEstado = new SelectElement(_driver.FindElement(By.Id("selectState")));
+            selectEstado.SelectByText("Pagado");
 
-        //    //// busca en el div del toast el texto
-        //    var successToastBody = wait.Until(ExpectedConditions.ElementIsVisible(
-        //                  By.XPath($"//div[@id='successToast']//div[@class='toast-body' and contains(text(), '{successText}')]")
-        //              ));
-        //    Assert.Contains(successText, successToastBody.Text);
+            // Descripción
+            var inputDescription = _driver.FindElement(By.Id("inputDescription"));
+            inputDescription.Clear();
+            inputDescription.SendKeys("Pago editar 34 Selenium - Pagado");
+            inputDescription.SendKeys(Keys.Tab);
 
-        //    wait.Until(d => d.Url.Contains("/pagos/empleados"));
-        //    Assert.Contains("/pagos/empleados", _driver.Url);
-        //}
+            var saveBtn = _driver.FindElement(By.Id("btnSave"));
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", saveBtn);
 
-        //[Fact]
-        //public void EditPaymentTestCancel()
-        //{
+            //// busca en el div del toast el texto
+            var successToastBody = wait.Until(ExpectedConditions.ElementIsVisible(
+                          By.XPath($"//div[@id='successToast']//div[@class='toast-body' and contains(text(), '{successText}')]")
+                      ));
+            Assert.Contains(successText, successToastBody.Text);
 
-        //    string successText = "Pago actualizado correctamente.";
-        //    var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+            wait.Until(d => d.Url.Contains("/pagos/empleados"));
+            Assert.Contains("/pagos/empleados", _driver.Url);
+        }
 
-        //    NavigationHelper.Login(_driver, _baseUrl, "itsgamc@gmail.com", "1234todo");
-        //    NavigationHelper.NavigatetoEmployeePayments(_driver);
+        [Fact]
+        public void EditPaymentTestCancel()
+        {
 
+            string successText = "Pago actualizado correctamente.";
+            var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
 
-        //    var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-28")));
-        //    ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", editElement);
-           
-        //    wait.Until(ExpectedConditions.ElementIsVisible(By.Id("selectState")));
-        //    // Estado 
-        //    var selectEstado = new SelectElement(_driver.FindElement(By.Id("selectState")));
-        //    selectEstado.SelectByText("Anulado");
+            NavigationHelper.Login(_driver, _baseUrl, "itsgamc@gmail.com", "1234todo");
+            NavigationHelper.NavigatetoEmployeePayments(_driver);
 
-        //    // Descripción
-        //    var inputDescription = _driver.FindElement(By.Id("inputDescription"));
-        //    inputDescription.Clear();
-        //    inputDescription.SendKeys("Pago editar 28 Selenium - anulado");
-        //    inputDescription.SendKeys(Keys.Tab);
 
-        //    var saveBtn = _driver.FindElement(By.Id("btnSave"));
-        //    ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", saveBtn);
+            var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-32")));
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", editElement);
 
-        //    //// busca en el div del toast el texto
-        //    var successToastBody = wait.Until(ExpectedConditions.ElementIsVisible(
-        //      By.XPath($"//div[@id='successToast']//div[@class='toast-body' and contains(text(), '{successText}')]")
-        //  ));
-        //    Assert.Contains(successText, successToastBody.Text);
-        //    wait.Until(d => d.Url.Contains("/pagos/empleados"));
-        //    Assert.Contains("/pagos/empleados", _driver.Url);
-        //}
+            wait.Until(ExpectedConditions.ElementIsVisible(By.Id("selectState")));
+            // Estado 
+            var selectEstado = new SelectElement(_driver.FindElement(By.Id("selectState")));
+            selectEstado.SelectByText("Anulado");
 
-        //[Fact]
-        //public void EditPaymentTestDeleteProduct()
-        //{
-        //    string successText = "Pago actualizado correctamente.";
-        //    var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+            // Descripción
+            var inputDescription = _driver.FindElement(By.Id("inputDescription"));
+            inputDescription.Clear();
+            inputDescription.SendKeys("Pago editar 32 Selenium - anulado");
+            inputDescription.SendKeys(Keys.Tab);
 
-        //    // 1. Login y navegación
-        //    NavigationHelper.Login(_driver, _baseUrl, "itsgamc@gmail.com", "1234todo");
-        //    NavigationHelper.NavigatetoEmployeePayments(_driver);
+            var saveBtn = _driver.FindElement(By.Id("btnSave"));
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", saveBtn);
 
-        //    // 2. Abrir Edición del pago 23
-        //    var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-23")));
-        //    ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", editElement);
+            //// busca en el div del toast el texto
+            var successToastBody = wait.Until(ExpectedConditions.ElementIsVisible(
+              By.XPath($"//div[@id='successToast']//div[@class='toast-body' and contains(text(), '{successText}')]")
+          ));
+            string actualToastText = successToastBody.Text;
+            Assert.Contains(successText, actualToastText);
+            wait.Until(d => d.Url.Contains("/pagos/empleados"));
+            Assert.Contains("/pagos/empleados", _driver.Url);
+        }
 
-        //    // 3. Esperar la carga de un producto 
-        //    var productItemToDeleteId = "deleteProduct_1";
-        //    var productItemToDelete = wait.Until(ExpectedConditions.ElementIsVisible(By.Id(productItemToDeleteId)));
+        [Fact]
+        public void EditPaymentTestDeleteProduct()
+        {
+            string successText = "Pago actualizado correctamente.";
+            var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
 
-        //    // ELIMINAR
-        //    ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", productItemToDelete);
+            // 1. Login y navegación
+            NavigationHelper.Login(_driver, _baseUrl, "itsgamc@gmail.com", "1234todo");
+            NavigationHelper.NavigatetoEmployeePayments(_driver);
 
-        //    // Valida que el producto desapareció 
-        //    wait.Until(ExpectedConditions.InvisibilityOfElementLocated(By.Id(productItemToDeleteId)));
-           
-        //    var inputDescription = _driver.FindElement(By.Id("inputDescription"));
-        //    inputDescription.Clear();
-        //    inputDescription.SendKeys("Eliminado un producto del 23");
-        //    inputDescription.SendKeys(Keys.Tab);
+            // 2. Abrir Edición del pago 23
+            var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-33")));
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", editElement);
 
-        //    var saveBtn = _driver.FindElement(By.Id("btnSave"));
-        //    ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", saveBtn);
+            // 3. Esperar la carga de un producto 
+            var productItemToDeleteId = "deleteProduct_1";
+            var productItemToDelete = wait.Until(ExpectedConditions.ElementIsVisible(By.Id(productItemToDeleteId)));
 
-        //    // busca en el div del toast el texto
-        //    var successToastBody = wait.Until(ExpectedConditions.ElementIsVisible(
-        //      By.XPath($"//div[@id='successToast']//div[@class='toast-body' and contains(text(), '{successText}')]")
-        //  ));
-        //    Assert.Contains(successText, successToastBody.Text);
-        //    wait.Until(d => d.Url.Contains("/pagos/empleados"));
-        //    Assert.Contains("/pagos/empleados", _driver.Url);
-        //}
+            // ELIMINAR
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", productItemToDelete);
+
+            // Valida que el producto desapareció 
+            wait.Until(ExpectedConditions.InvisibilityOfElementLocated(By.Id(productItemToDeleteId)));
+
+            var inputDescription = _driver.FindElement(By.Id("inputDescription"));
+            inputDescription.Clear();
+            inputDescription.SendKeys("Eliminado un producto del 33");
+            inputDescription.SendKeys(Keys.Tab);
+
+            var saveBtn = _driver.FindElement(By.Id("btnSave"));
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", saveBtn);
+
+            // busca en el div del toast el texto
+            var successToastBody = wait.Until(ExpectedConditions.ElementIsVisible(
+              By.XPath($"//div[@id='successToast']//div[@class='toast-body' and contains(text(), '{successText}')]")
+          ));
+            Assert.Contains(successText, successToastBody.Text);
+            wait.Until(d => d.Url.Contains("/pagos/empleados"));
+            Assert.Contains("/pagos/empleados", _driver.Url);
+        }
 
     }
 }

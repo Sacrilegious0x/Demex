@@ -99,3 +99,4 @@ namespace LAFABRICA.UI.Test.Components.pages.SupplierUITest
 
     }
 }
+

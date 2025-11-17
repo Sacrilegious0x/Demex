@@ -133,12 +133,12 @@ namespace LAFABRICA.UI.Test.Components.pages.SupplierUITest
         public void EditSupplier_Cancel_NavigatesToList()
         {
             NavigationHelper.Login(_driver, _baseUrl, "pablo.ramirezugalde@ucr.ac.cr", "1234qwer");
-            NavigationHelper.NavigateToSuppliers(_driver); 
+            NavigationHelper.NavigateToSuppliers(_driver);
 
             var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
-            string supplierName = "Nice nature"; 
+            string supplierName = "Nice nature";
 
-             // aqui en ves del id, fue un xpath
+            // aqui en ves del id, fue un xpath
             var editButtonLocator = By.XPath($"//table//tbody//tr[td[2][normalize-space()='{supplierName}']]//button[contains(@class,'btn-edit')]");
 
             IWebElement editBtn;
