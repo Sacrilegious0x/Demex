@@ -152,6 +152,8 @@ namespace LAFABRICA.UI.Test.Components.pages.SupplierUITest
             }
 
 
+
+
             editBtn.Click();
 
             // esperar que el InputText del Nombre sea visible.
