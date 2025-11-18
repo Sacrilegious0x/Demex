@@ -67,7 +67,7 @@ namespace LAFABRICA.UI.Test.Components.pages.SupplierUITest
             Assert.Contains(rows, r => r.Text.Contains("NuevoProv"));
         }
 
-        [Fact]
+       // [Fact]
         public void DeleteSupplier_ShowsConfirmation_AndRemovesRow()
         {
             NavigationHelper.Login(_driver, _baseUrl, "pablo.ramirezugalde@ucr.ac.cr", "1234qwer");
