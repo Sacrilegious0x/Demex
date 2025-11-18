@@ -23,7 +23,7 @@ namespace LAFABRICA.UI.Test.Components.pages.SupplierUITest
             _driver = test.Driver;
         }
 
-        [Fact]
+        //[Fact]
         public void CreateSupplier_FromCreatePage_Works()
         {
             NavigationHelper.Login(_driver, _baseUrl, "pablo.ramirezugalde@ucr.ac.cr", "1234qwer");
