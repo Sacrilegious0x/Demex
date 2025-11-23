@@ -209,7 +209,7 @@ namespace LAFABRICA.UI.Test.Components.pages.EmployeePayments
             NavigationHelper.NavigatetoEmployeePayments(_driver);
 
 
-            var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-120")));
+            var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-122")));
             ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", editElement);
 
             wait.Until(ExpectedConditions.ElementIsVisible(By.Id("selectState")));
@@ -247,7 +247,7 @@ namespace LAFABRICA.UI.Test.Components.pages.EmployeePayments
             NavigationHelper.NavigatetoEmployeePayments(_driver);
 
 
-            var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-121")));
+            var editElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit-120")));
             ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", editElement);
 
             wait.Until(ExpectedConditions.ElementIsVisible(By.Id("selectState")));
