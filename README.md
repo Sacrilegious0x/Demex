@@ -1,93 +1,156 @@
-# La Fabrica
+# La Fábrica — Sistema de Administración Demex
 
+Sistema de gestión interna para el taller de artesanía **Demex**, desarrollado con .NET 8 y Blazor Server. Centraliza la administración de inventario, clientes, proveedores, órdenes de trabajo, pagos y giras de entrega en una sola aplicación de red local, sin dependencia de internet ni servicios en la nube.
 
+---
 
-## Getting started
+## Contexto del negocio
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+Demex fabrica productos artesanales con maquinaria moderna (impresoras 3D, cortadoras y grabadoras láser) y un equipo especializado en pintura y acabados. Anteriormente su administración se apoyaba en hojas de Excel, pizarras y WhatsApp, lo que generaba una gestión fragmentada y dependiente de la memoria de la dueña. **La Fábrica** reemplaza ese flujo con una plataforma unificada de fácil uso, orientada a mejorar la eficiencia operativa y permitir la expansión gradual del negocio.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+---
 
-## Add your files
+## Módulos funcionales
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+| Módulo | Descripción | Prioridad |
+|---|---|---|
+| **Órdenes** | Crear, consultar, editar y eliminar órdenes de trabajo con seguimiento de estados (Cotizando → Diseño → Corte → Acabados → Entrega) | Alta |
+| **Clientes** | CRUD de clientes con marcado automático de cliente frecuente (≥ 3 compras) y búsqueda por zona para planificación de giras | Alta |
+| **Inventario** | Gestión de materiales de producción con alertas de stock bajo y asociación a proveedores | Alta |
+| **Proveedores** | Registro de proveedores con sugerencia automática de contacto cuando un material está bajo de stock | Media |
+| **Productos** | Catálogo de productos con calculadora de precios basada en materiales y complejidad | Media |
+| **Pagos** | Registro de pagos de clientes por orden, pagos a empleados por piezas y conteo mensual SINPES | Media |
+| **Giras** | Planificación de giras de entrega con lista de clientes por zona, registro de gastos y resumen de rentabilidad | Baja |
+| **Reportes** | Reportes gráficos de ventas, productos y empleados, exportables en PDF | Baja |
+| **Usuarios y Roles** | Dos roles: Administrador (acceso total) y Trabajador (acceso restringido) | Alta |
+
+---
+
+## Tecnologías
+
+- .NET 8 / Blazor Server
+- Entity Framework Core
+- SQLite / SQL Server (configurable)
+- HTML/CSS (`wwwroot/app.css`)
+- xUnit / MSTest para pruebas unitarias y de UI
+
+---
+
+## Requisitos previos
+
+- .NET SDK 8.x
+- Visual Studio 2022 con la carga de trabajo **ASP.NET y desarrollo web**
+- (Opcional) Docker
+
+---
+
+## Instalación y configuración
+
+```bash
+# 1. Clonar el repositorio
+git clone https://git.ucr.ac.cr/GABRIEL.MOYACARAVACA/la-fabrica.git
+cd la-fabrica
+
+# 2. Restaurar dependencias y compilar
+dotnet restore
+dotnet build
+
+# 3. Aplicar migraciones de base de datos
+dotnet ef database update --project LAFABRICA
+```
+
+Ajusta la cadena de conexión y demás parámetros en `appsettings.json` y `appsettings.Development.json` antes de ejecutar.
+
+---
+
+## Ejecutar la aplicación
+
+```bash
+# Desde CLI
+dotnet run --project LAFABRICA
+```
+
+O abre la solución en **Visual Studio 2022** y presiona `F5`.
+
+La aplicación corre localmente y es accesible desde otros equipos de la red mediante URL local (diseñada para 1 servidor + 2 laptops en red interna).
+
+---
+
+## Estructura del proyecto
 
 ```
-cd existing_repo
-git remote add origin https://git.ucr.ac.cr/GABRIEL.MOYACARAVACA/la-fabrica.git
-git branch -M main
-git push -uf origin main
+la-fabrica/
+├── Components/          # Componentes Blazor, páginas y layouts (App.razor, MainLayout.razor)
+├── Data/DB/             # Entidades del dominio y AppDbContext.cs
+├── Services/            # Lógica de negocio y acceso a datos
+│   └── Auth/            # Autenticación personalizada (DemexAuthService, PasswordValidator)
+├── Models/              # Modelos e interfaces
+├── wwwroot/             # Recursos estáticos (CSS, JS, imágenes)
+├── Program.cs           # Configuración de la app y DI
+├── LAFABRICA.Tests/     # Pruebas unitarias
+└── LAFABRICA.UI.Test/   # Pruebas de componentes UI
 ```
 
-## Integrate with your tools
+---
 
-- [ ] [Set up project integrations](https://git.ucr.ac.cr/GABRIEL.MOYACARAVACA/la-fabrica/-/settings/integrations)
+## Autenticación
 
-## Collaborate with your team
+La app usa un proveedor de estado personalizado (`DemexAuthenticationStateProvider`) con dos roles:
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+- **Administrador** — acceso completo a todos los módulos.
+- **Trabajador** — acceso restringido a módulos sensibles.
 
-## Test and Deploy
+Consulta `Services/Auth/` para detalles de configuración.
 
-Use the built-in continuous integration in GitLab.
+---
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+## Pruebas
 
-***
+```bash
+# Pruebas unitarias
+dotnet test LAFABRICA.Tests
 
-# Editing this README
+# Pruebas de componentes UI
+dotnet test LAFABRICA.UI.Test
+```
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+---
 
-## Suggestions for a good README
+## Migraciones de base de datos
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+```bash
+# Crear una nueva migración
+dotnet ef migrations add NombreMigracion --project LAFABRICA
 
-## Name
-Choose a self-explaining name for your project.
+# Aplicar migraciones pendientes
+dotnet ef database update --project LAFABRICA
+```
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+---
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+## Alcance y limitaciones
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+- **Despliegue local únicamente** — no requiere internet ni servicios en la nube.
+- **Sin procesamiento de pagos** — el sistema registra movimientos contables, no realiza transacciones.
+- **Plataforma objetivo: PC** — no contempla versiones móviles ni aplicaciones adicionales.
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+---
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+## Contribuir
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+1. Crea una rama por feature: `git checkout -b feature/nombre-feature`
+2. Commits atómicos con mensajes descriptivos.
+3. Abre un Pull Request siguiendo las normas de `.editorconfig` y `CONTRIBUTING.md`.
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+---
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+## Comandos de referencia rápida
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+| Comando | Descripción |
+|---|---|
+| `dotnet restore` | Restaurar paquetes NuGet |
+| `dotnet build` | Compilar el proyecto |
+| `dotnet run --project LAFABRICA` | Ejecutar la aplicación |
+| `dotnet test` | Ejecutar todas las pruebas |
+| `dotnet ef migrations add <Nombre>` | Crear migración de EF Core |
+| `dotnet ef database update` | Aplicar migraciones pendientes |
