@@ -136,14 +136,6 @@ dotnet ef database update --project LAFABRICA
 
 ---
 
-## Contribuir
-
-1. Crea una rama por feature: `git checkout -b feature/nombre-feature`
-2. Commits atómicos con mensajes descriptivos.
-3. Abre un Pull Request siguiendo las normas de `.editorconfig` y `CONTRIBUTING.md`.
-
----
-
 ## Comandos de referencia rápida
 
 | Comando | Descripción |
